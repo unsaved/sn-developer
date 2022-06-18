@@ -1,0 +1,13 @@
+Example SN_CF_COMMANDs env settings.
+
+WINDOWS SHELL
+To display cf output in separate terminal:
+  set SN_CF_COMMAND=start "Upload change comparison" /wait cmd /s /c "fc "%s" "%s" & pause"
+notepad++.  (Maybe use -titleAdd= instead of msg command after FM upgrades to >= v8.0.0)
+  set SN_CF_COMMAND=msg %USERNAME% "Hit CTRL+ALT+c in Notepad++" ^&^& C:/PROGRA~2/Notepad++/notepad++ -nosession -ro -alwaysOnTop "%s" "%s"
+
+GIT FOR WINDOWS
+diff output to different terminal:
+  export SN_CF_COMMAND="mintty -t \"Upload change comparison\" -s 100,50 -e sh -c \"diff --color=auto -U3 '%s' '%s'; read\""
+vim.  Close the multi-doc vim with :qa
+  export SN_CF_COMMAND="mintty -s 162,50 -e sh -c \"vimdiff -R '%s' '%s'\""

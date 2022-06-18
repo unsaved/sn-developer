@@ -1,0 +1,43 @@
+{
+  "name": "@admc.com/sn-developer",
+  "version": "1.0.0",
+  "description": "ServiceNow desktop developer utilities",
+  "main": "upload.js",
+  "bin": {
+    "snUpload": "upload.js",
+    "snVersions": "versionCf.js",
+    "suxList": "suxList.js"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "lintHtml": "eslint -f html -o local/eslint.html .",
+    "require+": "echo disabled node -p 'const { validate, is } = require(\"./index\"); validate(\"str\", \"string\");'",
+    "require-": "echo disabled node -p 'const { validate, is } = require(\"./index\"); validate(\"str\", \"int\");'",
+    "import+": "echo disabled node -r esm -p 'import { validate, is } from \"./index\"; validate(\"str\", \"string\");'",
+    "import-": "echo disabled node -r esm -p 'import { validate, is } from \"./index\"; validate(\"str\", \"int\");'"
+  },
+  "keywords": [
+    "ServiceNow",
+    "desktop",
+    "development"
+  ],
+  "author": "Blaine Simpson <blaine.simpson@admc.com>",
+  "license": "MIT",
+  "homepage": "https://TBD",
+  "repository": {
+    "type": "git",
+    "url": "O:/git_reposes/myservices-dtdev/"
+  },
+  "dependencies": {
+    "@admc.com/apputil": "^2.0.1",
+    "@admc.com/bycontract-plus": "^1.2.1",
+    "axios": "^0.26.1",
+    "checksum": "^1.0.0",
+    "entities": "^4.1.1",
+    "npm": "^8.12.2",
+    "yargs": "^17.4.0"
+  },
+  "devDependencies": {
+    "eslint": "^8.18.0"
+  }
+}

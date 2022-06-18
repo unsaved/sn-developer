@@ -1,0 +1,20 @@
+# Config file for 'snUpload' that maps files to target SN records and field.
+# Comment lines must begin with #
+# Empty lines ignored
+# Limitations:  # only honored as very first char on line,
+# keyvalue may be special constant * or <, with meanings:
+#  * = same as datafile value (with directory path removed, if any),
+#  < = basename of datafile (i.e. without directory path and suffix).
+# We always write content records using DOS \r\n EOLs, but we correctly
+# handle either style of EOL for local data files and existing server values.
+
+# As an example of special contants, if we had keyvalue of <
+# for the subdir/gplay.txt line below, that would attempt to upload to
+# a record with key value of "gplay".
+
+# Specifications lines must have 4 tokens in this order:
+#   datafile table datafield keyfield kevalue
+
+#datafile        table        datafield  keyfield  kevalue
+play.js          u_text_file  u_content  u_path    *
+subdir/gplay.txt u_text_file  u_content  u_path    global-play.txt
