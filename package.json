@@ -6,7 +6,8 @@
   "bin": {
     "snUpload": "upload.js",
     "snVersions": "versionCf.js",
-    "suxList": "suxList.js"
+    "suxList": "suxList.js",
+    "lintSnScriptlet": "lintSnScriptlet.js"
   },
   "scripts": {
     "lint": "eslint .",
@@ -36,9 +37,8 @@
     "entities": "^4.1.1",
     "npm": "^8.12.2",
     "readline-sync": "^1.4.10",
-    "yargs": "^17.4.0"
-  },
-  "devDependencies": {
+    "yargs": "^17.4.0",
+    "eslint-plugin-servicenow": "^0.1.0",
     "eslint": "^8.18.0"
   }
 }

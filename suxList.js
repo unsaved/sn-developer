@@ -2,7 +2,8 @@
 
 "use srict";
 
-const { AppErr, } = require("@admc.com/apputil");
+const { AppErr, conciseCatcher, conciseErrorHandler } = require("@admc.com/apputil");
+const { validate } = require("@admc.com/bycontract-plus");
 const { SNInternalToSNLocalString } = require("./lib/snJs");
 
 /*
@@ -25,7 +26,8 @@ if (argsArray.length > 0 && argsArray[0] === "-u") {
 const badFileSpecs = argsArray.filter(usPath => !fs.existsSync(usPath));
 const progName = process.argv[1].replace(/.*[/\\]/, "");
 
-try {
+conciseCatcher(async function() {
+    validate(arguments, []);
     if (badFileSpecs.length > 0)
         throw new AppErr(badFileSpecs.length + " missing input files: " + badFileSpecs.join(", "));
     if (argsArray.length < 1)
@@ -78,22 +80,4 @@ try {
           usPath, suxCount, entries.length, utcZone ? "UTC" : "local",
             (entrySummaries.length < 0 ? "" : "\n" + entrySummaries.join("\n")));
     });
-} catch(e) {
-    if (e === null)
-        console.error("A null was thrown.  "
-          + "Try using 'node --trace-uncaught' if you need the stack trace");
-    else if (typeof(e) !== "object")
-        console.error(`A ${typeof(e)} (non-object) was thrown.  `
-          + "Try using 'node --trace-uncaught' if you need the stack trace");
-    else if (!("stack" in e))
-        console.error(`An object with no stack was thrown.  `
-          + "Try using 'node --trace-uncaught' if you need the stack trace");
-    else if (e.name === "AppErr")
-        console.error("Aborting.  " + e.message);
-    else
-        // Weakness here is that you lose OOTB display of the actual source
-        // line of code.  Since AppErr will be thrown far more often,
-        // this is acceptable.
-        console.error(e.stack);
-    process.exit(10);
-}
+}, 10)().catch(e0=>conciseErrorHandler(e0, 1));

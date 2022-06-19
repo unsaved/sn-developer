@@ -1,3 +1,5 @@
+// This is for checking js files in the sn-developer implementation itself.
+// Don't use this for checking ServiceNow scirptles.
 {
   "env": {
       "commonjs": true,

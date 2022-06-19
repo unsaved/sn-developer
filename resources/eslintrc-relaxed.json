@@ -1,0 +1,88 @@
+/*
+ * This is a sample relaxed .eslintrc.json file for applying to ServiceNow scriptlets.
+ * You should customize this to your own preferences, and you should definitely add override
+ * "eslintrc.json" files to cascade directories  or with JSLint -c switch, to adjust rules for
+ * scriptlet types.
+ * For example, MID scriptlets, backend scriptlets, and client-side scriplets have drastically
+ * different global variables available.
+ * It would be great if could use ES6 for client-side scripts, but incompetent ServiceNow
+ * design doesn't allow for that.
+ *
+ * Instead of, or in addition to, cascading config files, you could put all the rules into one
+ * file an overrides element  for each type of source file.
+ */
+{
+  "root": true,
+  "plugins": [ "servicenow" ],
+  "rules": {
+    "curly": "off",
+    "quotes": "off",
+    "no-undef": "error",
+    //"no-console": "error",  allow for SN client scripts
+    "no-const-assign": "error",
+
+    // This set of rules are very subjective:
+    "max-len": ["warn", { "code": 100, "ignoreUrls": true }],
+    "no-tabs": "warn",
+    "no-mixed-spaces-and-tabs": "warn",
+    "no-trailing-spaces": "warn",
+
+    // TODO:  Turn down from error to warn things in this block that are not "unsafe":
+    "servicenow/no-hardcoded-sysids": "warn",
+    "servicenow/dont-use-gr-as-variablename": "off",
+    "servicenow/minimize-gs-log-print": "warn",
+    "camelcase": "warn",
+    "eqeqeq": "warn",
+    "constructor-super": "error",
+    "no-case-declarations": "error",
+    "no-class-assign": "error",
+    "no-compare-neg-zero": "error",
+    "no-cond-assign": "error",
+    "no-constant-condition": "error",
+    "no-control-regex": "error",
+    "no-debugger": "error",
+    "no-delete-var": "error",
+    "no-dupe-args": "error",
+    "no-dupe-class-members": "error",
+    "no-dupe-keys": "error",
+    "no-duplicate-case": "error",
+    "no-empty-character-class": "error",
+    "no-empty-pattern": "error",
+    "linebreak-style": "off",
+    "no-empty": [ "error", { "allowEmptyCatch": true } ],
+    "no-ex-assign": "error",
+    "no-extra-boolean-cast": "error",
+    "no-extra-semi": "error",
+    "semi": "error",
+    "no-fallthrough": "warn",
+    "no-func-assign": "error",
+    "no-global-assign": "error",
+    "no-inner-declarations": "error",
+    "no-invalid-regexp": "error",
+    "no-irregular-whitespace": "error",
+    "no-new-symbol": "error",
+    "no-obj-calls": "error",
+    "no-octal": "error",
+    "no-redeclare": "error",
+    "no-regex-spaces": "error",
+    "no-self-assign": "error",
+    "no-sparse-arrays": "error",
+    "no-this-before-super": "error",
+    "no-unexpected-multiline": "error",
+    "no-unreachable": "error",
+    "no-unsafe-finally": "error",
+    "no-unsafe-negation": "error",
+    "no-unused-labels": "error",
+    "no-unused-vars": "error",
+    "no-useless-escape": "error",
+    "require-yield": "error",
+    "use-isnan": "error",
+    "valid-typeof": "error",
+    // I want to customize no-use-before-define to allow it for functions.
+    // Until then, use eslint-disable* code comments liberally.
+    "no-use-before-define": "warn",
+    "func-style": [ "error", "declaration", { "allowArrowFunctions": false } ]
+  }
+  // You should definitely add to the globals list with overriding  '.lintrc.json' files:
+  //"globals": { "AdmcUtil": true }
+}

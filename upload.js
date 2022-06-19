@@ -32,10 +32,6 @@ Honored environmental variables.  * variables are required:
       type: "boolean",
   }).
   option("d", { describe: "Debug logging", type: "boolean", }).
-  option("e", {
-      describe: "display Environment settings for different comparators",
-      type: "boolean",
-  }).
   option("m", {
       describe: "Monitor poll period in milliseconds, positive integer",
       requiresArg: true,
