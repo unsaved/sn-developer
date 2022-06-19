@@ -70,8 +70,8 @@ try {
             return 0;
         }).map(entry =>
             util.format("    %s  %s %s", utcZone ?
-              entry.time.replace(" ", "T") : SNInternalToSNLocalString(entry.time),
-              entry.table.padEnd(30), entry.sysId)
+              (entry.time.replace(" ", "T")+"Z") : SNInternalToSNLocalString(entry.time),
+              entry.table.padEnd(29), entry.sysId)
         );
         console.info(
           "%s has %d sys_update_xml records w/ %d update %s timestamps%s",

@@ -188,10 +188,7 @@ conciseCatcher(async function() {
     if (instName === undefined)
         throw new AppErr("Set required env var 'SN_DEVELOPER_INST' to "
           + "unqualified SN host name (like 'acmedev')");
-    if (yargsDict.p) {
-    } else {
-        rcFile = new NetRC();
-    }
+    if (!yargsDict.p) rcFile = new NetRC();
     if (process.env.CF_COMMAND !== undefined) {
         comparatorCmd = process.env.CF_COMMAND;
     } else {
@@ -258,10 +255,10 @@ conciseCatcher(async function() {
     console.debug("Received list of %i versions", currentData.length);
     if (verA === undefined) {
         process.stdout.write(format("%s %s %s  %s  %s %s",
-          "Index", "Op", "Created".padEnd(22), "Created by".padEnd(10),
+          "Index", "Op", "Created".padEnd(19), "Created by".padEnd(10),
           "Source".padEnd(16), "Scope")
           + "\n" + format("%s %s %s  %s  %s  %s",
-              "-----", "--", "----------------------", "----------",
+              "-----", "--", "-------------------", "----------",
               "----------------", "----------------")
           + "\n" + currentData.map((r, i) =>
             format("%s %s %s  %s  %s  %s", String(-i).padStart(5),

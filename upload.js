@@ -16,7 +16,7 @@ const path = require("path");
 // .help().
 const yargs = require("yargs")(process.argv.slice(2)).
   strictOptions().
-  usage(`SYNTAX: $0 [-dnqrv] [-m POLL_MS] file.ext    OR   $0 -e|h|u
+  usage(`SYNTAX: $0 [-dqrv] [-p username] [-m POLL_MS] file.ext    OR   $0 -e|h|u
 Honored environmental variables.  * variables are required:
     SN_CF_COMMAND:           Comparison command template  (-e to display examples)
    *SN_DEVELOPER_INST:       Short (unqualified) ServiceNow instancename
@@ -41,9 +41,10 @@ Honored environmental variables.  * variables are required:
       requiresArg: true,
       type: "number",
   }).
-  option("n", {
-      describe: "authorize via basic auth using netrc file",
-      type: "boolean",
+  option("p", {
+      describe: ("Prompt for basic auth password for the specified user.  "
+        + "(By default uses name and passsword from netrc file)."),
+      type: "string",
   }).
   option("q", {
       describe: "Quiet logging by logging only at level WARN and ERROR",
@@ -96,7 +97,7 @@ let file, fileExt, fileHasCRs, comparatorCmd, lastChecksum;
 if (yargsDict.m) { // yargsDict.m value validation
     if (isNaN(yargsDict.m) || !Number.isInteger(yargsDict.m)
       || yargsDict.m <= 0) {
-        console.error("Switch -p value not a positive integr: " + yargsDict.m);
+        console.error("Switch -m value not a positive integr: " + yargsDict.m);
         yargs.showHelp();
         process.exit(9);
     }
@@ -117,7 +118,7 @@ conciseCatcher(function(inFile) {
           + "REST API scope in the resource path (like 'acme')");
     let apiName = process.env.SN_UPLOAD_RESTAPI_NAME;
     if (apiName === undefined) apiName = "dev";
-    if (yargsDict.n) rcFile = new NetRC();
+    if (!yargsDict.p) rcFile = new NetRC();
     if (!yargsDict.r) {
         console.debug(`Checking local file '${file}'`);
         if (!fs.existsSync(file)) throw new AppErr("File is missing:", file);
@@ -166,11 +167,11 @@ conciseCatcher(function(inFile) {
         const url = `https://${instName}.service-now.com` + (yargsDict.r ?
             `/api/now/v2/table/${uploadEntry.table}` :
             `/api/${apiScope}/${apiName}/${uploadEntry.table}/${uploadEntry.dataField}`);
-        let authOpts;
-        if (rcFile !== undefined)
-            authOpts = { auth: rcFile.getAuthSettings(url)};
-        if (authOpts === undefined)
-            throw new AppErr("You must specify some authentication mechanism");
+        const authOpts = { auth: (rcFile === undefined 
+          ? { username: yargsDict.p, password: require("readline-sync").
+              question(`Password for '${yargsDict.p}': `, {hideEchoBack: true}) }
+          : rcFile.getAuthSettings(url)
+        )};
         const opts = {
             method: yargsDict.r ? 'get' : 'patch',
             url: url,
