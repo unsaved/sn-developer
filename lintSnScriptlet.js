@@ -11,7 +11,7 @@ const path = require("path");
 
 const yargs = require("yargs")(process.argv.slice(2)).
   strictOptions().
-  usage(`SYNTAX: $0 [-dHqv] [-- -eslint-switches] file/path.js     OR     $0 -h     OR
+  usage(`SYNTAX: $0 [-cdHqv] [-- -eslint-switches] file/path.js     OR     $0 -h     OR
          $0 -s strict/rc/directory     OR     $0 -r relaxed/rc/directory
   It is critically important to have ServiceNow-specific .eslintrc* file(s) set
   up in the file/path.js directory and/or ancestor directories.`).
@@ -23,6 +23,7 @@ const yargs = require("yargs")(process.argv.slice(2)).
       describe: "output HTML instead of plain text report",
       type: "boolean",
   }).
+  option("c", { describe: "allow Const statement", type: "boolean", }).
   option("d", { describe: "Debug logging", type: "boolean", }).
   option("s", {
       describe: "directory to write Strict '.eslintrc.json' sample file into",
@@ -73,22 +74,33 @@ conciseCatcher(async function() {
     }
     const srcFilePath = yargsDict._.pop();
     if (!fs.existsSync(srcFilePath)) throw new AppErr(`'${srcFilePath}' does not exists`);
-    const content = fs.readFileSync(srcFilePath, "utf8");
+    let content;
     const eslintArgs = yargsDict._.slice();
-    eslintArgs.splice(0, 0,
-        path.join(__dirname, "/node_modules/.bin/eslint"),
-        "--resolve-plugins-relative-to",
-        __dirname,
-        "--stdin",
-        "--stdin-filename",
-        path.join(process.cwd(), srcFilePath),
-    );
+    if (yargsDict.c) {
+        content = fs.readFileSync(srcFilePath, "utf8");
+        eslintArgs.splice(0, 0,
+            path.join(__dirname, "/node_modules/.bin/eslint"),
+            //"--resolve-plugins-relative-to",
+            //__dirname,
+            "--stdin",
+            "--stdin-filename",
+            path.join(process.cwd(), srcFilePath),
+        );
+    } else {
+        eslintArgs.splice(0, 0,
+            path.join(__dirname, "/node_modules/.bin/eslint"),
+            //"--resolve-plugins-relative-to",
+            //__dirname,
+            srcFilePath,
+        );
+    }
     if (yargsDict.H) eslintArgs.splice(1, 0, "-f", "html");
     console.debug('eslint invocation args', eslintArgs);
     const childProcess = require("child_process").spawn(process.execPath, eslintArgs, {
-        cwd: path.dirname(srcFilePath),
         stdio: ["pipe", "inherit", "inherit"],
     });
-    childProcess.stdin.write(content.replace(/(\s)const(\s)/g, "$1var$2"));
-    childProcess.stdin.end();
+    if (content) {
+        childProcess.stdin.write(content.replace(/(\s)const(\s)/g, "$1var$2"));
+        childProcess.stdin.end();
+    }
 }, 10)().catch(e0=>conciseErrorHandler(e0, 1));

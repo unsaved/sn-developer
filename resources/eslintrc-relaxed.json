@@ -80,8 +80,7 @@
     "valid-typeof": "error",
     // I want to customize no-use-before-define to allow it for functions.
     // Until then, use eslint-disable* code comments liberally.
-    "no-use-before-define": "warn",
-    "func-style": [ "error", "declaration", { "allowArrowFunctions": false } ]
+    "no-use-before-define": "warn"
   }
   // You should definitely add to the globals list with overriding  '.lintrc.json' files:
   //"globals": { "AdmcUtil": true }

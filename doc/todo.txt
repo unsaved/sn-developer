@@ -1,3 +1,5 @@
 integrate lintSnScriptlet execution into upload.js.
 I think just execFile the ./bin/.
 Change switch behavior.  Should lint-check by default.
+
+Support null previous field content for upload.js

@@ -51,7 +51,7 @@ Honored environmental variables.  * variables are required:
       type: "boolean",
   }).
   option("u", {
-      describe: "writes a skeleton 'upload.map' file to current directory",
+      describe: "writes a skeleton 'uploadmap.txt' file to current directory",
       type: "boolean",
   }).
   demandCommand(0, 1).
