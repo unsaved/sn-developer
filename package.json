@@ -22,11 +22,11 @@
     "development"
   ],
   "author": "Blaine Simpson <blaine.simpson@admc.com>",
-  "license": "MIT",
-  "homepage": "https://TBD",
+  "license": "Apache 2.0",
+  "homepage": "https://github.com/unsaved/sn-developer",
   "repository": {
     "type": "git",
-    "url": "O:/git_reposes/myservices-dtdev/"
+    "url": "https://github.com/unsaved/sn-developer.git"
   },
   "dependencies": {
     "@admc.com/apputil": "^2.0.1",
