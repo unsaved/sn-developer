@@ -167,7 +167,7 @@ conciseCatcher(function(inFile) {
         const url = `https://${instName}.service-now.com` + (yargsDict.r ?
             `/api/now/v2/table/${uploadEntry.table}` :
             `/api/${apiScope}/${apiName}/${uploadEntry.table}/${uploadEntry.dataField}`);
-        const authOpts = { auth: (rcFile === undefined 
+        const authOpts = { auth: (rcFile === undefined
           ? { username: yargsDict.p, password: require("readline-sync").
               question(`Password for '${yargsDict.p}': `, {hideEchoBack: true}) }
           : rcFile.getAuthSettings(url)

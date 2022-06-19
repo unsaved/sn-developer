@@ -120,7 +120,7 @@ if (yargsDict.t) { // yargsDict.t value validation
     }
 }
 const tableField = yargsDict._.shift();
-var table, field;
+let table, field;
 const isUnixShell = process.env.SHELL !== undefined;
 const recId = yargsDict._.shift();
 const keyBySysId = patterns.SYS_ID.test(recId);
@@ -215,7 +215,7 @@ conciseCatcher(async function() {
     }
 
     const url = `https://${instName}.service-now.com/api/now/table/sys_update_version`;
-    const authOpts = { auth: (rcFile === undefined 
+    const authOpts = { auth: (rcFile === undefined
       ? { username: yargsDict.p, password: require("readline-sync").
           question(`Password for '${yargsDict.p}': `, {hideEchoBack: true}) }
       : rcFile.getAuthSettings(url)
