@@ -35,6 +35,7 @@
     "checksum": "^1.0.0",
     "entities": "^4.1.1",
     "npm": "^8.12.2",
+    "readline-sync": "^1.4.10",
     "yargs": "^17.4.0"
   },
   "devDependencies": {

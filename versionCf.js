@@ -22,8 +22,8 @@ const path = require("path");
 // .help().
 const yargs = require("yargs")(process.argv.slice(2)).
   strictOptions().
-  usage(`SYNTAX: $0 [-dnqv] [-t filetype] table.field REC_ID EARLIER_VER [LATER_VER]
-    OR: $0 [-dnqv] [-t filetype] table REC_ID
+  usage(`SYNTAX: $0 [-dqv] [-p username] [-t filetype] table.field REC_ID EARLIER_VER [LATER_VER]
+    OR: $0 [-dqv] [-p username] [-t filetype] table REC_ID
     OR: $0 -h|e
 REC_ID      identifies which table.field record, by either display-value
             or sys_id.  N.b. this is the display field value at the time
@@ -56,9 +56,10 @@ Honored environmental variables:
       describe: "display Environment settings for different comparators",
       type: "boolean",
   }).
-  option("n", {
-      describe: "authorize via basic auth using netrc file",
-      type: "boolean",
+  option("p", {
+      describe: ("Prompt for basic auth password for the specified user.  "
+        + "(By default uses name and passsword from netrc file)."),
+      type: "string",
   }).
   option("q", {
       describe: "Quiet logging by logging only at level WARN and ERROR",
@@ -181,14 +182,16 @@ if (verA === undefined) {
 }
 
 conciseCatcher(async function() {
-  //SYNTAX: $0 [-dhqv] table.field REC_ID EARLIER_VER [LATER_VER]
     validate(arguments, []);
-    let rcFile, authOpts, opts, proxyClause;
+    let rcFile, opts, proxyClause;
     const instName = process.env.SN_DEVELOPER_INST;
     if (instName === undefined)
         throw new AppErr("Set required env var 'SN_DEVELOPER_INST' to "
           + "unqualified SN host name (like 'acmedev')");
-    if (yargsDict.n) rcFile = new NetRC();
+    if (yargsDict.p) {
+    } else {
+        rcFile = new NetRC();
+    }
     if (process.env.CF_COMMAND !== undefined) {
         comparatorCmd = process.env.CF_COMMAND;
     } else {
@@ -215,8 +218,11 @@ conciseCatcher(async function() {
     }
 
     const url = `https://${instName}.service-now.com/api/now/table/sys_update_version`;
-    if (rcFile !== undefined) authOpts = { auth: rcFile.getAuthSettings(url)};
-    if (authOpts === undefined) throw new AppErr("You must specify some authentication mechanism");
+    const authOpts = { auth: (rcFile === undefined 
+      ? { username: yargsDict.p, password: require("readline-sync").
+          question(`Password for '${yargsDict.p}': `, {hideEchoBack: true}) }
+      : rcFile.getAuthSettings(url)
+    )};
     const queryClauses = [
       "nameSTARTSWITH" + table + "_",
       ((keyBySysId ? "nameENDSWITH" : "record_name=") + recId),
