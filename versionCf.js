@@ -42,9 +42,9 @@ LATER_VER   is just like EARLIER_ID, except that it defaults to 0 if you
 To see Created times in Versions related lists, you will have to add to
 the list layout.
 Honored environmental variables:
-    SN_CF_COMMAND:     Comparison command template  (-e to display examples)
-    SN_HTTPS_PROXY:    HTTPS Proxy URL
-    SN_UPLOAD_INST:    Short (unqualified) ServiceNow instancename
+    SN_CF_COMMAND:      Comparison command template  (-e to display examples)
+    SN_HTTPS_PROXY:     HTTPS Proxy URL
+    SN_DEVELOPER_INST:  Short (unqualified) ServiceNow instancename
     VERSION_LIST_LIMIT: Version lists displays only last X versions (dflt 50)`.
   replace(/ /g, "\u2009")).
   option("v", {
@@ -184,9 +184,10 @@ conciseCatcher(async function() {
   //SYNTAX: $0 [-dhqv] table.field REC_ID EARLIER_VER [LATER_VER]
     validate(arguments, []);
     let rcFile, authOpts, opts, proxyClause;
-    if (process.env.SN_UPLOAD_INST === undefined)
-        throw new AppErr("Set required env var 'SN_UPLOAD_INST' to "
-          + "unqualified SN host anme (like 'fanniemaedev')");
+    const instName = process.env.SN_DEVELOPER_INST;
+    if (instName === undefined)
+        throw new AppErr("Set required env var 'SN_DEVELOPER_INST' to "
+          + "unqualified SN host name (like 'acmedev')");
     if (yargsDict.n) rcFile = new NetRC();
     if (process.env.CF_COMMAND !== undefined) {
         comparatorCmd = process.env.CF_COMMAND;
@@ -213,8 +214,7 @@ conciseCatcher(async function() {
         if (ex[3] !== undefined) proxyClause.port = parseInt(ex[3]);
     }
 
-    const url = `https://${process.env.SN_UPLOAD_INST}.service-now.com` +
-      "/api/now/table/sys_update_version";
+    const url = `https://${instName}.service-now.com/api/now/table/sys_update_version`;
     if (rcFile !== undefined) authOpts = { auth: rcFile.getAuthSettings(url)};
     if (authOpts === undefined) throw new AppErr("You must specify some authentication mechanism");
     const queryClauses = [
@@ -240,7 +240,7 @@ conciseCatcher(async function() {
     conciseCatcher(versionListHandler, 1)(await axios.get(url, {...opts, ...authOpts}).catch(e => {
         console.error("Caught failure.  Consider checking %s's syslog "
           + "for messages written by %s.\n%s%s",
-          process.env.SN_UPLOAD_INST, authOpts.auth.username, e.message,
+          instName, authOpts.auth.username, e.message,
           (e.response !== undefined && e.response.data !== undefined
           && e.response.data.error !== undefined
           && e.response.data.error.message !== undefined
@@ -311,7 +311,7 @@ conciseCatcher(async function() {
       e=>console.error(
         "Caught failure.  Consider checking %s's syslog "
         + "for messages written by %s.\n%s%s",
-        process.env.SN_UPLOAD_INST, authOpts.auth.username, e.message,
+        instName, authOpts.auth.username, e.message,
         (e.response !== undefined && e.response.data !== undefined
         && e.response.data.error !== undefined
         && e.response.data.error.message !== undefined

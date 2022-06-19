@@ -1,4 +1,4 @@
-#!/usr/bin/env
+#!/usr/bin/env node
 
 console.debug("debug level");
 console.info("info level");

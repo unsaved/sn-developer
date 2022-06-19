@@ -17,10 +17,12 @@ const path = require("path");
 const yargs = require("yargs")(process.argv.slice(2)).
   strictOptions().
   usage(`SYNTAX: $0 [-dnqrv] [-m POLL_MS] file.ext    OR   $0 -e|h|u
-Honored environmental variables:
-    SN_CF_COMMAND:   Comparison command template  (-e to display examples)
-    SN_HTTPS_PROXY:  HTTPS Proxy URL
-    SN_UPLOAD_INST:  Short (unqualified) ServiceNow instancename`).
+Honored environmental variables.  * variables are required:
+    SN_CF_COMMAND:           Comparison command template  (-e to display examples)
+   *SN_DEVELOPER_INST:       Short (unqualified) ServiceNow instancename
+    SN_HTTPS_PROXY:          HTTPS Proxy URL
+   *SN_UPLOAD_RESTAPI_SCOPE: Scope of the WS Op upload resource path after '/app/'
+    SN_UPLOAD_RESTAPI_NAME:  Name of the WS upload definition name.  Defaults to 'dev'.`).
   option("e", {
       describe: "display Environment settings for different comparators",
       type: "boolean",
@@ -105,9 +107,16 @@ conciseCatcher(function(inFile) {
     validate(arguments, ["string"]);
     let rcFile;
     file = inFile;
-    if (process.env.SN_UPLOAD_INST === undefined)
-        throw new AppErr("Set required env var 'SN_UPLOAD_INST' to "
-          + "unqualified SN host anme (like 'fanniemaedev')");
+    const instName = process.env.SN_DEVELOPER_INST;
+    if (instName === undefined)
+        throw new AppErr("Set required env var 'SN_DEVELOPER_INST' to "
+          + "unqualified SN host name (like 'acmedev')");
+    const apiScope = process.env.SN_UPLOAD_RESTAPI_SCOPE;
+    if (apiScope === undefined)
+        throw new AppErr("Set required env var 'SN_UPLOAD_RESTAPI_SCOPE' to "
+          + "REST API scope in the resource path (like 'acme')");
+    let apiName = process.env.SN_UPLOAD_RESTAPI_NAME;
+    if (apiName === undefined) apiName = "dev";
     if (yargsDict.n) rcFile = new NetRC();
     if (!yargsDict.r) {
         console.debug(`Checking local file '${file}'`);
@@ -154,10 +163,9 @@ conciseCatcher(function(inFile) {
             if (localFileText.endsWith("\r\n")) localFileText = localFileText.slice(0, -2);
         }
 
-        const url = `https://${process.env.SN_UPLOAD_INST}.service-now.com` +
-          (yargsDict.r ?
+        const url = `https://${instName}.service-now.com` + (yargsDict.r ?
             `/api/now/v2/table/${uploadEntry.table}` :
-            `/api/fenma/dev/${uploadEntry.table}/${uploadEntry.dataField}`);
+            `/api/${apiScope}/${apiName}/${uploadEntry.table}/${uploadEntry.dataField}`);
         let authOpts;
         if (rcFile !== undefined)
             authOpts = { auth: rcFile.getAuthSettings(url)};
@@ -197,7 +205,7 @@ conciseCatcher(function(inFile) {
           then(conciseCatcher(responseHandler, 1),  // eslint-disable-line no-use-before-define
           e=>console.error(
             "Caught failure.  Consider checking %s's syslog for messages written by %s.\n%s%s",
-            process.env.SN_UPLOAD_INST, authOpts.auth.username, e.message,
+            instName, authOpts.auth.username, e.message,
             (e.response !== undefined && e.response.data !== undefined
             && e.response.data.error !== undefined
             && e.response.data.error.message !== undefined

@@ -1,0 +1,9 @@
+Add -i 'Id' switch to the MyServices modules scripts to specify user and query for password;
+and DEFAULT to -n.
+
+Add new env var SN_UPLOAD_X for the service endpoint, default to 'env'
+
+Add lintcfgmaps directory that is loaded same way as upload.map, but has entries of the form
+    sn_tablename.json
+
+Change the eslint dependency to a full dependency (not just dev)
