@@ -12,7 +12,7 @@ const path = require("path");
 const yargs = require("yargs")(process.argv.slice(2)).
   strictOptions().
   usage(`SYNTAX: $0 [-cdHqv] [-- -eslint-switches] file/path.js     OR     $0 -h     OR
-         $0 -s strict/rc/directory     OR     $0 -r relaxed/rc/directory
+         $0 -s rc/directory
   It is critically important to have ServiceNow-specific .eslintrc* file(s) set
   up in the file/path.js directory and/or ancestor directories.`).
   option("v", {
@@ -26,11 +26,7 @@ const yargs = require("yargs")(process.argv.slice(2)).
   option("c", { describe: "allow Const statement", type: "boolean", }).
   option("d", { describe: "Debug logging", type: "boolean", }).
   option("s", {
-      describe: "directory to write Strict '.eslintrc.json' sample file into",
-      type: "string",
-  }).
-  option("r", {
-      describe: "directory to write Relaxed '.eslintrc.json' sample file into",
+      describe: "directory to write template '.eslintrc.json' sample file into",
       type: "string",
   }).
   option("q", {
@@ -55,16 +51,7 @@ conciseCatcher(async function() {
             console.error(`Refusing to overwrite existing '${targRcFile}'`);
             process.exit(8);
         }
-        fs.copyFileSync(path.join(__dirname, "resources/eslintrc-strict.json"), targRcFile);
-        process.exit(0);
-    }
-    if (yargsDict.r) {
-        targRcFile = path.join(yargsDict.r, ".eslintrc.json");
-        if (fs.existsSync(targRcFile)) {
-            console.error(`Refusing to overwrite existing '${targRcFile}'`);
-            process.exit(8);
-        }
-        fs.copyFileSync(path.join(__dirname, "resources/eslintrc-relaxed.json"), targRcFile);
+        fs.copyFileSync(path.join(__dirname, "resources/eslintrc-example.json"), targRcFile);
         process.exit(0);
     }
     if (yargsDict._.length < 1) {
@@ -80,8 +67,8 @@ conciseCatcher(async function() {
         content = fs.readFileSync(srcFilePath, "utf8");
         eslintArgs.splice(0, 0,
             path.join(__dirname, "/node_modules/.bin/eslint"),
-            //"--resolve-plugins-relative-to",
-            //__dirname,
+            "--resolve-plugins-relative-to",
+            __dirname,
             "--stdin",
             "--stdin-filename",
             path.join(process.cwd(), srcFilePath),
@@ -89,8 +76,8 @@ conciseCatcher(async function() {
     } else {
         eslintArgs.splice(0, 0,
             path.join(__dirname, "/node_modules/.bin/eslint"),
-            //"--resolve-plugins-relative-to",
-            //__dirname,
+            "--resolve-plugins-relative-to",
+            __dirname,
             srcFilePath,
         );
     }
