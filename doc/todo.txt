@@ -1,1 +1,7 @@
-AFAIK everything working and needed use-cases implemented
+Portability bug.  My spawn commands are executing ".../.bin/eslint", but that is a UNIX shell
+script.  Need to execute .../eslint/bin/eslint.js.
+
+Don't do syntax checking if file doesn't end in '.js'
+
+Add a "=" keyword in uploadmap.txt file for when want the source file path used precisely
+(i.e. don't strip off file path).
