@@ -19,11 +19,11 @@ const yargs = require("yargs")(process.argv.slice(2)).
   strictOptions().
   usage(`SYNTAX: $0 [-dnqrv] [-p username] [-m POLL_MS] file.ext    OR   $0 -e|h|u
 Honored environmental variables.  * variables are required:
-    SN_CF_COMMAND:           Comparison command template  (-e to display examples)
-   *SN_DEVELOPER_INST:       Short (unqualified) ServiceNow instancename
-    SN_HTTPS_PROXY:          HTTPS Proxy URL
-   *SN_UPLOAD_RESTAPI_SCOPE: Scope of the WS Op upload resource path after '/app/'
-    SN_UPLOAD_RESTAPI_NAME:  Name of the WS upload definition name.  Defaults to 'dev'.`).
+    SN_CF_COMMAND:      Comparison command template  (-e to display examples)
+   *SN_DEVELOPER_INST:  Short (unqualified) ServiceNow instancename
+    SN_HTTPS_PROXY:     HTTPS Proxy URL
+   *SN_RESTAPI_SCOPE:   Scope of the WS Op upload resource path after '/app/'
+    SN_RESTAPI_NAME:    Name of the WS upload definition name.  Defaults to 'sndev'.`).
   option("e", {
       describe: "display Environment settings for different comparators",
       type: "boolean",
@@ -110,12 +110,12 @@ conciseCatcher(function(inFile) {
     if (instName === undefined)
         throw new AppErr("Set required env var 'SN_DEVELOPER_INST' to "
           + "unqualified SN host name (like 'acmedev')");
-    const apiScope = process.env.SN_UPLOAD_RESTAPI_SCOPE;
+    const apiScope = process.env.SN_RESTAPI_SCOPE;
     if (apiScope === undefined)
-        throw new AppErr("Set required env var 'SN_UPLOAD_RESTAPI_SCOPE' to "
+        throw new AppErr("Set required env var 'SN_RESTAPI_SCOPE' to "
           + "REST API scope in the resource path (like 'acme')");
-    let apiName = process.env.SN_UPLOAD_RESTAPI_NAME;
-    if (apiName === undefined) apiName = "dev";
+    let apiName = process.env.SN_RESTAPI_NAME;
+    if (apiName === undefined) apiName = "sndev";
     if (!yargsDict.p) rcFile = new NetRC();
     if (!yargsDict.r) {
         console.debug(`Checking local file '${file}'`);
@@ -150,23 +150,25 @@ conciseCatcher(function(inFile) {
     function transfer() {
         let localFileText;
         if (!yargsDict.r) {
-            const lintSnArgs = [ path.join(__dirname, "lintSnScriptlet.js") ];
-            // TODO:  Developers may add their own fields, like my own u_text_file.content,
-            // which also allow fully support 'const'.  Think of some way to either auto-detect
-            // or allow end-user configuration.
-            switch (uploadEntry.table) {
-                case "sys_script_client":
-                case "catalog_script_client":
-                    break;
-                default:
-                    lintSnArgs.push('-c');
-            }
-            lintSnArgs.push(file);
-            try {
-                // eslint-disable-next-line camelcase
-                child_process.execFileSync(process.execPath, lintSnArgs, { stdio: "inherit" });
-            } catch (e9) {
-                throw new AppErr("Lint check failed");
+            if (!yargsDict.n) {
+                const lintSnArgs = [ path.join(__dirname, "lintSnScriptlet.js") ];
+                // TODO:  Developers may add their own fields, like my own u_text_file.content,
+                // which also allow fully support 'const'.  Think of some way to either auto-detect
+                // or allow end-user configuration.
+                switch (uploadEntry.table) {
+                    case "sys_script_client":
+                    case "catalog_script_client":
+                        break;
+                    default:
+                        lintSnArgs.push('-c');
+                }
+                lintSnArgs.push(file);
+                try {
+                    // eslint-disable-next-line camelcase
+                    child_process.execFileSync(process.execPath, lintSnArgs, { stdio: "inherit" });
+                } catch (e9) {
+                    throw new AppErr("Lint check failed");
+                }
             }
 
             localFileText = fs.readFileSync(file, "utf8");

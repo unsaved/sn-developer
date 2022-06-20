@@ -24,13 +24,13 @@ To bundle with your own project, install locally:
 ```
 
 snUpload requires installation of a Scripted REST API to serve the upload requests.
-The 'resources/' directory for this package contains an Update Set export "sndev-US.xml"
-which contains a working sample scripted REST API 'sndev'.
-This provided service requires membership in role 'sndev', so add non-admin developer accounts to
-this role.
+The 'resources/' directory for this package contains an Update Set export
+"sn-developer_service-US.xml" which contains a working sample scripted REST API, 'sndev'.
+This provided service requires membership in role 'sndev' if you don't have admin,
+so add non-admin developer accounts to this role.
 In most cases you should not be facilitating script uploads to a Production environment, so
 consider editing the script to reject requests if the instance name isn't what you want.
-(There is a commented out test for instance of name "x").
+(There is a commented-out test for instance of name "x").
 "resources/upload-wsop.js" contains the JavaScript code for the service.
 
 # Setup and Usage

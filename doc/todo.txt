@@ -1,1 +1,1 @@
-Support null previous field content for upload.js
+AFAIK everything working and needed use-cases implemented

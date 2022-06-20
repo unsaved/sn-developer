@@ -1,19 +1,10 @@
-/* This is intended for a project with different directories for different source script types.
- * ".eslintrc.json" files in cascade directories have branch-specific overrides for what is here.
- * If your scripts are in a flat hierarchy, then just move this file into that directory
- * along-side the scripts and add each file not getting the default config into one of the
- * "files" lists below. */
 {
   "root": true,
-  // To minimize duplication, we're putting one-directory-specific settings into a cascaded
-  // .eslintrc.json file in the leaf directory, including single-dir overrides to what is here.
-  // Configs covering multple src/main/sn/ subdirectories go here.
   "overrides": [
     { // Backend scripts
       "files": [
-        "**/sa_pattern_prepost_script/**",
-        "**/sys_script_fix/**",
-        "**/sys_script_include/**"
+        "upload-wsop.js",
+        "HttpCodeError.js"
       ],
       "plugins": [ "servicenow" ],
       "rules": {
@@ -94,8 +85,7 @@
     },
     { // Client scripts
       "files": [
-        "**/sys_script_client/**",
-        "**/catalog_script_client/**"
+        "noneyet"
       ],
       // sys_client_scripts will have to notate function definitions for
       // onLoad, onCellEditr, onChange, onSubmit as 
@@ -107,13 +97,6 @@
         "g_list": "readonly",
         "g_user": "readonly"
       },
-      "rules": {
-        // This is to facilitate implementing onX methods that you must implement
-        // and that are called by the platform.
-        // With this set to either warn or error, developers should annotate these
-        // function definitions with an eslint-disable* comment.
-        "no-unused-vars": "warn"
-      },
       "env": {
         "browser": true,
         "es2021": true
@@ -124,7 +107,7 @@
     { // MID scripts
       // I think MID runs Rhino.  Definitely don't have ES6 nor a browser environment.
       "files": [
-        "**/ecc_agent_script_include/**"
+        "noneyet"
       ],
       "plugins": [ "servicenow" ],
       "rules": {
@@ -143,66 +126,65 @@
     // server-side and client-side scripting.  Handle with an .eslintrc.json file in that dir.
   ],
   "rules": {
-    // Integrator TODO:  Consider raising most of the "warn"s to "error"s.
     "curly": "off",
     "quotes": "off",
     "no-undef": "error",
     "no-const-assign": "error",
 
-    "max-len": ["warn", { "code": 100, "ignoreUrls": true }],
-    "no-tabs": "warn",
-    "no-mixed-spaces-and-tabs": "warn",
-    "no-trailing-spaces": "warn",
+    "max-len": ["error", { "code": 100, "ignoreUrls": true }],
+    "no-tabs": "error",
+    "no-mixed-spaces-and-tabs": "error",
+    "no-trailing-spaces": "error",
 
     "servicenow/no-hardcoded-sysids": "error",
     "servicenow/dont-use-gr-as-variablename": "off",
-    "camelcase": "warn",
-    "eqeqeq": "warn",
-    "constructor-super": "warn",
-    "no-case-declarations": "warn",
-    "no-class-assign": "warn",
-    "no-compare-neg-zero": "warn",
-    "no-cond-assign": "warn",
-    "no-constant-condition": "warn",
-    "no-control-regex": "warn",
-    "no-debugger": "warn",
-    "no-delete-var": "warn",
+    "camelcase": "error",
+    "eqeqeq": "error",
+    "constructor-super": "error",
+    "no-case-declarations": "error",
+    "no-class-assign": "error",
+    "no-compare-neg-zero": "error",
+    "no-cond-assign": "error",
+    "no-constant-condition": "error",
+    "no-control-regex": "error",
+    "no-debugger": "error",
+    "no-delete-var": "error",
     "no-dupe-args": "error",
     "no-dupe-class-members": "error",
     "no-dupe-keys": "error",
-    "no-duplicate-case": "warn",
-    "no-empty-character-class": "warn",
-    "no-empty-pattern": "warn",
+    "no-duplicate-case": "error",
+    "no-empty-character-class": "error",
+    "no-empty-pattern": "error",
     "linebreak-style": "off",
-    "no-empty": [ "warn", { "allowEmptyCatch": true } ],
-    "no-ex-assign": "warn",
+    "no-empty": [ "error", { "allowEmptyCatch": true } ],
+    "no-ex-assign": "error",
     "no-extra-boolean-cast": "error",
     "no-extra-semi": "error",
-    "semi": "warn",
+    "semi": "error",
     "no-fallthrough": "warn",
-    "no-func-assign": "warn",
-    "no-global-assign": "warn",
-    "no-inner-declarations": "warn",
+    "no-func-assign": "error",
+    "no-global-assign": "error",
+    "no-inner-declarations": "error",
     "no-invalid-regexp": "error",
-    "no-irregular-whitespace": "warn",
-    "no-new-symbol": "warn",
-    "no-obj-calls": "warn",
-    "no-octal": "warn",
-    "no-redeclare": "warn",
-    "no-regex-spaces": "warn",
-    "no-self-assign": "warn",
-    "no-sparse-arrays": "warn",
-    "no-this-before-super": "warn",
-    "no-unexpected-multiline": "warn",
-    "no-unreachable": "warn",
-    "no-unsafe-finally": "warn",
-    "no-unsafe-negation": "warn",
+    "no-irregular-whitespace": "error",
+    "no-new-symbol": "error",
+    "no-obj-calls": "error",
+    "no-octal": "error",
+    "no-redeclare": "error",
+    "no-regex-spaces": "error",
+    "no-self-assign": "error",
+    "no-sparse-arrays": "error",
+    "no-this-before-super": "error",
+    "no-unexpected-multiline": "error",
+    "no-unreachable": "error",
+    "no-unsafe-finally": "error",
+    "no-unsafe-negation": "error",
     "no-unused-labels": "error",
     "no-unused-vars": "error",
     "no-useless-escape": "error",
-    "require-yield": "warn",
-    "use-isnan": "warn",
-    "valid-typeof": "warn",
-    "no-use-before-define": "warn"
+    "require-yield": "error",
+    "use-isnan": "error",
+    "valid-typeof": "error",
+    "no-use-before-define": "error"
   }
 }
