@@ -49,7 +49,7 @@ To start managing a new soure file with snUpload, it usually makes sense to
     ```
     snUpload -r path/to/script.js
     ```
-This will give you the code to start with.
+    This will give you the code to start with.
 1. Check the EOL style of the text file.  -r will give you whatever format the ServiceNow
    instance prefers.  Change the EOL style to what you want to work with (this will not change
    the EOL style on the SN instance).
