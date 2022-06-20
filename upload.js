@@ -22,7 +22,7 @@ Honored environmental variables.  * variables are required:
     SN_CF_COMMAND:      Comparison command template  (-e to display examples)
    *SN_DEVELOPER_INST:  Short (unqualified) ServiceNow instancename
     SN_HTTPS_PROXY:     HTTPS Proxy URL
-   *SN_RESTAPI_SCOPE:   Scope of the WS Op upload resource path after '/app/'
+   *SN_RESTAPI_SCOPE:   Scope of the WS Op upload resource path after '/api/'
     SN_RESTAPI_NAME:    Name of the WS upload definition name.  Defaults to 'sndev'.`).
   option("e", {
       describe: "display Environment settings for different comparators",
