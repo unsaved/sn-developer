@@ -45,8 +45,7 @@ To start managing a new soure file with snUpload, it usually makes sense to
 1. Make sure it's covered correctly by your .eslintrc.json file(s).
    Add to overrides/files lists or whatever is necessary.
 1. Add an entry to "upadatemap.txt"
-1. Assuming that you don't already have the starting script file, run
-```
+1. Assuming that you don't already have the starting script file, run ```
     snUpload -r path/to/script.js
 ```
 This will give you the code to start with.
