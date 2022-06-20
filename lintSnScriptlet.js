@@ -13,8 +13,10 @@ const yargs = require("yargs")(process.argv.slice(2)).
   strictOptions().
   usage(`SYNTAX: $0 [-cdHqv] [-- -eslint-switches] file/path.js     OR     $0 -h     OR
          $0 -s rc/directory
-  It is critically important to have ServiceNow-specific .eslintrc* file(s) set
-  up in the file/path.js directory and/or ancestor directories.`).
+It is critically important to have ServiceNow-specific .eslintrc* file(s) set
+up in the file/path.js directory and/or ancestor directories.
+Set env variable SN_FORCE_COLOR to true to force ESLint to output colorized
+text (some terminal or shell setups cause ESLint to default to no-color).`).
   option("v", {
       describe: "Verbose.  N.b. may display passwords!",
       type: "boolean",
@@ -29,7 +31,7 @@ const yargs = require("yargs")(process.argv.slice(2)).
   }).
   option("d", { describe: "Debug logging", type: "boolean", }).
   option("s", {
-      describe: "directory to write template '.eslintrc.json' sample file into",
+      describe: "directory to write template '.eslintrc.json' Sample file into",
       type: "string",
   }).
   option("q", {
@@ -66,6 +68,7 @@ conciseCatcher(async function() {
     if (!fs.existsSync(srcFilePath)) throw new AppErr(`'${srcFilePath}' does not exists`);
     let content;
     const eslintArgs = yargsDict._.slice();
+    if (process.env.SN_FORCE_COLOR) eslintArgs.splice(0, 0, "--color");
     if (yargsDict.c) {
         content = fs.readFileSync(srcFilePath, "utf8");
         eslintArgs.splice(0, 0,

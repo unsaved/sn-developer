@@ -1,1 +1,2 @@
-Working great AFAIK
+Test to see if it would be completely portable if I move the sample REST API service (and the
+HttpCodeError class) to a scoped app.
