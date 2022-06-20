@@ -23,9 +23,6 @@ To bundle with your own project, install locally:
     npm i @admc.com/sn-developer
 ```
 
-When you run snUpload and snVersions, they will tell you the environmental variables that you
-need to set.
-
 snUpload requires installation of a Scripted REST API to serve the upload requests.
 The 'resources/' directory for this package contains an Update Set export "sndev-US.xml"
 which contains a working sample scripted REST API 'sndev'.
@@ -36,12 +33,17 @@ consider editing the script to reject requests if the instance name isn't what y
 (There is a commented out test for instance of name "x").
 "resources/upload-wsop.js" contains the JavaScript code for the service.
 
+# Setup and Usage
+
+When you run snUpload and snVersions, they will tell you the environmental variables that you
+need to set.
+
 lintSnScriptlet and snUpload (unless you use -n switch to skip syntax/lint checking)
 require setup of ESLint RC files.
 You can use "lintSnScriptlet -s" to create a sample ".eslintrc.json" file that you should
 edit and adjust according to the comments in it.
 
-To start managing a new soure file with snUpload, it usually makes sense to
+To start managing a new source file with snUpload, it usually makes sense to
 1. Make sure it's covered correctly by your .eslintrc.json file(s).
    Add to overrides/files lists or whatever is necessary.
 1. Add an entry to "upadatemap.txt"
