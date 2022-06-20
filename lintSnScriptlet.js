@@ -23,7 +23,10 @@ const yargs = require("yargs")(process.argv.slice(2)).
       describe: "output HTML instead of plain text report",
       type: "boolean",
   }).
-  option("c", { describe: "allow Const statement", type: "boolean", }).
+  option("c", {
+      describe: "unchecked Const statements (can't check consts for Rhino execution)",
+      type: "boolean",
+  }).
   option("d", { describe: "Debug logging", type: "boolean", }).
   option("s", {
       describe: "directory to write template '.eslintrc.json' sample file into",
@@ -36,7 +39,7 @@ const yargs = require("yargs")(process.argv.slice(2)).
   alias("help", "h").
   version(getAppVersion(__dirname));
 const yargsDict = yargs.argv;
-const progName = yargsDict.$0.replace(/^.*[\\/]/, "");
+const progName = yargsDict.$0.replace(/^.*[\\/]/, "");  // eslint-disable-line no-unused-vars
 let targRcFile;
 
 if (!yargsDict.d) console.debug = () => {};
@@ -90,4 +93,7 @@ conciseCatcher(async function() {
         childProcess.stdin.write(content.replace(/(\s)const(\s)/g, "$1var$2"));
         childProcess.stdin.end();
     }
+    childProcess.on("exit", ()=> {
+        if (childProcess.exitCode !== 0) process.exit(childProcess.exitCode);
+    });
 }, 10)().catch(e0=>conciseErrorHandler(e0, 1));

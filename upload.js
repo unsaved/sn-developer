@@ -11,12 +11,13 @@ const UploadMap = require("./lib/UploadMap");
 const { format } = require("util");
 const checksum = require("checksum");
 const path = require("path");
+const child_process = require("child_process"); // eslint-disable-line camelcase
 
 // We keep a copy of the yargs instance so we can invoke methods on it like
 // .help().
 const yargs = require("yargs")(process.argv.slice(2)).
   strictOptions().
-  usage(`SYNTAX: $0 [-dqrv] [-p username] [-m POLL_MS] file.ext    OR   $0 -e|h|u
+  usage(`SYNTAX: $0 [-dnqrv] [-p username] [-m POLL_MS] file.ext    OR   $0 -e|h|u
 Honored environmental variables.  * variables are required:
     SN_CF_COMMAND:           Comparison command template  (-e to display examples)
    *SN_DEVELOPER_INST:       Short (unqualified) ServiceNow instancename
@@ -37,6 +38,7 @@ Honored environmental variables.  * variables are required:
       requiresArg: true,
       type: "number",
   }).
+  option("n", { describe: "No syntax/lint check", type: "boolean", }).
   option("p", {
       describe: ("Prompt for basic auth password for the specified user.  "
         + "(By default uses name and passsword from netrc file)."),
@@ -148,6 +150,25 @@ conciseCatcher(function(inFile) {
     function transfer() {
         let localFileText;
         if (!yargsDict.r) {
+            const lintSnArgs = [ path.join(__dirname, "lintSnScriptlet.js") ];
+            // TODO:  Developers may add their own fields, like my own u_text_file.content,
+            // which also allow fully support 'const'.  Think of some way to either auto-detect
+            // or allow end-user configuration.
+            switch (uploadEntry.table) {
+                case "sys_script_client":
+                case "catalog_script_client":
+                    break;
+                default:
+                    lintSnArgs.push('-c');
+            }
+            lintSnArgs.push(file);
+            try {
+                // eslint-disable-next-line camelcase
+                child_process.execFileSync(process.execPath, lintSnArgs, { stdio: "inherit" });
+            } catch (e9) {
+                throw new AppErr("Lint check failed");
+            }
+
             localFileText = fs.readFileSync(file, "utf8");
             if (lastChecksum) {
                 // Only and always runs when in monitor mode
@@ -158,6 +179,8 @@ conciseCatcher(function(inFile) {
             fileHasCRs = localFileText.includes("\r");
             if (!localFileText.includes("\r")) localFileText = localFileText.replace(/\n/g, "\r\n");
             if (localFileText.endsWith("\r\n")) localFileText = localFileText.slice(0, -2);
+
+
         }
 
         const url = `https://${instName}.service-now.com` + (yargsDict.r ?
@@ -253,7 +276,7 @@ async function responseHandler(response) {
     }
     fs.writeFileSync(prevRevFile, prevRevData + (fileHasCRs ? "\r\n" : "\n"));
     console.info("Executing: " + comparatorCmd, prevRevFile, path.normalize(file));
-    const pObj = require("child_process").spawnSync(
+    const pObj = child_process.spawnSync(  // eslint-disable-line camelcase
       format(comparatorCmd, prevRevFile, path.normalize(file)), {
         shell: true,
         stdio: ["ignore", "pipe", "pipe"],
