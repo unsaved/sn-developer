@@ -38,7 +38,7 @@ Honored environmental variables.  * variables are required:
       requiresArg: true,
       type: "number",
   }).
-  option("n", { describe: "No syntax/lint check", type: "boolean", }).
+  option("n", { describe: "No syntax/lint check for *.js file", type: "boolean", }).
   option("p", {
       describe: ("Prompt for basic auth password for the specified user.  "
         + "(By default uses name and passsword from netrc file)."),
@@ -150,7 +150,7 @@ conciseCatcher(function(inFile) {
     function transfer() {
         let localFileText;
         if (!yargsDict.r) {
-            if (!yargsDict.n) {
+            if (file.endsWith(".js") && !yargsDict.n) {
                 const lintSnArgs = [ path.join(__dirname, "lintSnScriptlet.js") ];
                 // TODO:  Developers may add their own fields, like my own u_text_file.content,
                 // which also allow fully support 'const'.  Think of some way to either auto-detect

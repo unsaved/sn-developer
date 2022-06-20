@@ -5,6 +5,8 @@
 # keyvalue may be special constant * or <, with meanings:
 #  * = same as datafile value (with directory path removed, if any),
 #  < = basename of datafile (i.e. without directory path and suffix).
+#  / = datafile with directory path but without suffix).
+#  # = datafile value exactly
 # We always write content records using DOS \r\n EOLs, but we correctly
 # handle either style of EOL for local data files and existing server values.
 

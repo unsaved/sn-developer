@@ -69,21 +69,17 @@ conciseCatcher(async function() {
     if (yargsDict.c) {
         content = fs.readFileSync(srcFilePath, "utf8");
         eslintArgs.splice(0, 0,
-            path.join(__dirname, "/node_modules/.bin/eslint"),
-            "--resolve-plugins-relative-to",
-            __dirname,
             "--stdin",
             "--stdin-filename",
             path.join(process.cwd(), srcFilePath),
         );
     } else {
-        eslintArgs.splice(0, 0,
-            path.join(__dirname, "/node_modules/.bin/eslint"),
-            "--resolve-plugins-relative-to",
-            __dirname,
-            srcFilePath,
-        );
+        eslintArgs.splice(0, 0, srcFilePath);
     }
+    eslintArgs.splice(0, 0,
+        path.join(__dirname, "/node_modules/eslint/bin/eslint.js"),
+        "--resolve-plugins-relative-to",
+        __dirname);
     if (yargsDict.H) eslintArgs.splice(1, 0, "-f", "html");
     console.debug('eslint invocation args', eslintArgs);
     const childProcess = require("child_process").spawn(process.execPath, eslintArgs, {
