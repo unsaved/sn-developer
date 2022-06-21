@@ -1,2 +1,1 @@
-Test to see if it would be completely portable if I move the sample REST API service (and the
-HttpCodeError class) to a scoped app.
+Convert the sample REST API service and HttpCodeError class to a scoped app.  Re-package.

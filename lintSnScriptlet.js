@@ -68,7 +68,7 @@ conciseCatcher(async function() {
     if (!fs.existsSync(srcFilePath)) throw new AppErr(`'${srcFilePath}' does not exists`);
     let content;
     const eslintArgs = yargsDict._.slice();
-    if (process.env.SN_FORCE_COLOR) eslintArgs.splice(0, 0, "--color");
+    if (process.env.SN_FORCE_COLOR) eslintArgs.unshift("--color");
     if (yargsDict.c) {
         content = fs.readFileSync(srcFilePath, "utf8");
         eslintArgs.splice(0, 0,
@@ -77,7 +77,7 @@ conciseCatcher(async function() {
             path.join(process.cwd(), srcFilePath),
         );
     } else {
-        eslintArgs.splice(0, 0, srcFilePath);
+        eslintArgs.unshift(0, 0, srcFilePath);
     }
     eslintArgs.splice(0, 0,
         path.join(__dirname, "/node_modules/eslint/bin/eslint.js"),

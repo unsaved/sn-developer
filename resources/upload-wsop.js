@@ -45,12 +45,8 @@ try {
     checkGA.addAggregate("COUNT");
     checkGA._query();
     if (!checkGA._next()) throw new Error(fName + " internal assertion failed on _next");
-    gs.logWarning("3: " + checkGA.getRowCount(), fName);
-gs.logWarning("2: " + checkGA.getAggregate, fName);
-gs.logWarning("A: " + checkGA.getAggregate("COUNT"), fName);
     if (parseInt(checkGA.getAggregate("COUNT")) < 1)
         throw new HttpCodeError(404, "No such field: " + table + "." + field);
-gs.logWarning("B: " + parseInt(checkGA.getAggregate("COUNT")), fName);
 
     /* With GlideRecord extensions:
     if (GlideRecord.get1MultiCrit("sys_dictionary", [
