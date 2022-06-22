@@ -207,6 +207,13 @@ conciseCatcher(function(inFile) {
                 query: `${uploadEntry.keyField}=${uploadEntry.keyValue}`
             },
         };
+        if (uploadEntry.appScope) {
+            if (yargsDict.r)
+                opts.params.sysparam_query =
+                  `${opts.params.sysparam_query}^sys_scope=${uploadEntry.appScope}`;
+            else
+                opts.params.appscope = uploadEntry.appScope;
+        }
         if ("SN_HTTPS_PROXY" in process.env) {
             const ex = /^([^:]+):[/]+([^:]+)(?::(\d+))?$/.exec(process.env.SN_HTTPS_PROXY);
             if (!ex)
@@ -226,8 +233,8 @@ conciseCatcher(function(inFile) {
         if (!yargsDict.r) opts.data = { "content": localFileText };
         axios({...opts, ...authOpts}).
           then(conciseCatcher(responseHandler, 1),  // eslint-disable-line no-use-before-define
-          e=>console.error(
-            "Caught failure.  Consider checking %s's syslog for messages written by %s.\n%s%s",
+          e=>console.error("Caught failure.  Consider running with -d switch (debug) "
+            + "and checking %s's syslog for messages written by %s.\n%s%s",
             instName, authOpts.auth.username, e.message,
             (e.response !== undefined && e.response.data !== undefined
             && e.response.data.error !== undefined

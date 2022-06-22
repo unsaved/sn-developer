@@ -1,5 +1,1 @@
-Convert the sample REST API service and HttpCodeError class to a scoped app.  Re-package.
-
-Add optional 6th field to uploadmap.txt file, specifying sys_scope
-
-Enhance the wsop script to support sys_scope.
+All caught up

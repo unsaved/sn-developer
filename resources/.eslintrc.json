@@ -80,7 +80,8 @@
         "GlideLocale": "readonly",
         "XMLNodeIterator": "readonly",
         "GlideEmailAction": "readonly",
-        "GlideChoiceList": "readonly"
+        "GlideChoiceList": "readonly",
+        "JSUtil": "readonly"
       }
     },
     { // Client scripts

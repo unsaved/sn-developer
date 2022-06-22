@@ -23,11 +23,14 @@ To bundle with your own project, install locally:
     npm i @admc.com/sn-developer
 ```
 
+##  REST Service
 snUpload requires installation of a Scripted REST API to serve the upload requests.
 The 'resources/' directory for this package contains an Update Set export
 "sn-developer_service-US.xml" which contains a working sample scripted REST API, 'sndev'.
 This provided service requires membership in role 'sndev' if you don't have admin,
 so add non-admin developer accounts to this role.
+This is implemented in global scope because a major purpose is to update records in multiple
+other scopes.
 In most cases you should not be facilitating script uploads to a Production environment, so
 consider editing the script to reject requests if the instance name isn't what you want.
 (There is a commented-out test for instance of name "x").
@@ -35,8 +38,10 @@ consider editing the script to reject requests if the instance name isn't what y
 
 # Setup and Usage
 
-When you run snUpload and snVersions, they will tell you the environmental variables that you
+Run snUpload and snVersions with '-h' switch to learn about environmental variables that you
 need to set.
+You will probably want to set in a UNIX ~/.profile (don't forget to export) or via Windows
+sysdm.cpl or a CMD script.
 
 lintSnScriptlet and snUpload (unless you use -n switch to skip syntax/lint checking)
 require setup of ESLint RC files.
@@ -46,8 +51,8 @@ edit and adjust according to the comments in it.
 To start managing a new source file with snUpload, it usually makes sense to
 1. Make sure it's covered correctly by your .eslintrc.json file(s).
    Add to overrides/files lists or whatever is necessary.
-1. Add an entry to "upadatemap.txt"
-1. Assuming that you don't already have the starting script file, run
+1. Add an entry to "updatemap.txt", unless already covered by a regex entry
+1. Assuming that you don't already have the starting script file locally, run
     ```
     snUpload -r path/to/script.js
     ```

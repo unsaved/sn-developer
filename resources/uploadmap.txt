@@ -1,22 +1,33 @@
 # Config file for 'snUpload' that maps files to target SN records and field.
 # Comment lines must begin with #
 # Empty lines ignored
-# Limitations:  # only honored as very first char on line,
-# keyvalue may be special constant * or <, with meanings:
+# Limitations:  # only honored as very first char on line.
+# localFileSpec values are for matching against the user-specified upload file path.
+#    Since upload calls use (local) relative paths, the localFileSpecs are either
+#    local relative file paths; or a regular expression matching the same.
+#    Regular expression localFileSpecs are coded like '/expr/' or '/expr/i'.
+#    No literal space or tab characters allowed inside /regexp/s.
+# keyvalue values may be special constant * or <, with meanings:
 #  * = same as datafile value (with directory path removed, if any),
 #  < = basename of datafile (i.e. without directory path and suffix).
 #  / = datafile with directory path but without suffix).
 #  # = datafile value exactly
-# We always write content records using DOS \r\n EOLs, but we correctly
-# handle either style of EOL for local data files and existing server values.
-
-# As an example of special contants, if we had keyvalue of <
+# As an example of special keyvalue constants, if we had keyvalue of <
 # for the subdir/gplay.txt line below, that would attempt to upload to
 # a record with key value of "gplay".
 
-# Specifications lines must have 4 tokens in this order:
-#   datafile table datafield keyfield kevalue
+# If more than one map entry matches the specified path, then the first
+# qualifying record will be used.
 
-#datafile        table        datafield  keyfield  kevalue
+# In nearly all cases, you can easily narrow to your single target record by
+# using 'keyfield' of the table's display field or "name", with sys_scope
+# specified where there are alternate records for different sys_scopes.
+# You could always set 'keyfield' to "sys_id".
+
+# Specifications lines must have 5 or 6 tokens in this order:
+#   localFileSpec table datafield keyfield kevalue [sys_scope]
+
+#localFileSpec   table        datafield  keyfield  keyvalue     sys_scope
 play.js          u_text_file  u_content  u_path    *
 subdir/gplay.txt u_text_file  u_content  u_path    global-play.txt
+/.+[.]js$/       sys_script_include script u_path  <            global

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?><unload unload_date="2022-06-20 16:33:24">
+<?xml version="1.0" encoding="UTF-8"?><unload unload_date="2022-06-22 20:20:00">
 <sys_remote_update_set action="INSERT_OR_UPDATE">
 <application display_value="Global">global</application>
 <application_name>Global</application_name>
@@ -20,41 +20,15 @@
 <summary/>
 <sys_class_name>sys_remote_update_set</sys_class_name>
 <sys_created_by>blaine</sys_created_by>
-<sys_created_on>2022-06-20 16:33:24</sys_created_on>
-<sys_id>b0a547002f9cd110cd01debcf699b68b</sys_id>
+<sys_created_on>2022-06-22 20:20:00</sys_created_on>
+<sys_id>5bac4e742f509510cd01debcf699b64f</sys_id>
 <sys_mod_count>0</sys_mod_count>
 <sys_updated_by>blaine</sys_updated_by>
-<sys_updated_on>2022-06-20 16:33:24</sys_updated_on>
+<sys_updated_on>2022-06-22 20:20:00</sys_updated_on>
 <update_set display_value=""/>
 <update_source display_value=""/>
 <updated/>
 </sys_remote_update_set>
-<sys_update_xml action="INSERT_OR_UPDATE">
-<action>INSERT_OR_UPDATE</action>
-<application display_value="Global">global</application>
-<category>customer</category>
-<comments/>
-<name>sys_user_role_9736e2442f1cd110cd01debcf699b6b8</name>
-<payload><![CDATA[<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_user_role"><sys_user_role action="INSERT_OR_UPDATE"><assignable_by/><can_delegate>true</can_delegate><description>User of sn-developer utility package</description><elevated_privilege>false</elevated_privilege><grantable>true</grantable><includes_roles/><name>sndev</name><requires_subscription>-1</requires_subscription><scoped_admin>false</scoped_admin><suffix/><sys_class_name>sys_user_role</sys_class_name><sys_created_by>blaine</sys_created_by><sys_created_on>2022-06-20 14:17:23</sys_created_on><sys_id>9736e2442f1cd110cd01debcf699b6b8</sys_id><sys_mod_count>0</sys_mod_count><sys_name>sndev</sys_name><sys_package display_value="Global" source="global">global</sys_package><sys_policy/><sys_scope display_value="Global">global</sys_scope><sys_update_name>sys_user_role_9736e2442f1cd110cd01debcf699b6b8</sys_update_name><sys_updated_by>blaine</sys_updated_by><sys_updated_on>2022-06-20 14:17:23</sys_updated_on></sys_user_role></record_update>]]></payload>
-<payload_hash>2120096774</payload_hash>
-<remote_update_set display_value="sn-developer_service">b0a547002f9cd110cd01debcf699b68b</remote_update_set>
-<replace_on_upgrade>false</replace_on_upgrade>
-<sys_created_by>blaine</sys_created_by>
-<sys_created_on>2022-06-20 16:33:24</sys_created_on>
-<sys_id>3ca547002f9cd110cd01debcf699b68b</sys_id>
-<sys_mod_count>0</sys_mod_count>
-<sys_recorded_at>1818179aa800000001</sys_recorded_at>
-<sys_updated_by>blaine</sys_updated_by>
-<sys_updated_on>2022-06-20 16:33:24</sys_updated_on>
-<table/>
-<target_name>sndev</target_name>
-<type>Role</type>
-<update_domain>global</update_domain>
-<update_guid>0486ea44171cd110141fa2e5435ba167</update_guid>
-<update_guid_history>0486ea44171cd110141fa2e5435ba167:2120096774</update_guid_history>
-<update_set display_value=""/>
-<view/>
-</sys_update_xml>
 <sys_update_xml action="INSERT_OR_UPDATE">
 <action>INSERT_OR_UPDATE</action>
 <application display_value="Global">global</application>
@@ -80,23 +54,23 @@
         gs.logError(this.message, srcLocation === undefined ? "HttpCodeError" : srcLocation);
     };
 }
-HttpCodeError.prototype = new Error;]]&gt;&lt;/script&gt;&lt;sys_class_name&gt;sys_script_include&lt;/sys_class_name&gt;&lt;sys_created_by&gt;blaine&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2022-06-01 14:15:00&lt;/sys_created_on&gt;&lt;sys_id&gt;847e68822f334910cd01debcf699b627&lt;/sys_id&gt;&lt;sys_mod_count&gt;5&lt;/sys_mod_count&gt;&lt;sys_name&gt;HttpCodeError&lt;/sys_name&gt;&lt;sys_package display_value="Global" source="global"&gt;global&lt;/sys_package&gt;&lt;sys_policy/&gt;&lt;sys_scope display_value="Global"&gt;global&lt;/sys_scope&gt;&lt;sys_update_name&gt;sys_script_include_847e68822f334910cd01debcf699b627&lt;/sys_update_name&gt;&lt;sys_updated_by&gt;blaine&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2022-06-20 16:32:56&lt;/sys_updated_on&gt;&lt;/sys_script_include&gt;&lt;/record_update&gt;</payload>
+HttpCodeError.prototype = new Error;]]&gt;&lt;/script&gt;&lt;sys_class_name&gt;sys_script_include&lt;/sys_class_name&gt;&lt;sys_created_by&gt;blaine&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2022-06-01 14:15:00&lt;/sys_created_on&gt;&lt;sys_id&gt;847e68822f334910cd01debcf699b627&lt;/sys_id&gt;&lt;sys_mod_count&gt;6&lt;/sys_mod_count&gt;&lt;sys_name&gt;HttpCodeError&lt;/sys_name&gt;&lt;sys_package display_value="Global" source="global"&gt;global&lt;/sys_package&gt;&lt;sys_policy/&gt;&lt;sys_scope display_value="Global"&gt;global&lt;/sys_scope&gt;&lt;sys_update_name&gt;sys_script_include_847e68822f334910cd01debcf699b627&lt;/sys_update_name&gt;&lt;sys_updated_by&gt;blaine&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2022-06-22 19:55:20&lt;/sys_updated_on&gt;&lt;/sys_script_include&gt;&lt;/record_update&gt;</payload>
 <payload_hash>-771107762</payload_hash>
-<remote_update_set display_value="sn-developer_service">b0a547002f9cd110cd01debcf699b68b</remote_update_set>
+<remote_update_set display_value="sn-developer_service">5bac4e742f509510cd01debcf699b64f</remote_update_set>
 <replace_on_upgrade>false</replace_on_upgrade>
 <sys_created_by>blaine</sys_created_by>
-<sys_created_on>2022-06-20 16:33:24</sys_created_on>
-<sys_id>74a547002f9cd110cd01debcf699b68b</sys_id>
+<sys_created_on>2022-06-22 20:20:00</sys_created_on>
+<sys_id>1fac4e742f509510cd01debcf699b64f</sys_id>
 <sys_mod_count>0</sys_mod_count>
-<sys_recorded_at>18181f5c4530000001</sys_recorded_at>
+<sys_recorded_at>1818cfbc9ae0000001</sys_recorded_at>
 <sys_updated_by>blaine</sys_updated_by>
-<sys_updated_on>2022-06-20 16:33:24</sys_updated_on>
+<sys_updated_on>2022-06-22 20:20:00</sys_updated_on>
 <table/>
 <target_name>HttpCodeError</target_name>
 <type>Script Include</type>
 <update_domain>global</update_domain>
-<update_guid>398587001f9cd110cc7731c060486f54</update_guid>
-<update_guid_history>398587001f9cd110cc7731c060486f54:-771107762,4f658fccdf5cd1100b1b09d97a442479:-1493301574,44450300919cd11066c8948f225d67a8:-771107762,e7692648791cd110f7133fa4949d00e8:-1065973810,dd2cf046ee33491087b51f6a5a7e9be9:1944941094,c8cf60425f3349100d2af7c6f0321f1d:560363054</update_guid_history>
+<update_guid>46078ab0e2509510c472ec5b592da0ea</update_guid>
+<update_guid_history>46078ab0e2509510c472ec5b592da0ea:-771107762,398587001f9cd110cc7731c060486f54:-771107762,4f658fccdf5cd1100b1b09d97a442479:-1493301574,44450300919cd11066c8948f225d67a8:-771107762,e7692648791cd110f7133fa4949d00e8:-1065973810,dd2cf046ee33491087b51f6a5a7e9be9:1944941094,c8cf60425f3349100d2af7c6f0321f1d:560363054</update_guid_history>
 <update_set display_value=""/>
 <view/>
 </sys_update_xml>
@@ -110,8 +84,7 @@ HttpCodeError.prototype = new Error;]]&gt;&lt;/script&gt;&lt;sys_class_name&gt;s
 
 /* global response, HttpCodeError, request, sn_ws_err */
 
-const fName = "sndev/upload:rest";
-//const HttpCodeError = x_fenma_util.HttpCodeError;
+const fName = "admc/sndev/upload:rest";
 var eMsg, dict, oldContent;
 //const callerId = gs.getUserID();
 
@@ -131,7 +104,9 @@ try {
     if (!request.queryParams.query)
         throw new HttpCodeError(400, "Request does not set required http param 'query'");
     const query = String(request.queryParams.query);
-    /*
+    var appScope;
+    if (request.queryParams.appscope) appScope = String(request.queryParams.appscope);
+    /*  If you want to impersonate, perhaps to switch to a SSO account:
     const targetUid = GlideRecord.get1("sys_user", ["sys_id", callerId]).
       getValue("u_profile_owner");
     if (!targetUid)
@@ -142,54 +117,35 @@ try {
     new GlideImpersonate().impersonate(targetUserGR.getValue("sys_id"));
     if (gs.getUserName() === "guest") throw new HttpCodeError(403, "Impersonation failed");
     gs.log("I became " + gs.getUserName(), fName); */
-    /* SO MUCH EASIER With AdmcUtil utilities:
-    if (AdmcUtil.isTable(table))
-    and GlideAggregate.matchCount("sys_dictionary", [["name", table], ["element", field]]) */
-    if (!new GlideRecord("sys_db_object").get("name", table))
-        throw new HttpCodeError(404, "Not a table: " + table);
-    const checkGA = new GlideAggregate("sys_dictionary");
-    checkGA.addQuery("name", table);
-    checkGA.addQuery("element", field);
-    checkGA.addAggregate("COUNT");
-    checkGA._query();
-    if (!checkGA._next()) throw new Error(fName + " internal assertion failed on _next");
-    gs.logWarning("3: " + checkGA.getRowCount(), fName);
-gs.logWarning("2: " + checkGA.getAggregate, fName);
-gs.logWarning("A: " + checkGA.getAggregate("COUNT"), fName);
-    if (parseInt(checkGA.getAggregate("COUNT")) &lt; 1)
-        throw new HttpCodeError(404, "No such field: " + table + "." + field);
-gs.logWarning("B: " + parseInt(checkGA.getAggregate("COUNT")), fName);
-
-    /* With GlideRecord extensions:
-    if (GlideRecord.get1MultiCrit("sys_dictionary", [
-        ["name", table],
-        ["element", field],
-    ], true) === null)
-        throw new HttpCodeError(404, "Not a field: " + table + "." + field);
-    const r = GlideRecord.get1(table, query, true);
-    if (r === null)
-        throw new HttpCodeError(404, "Query does not match 1 record: " + query); */
-
-    //OOTB GlideRecord:
     const r = new GlideRecord(table);
+    if (!r.isValid()) throw new HttpCodeError(404, "Not a table: " + table);
+    if (!r.isValidField(field))
+        throw new HttpCodeError(404, "No such field: " + table + "." + field);
+    if (appScope &amp;&amp;!r.isValidField("sys_scope"))
+        throw new HttpCodeError(404, "No such field: " + table + ".sys_scope");
+
+    r.setLimit(2);
     r.addEncodedQuery(query);
+    if (appScope) r.addQuery("sys_scope.scope", appScope);
     r._query();
+    if (r.getRowCount() &gt; 1)
+        throw new HttpCodeError(404, "Query matches multiple records: "
+          + table + " with " + r.getEncodedQuery());
     if (r.getRowCount() !== 1)
-        throw new HttpCodeError(404, "Query does not match 1 record: " + query);
+        throw new HttpCodeError(404, "Query matches no records: "
+          + table + " with " + r.getEncodedQuery());
     if (!r._next())
         throw new HttpCodeError(500, "Internal failure.  GR _next failed after rowCount 1");
 
     const ds = request.body.dataString;
     if (typeof ds !== "string")
-        throw new HttpCodeError(400, "PATCH body not a JSON string but a "
-          + typeof(ds));
+        throw new HttpCodeError(400, "PATCH body not a JSON string but a " + typeof(ds));
     try {
         dict = JSON.parse(ds);
     } catch(e0) {
         throw new HttpCodeError(400, "Body contains invalid JSON: " + e0);
     }
-    /* Better test if have AdmcUtility utilities:
-    if (!AdmcUtil.isPlainObject(dict)) */
+    //if (!AdmcUtil.isPlainObject(dict))  would be a much better test
     if (typeof(dict) !== "object")
         throw new HttpCodeError(400, "Decoded body is not a plain object but " + typeof(dict));
     if (typeof dict.content !== "string")  // to upload null, client needs to send "".
@@ -198,8 +154,8 @@ gs.logWarning("B: " + parseInt(checkGA.getAggregate("COUNT")), fName);
     oldContent = r.getValue(field);
     if (oldContent === null) oldContent = "";
     // eslint-disable-next-line  servicenow/minimize-gs-log-print
-    gs.log("OLD content length: " + oldContent.length
-      + "\nNEW content length: " + dict.content.length, fName);
+    gs.log(table + "." + field + " content length: " + oldContent.length
+      + " =&gt; " + dict.content.length, fName);
     r.setValue(field, dict.content);
     if (!r.changes()) throw new HttpCodeError(409, "Provided content is not a change");
     if (!r.update()) throw new HttpCodeError(500, "Update failed");
@@ -229,23 +185,23 @@ gs.logWarning("B: " + parseInt(checkGA.getAggregate("COUNT")), fName);
     return snErr;
 }
 
-})();]]&gt;&lt;/operation_script&gt;&lt;operation_uri&gt;/api/615244/sndev/{table}/{field}&lt;/operation_uri&gt;&lt;produces&gt;text/plain&lt;/produces&gt;&lt;produces_customized&gt;true&lt;/produces_customized&gt;&lt;relative_path&gt;/{table}/{field}&lt;/relative_path&gt;&lt;request_example/&gt;&lt;requires_acl_authorization&gt;false&lt;/requires_acl_authorization&gt;&lt;requires_authentication&gt;true&lt;/requires_authentication&gt;&lt;requires_snc_internal_role&gt;true&lt;/requires_snc_internal_role&gt;&lt;short_description/&gt;&lt;sys_class_name&gt;sys_ws_operation&lt;/sys_class_name&gt;&lt;sys_created_by&gt;blaine&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2022-06-01 13:59:30&lt;/sys_created_on&gt;&lt;sys_id&gt;1cdb28022f334910cd01debcf699b626&lt;/sys_id&gt;&lt;sys_mod_count&gt;19&lt;/sys_mod_count&gt;&lt;sys_name&gt;update&lt;/sys_name&gt;&lt;sys_package display_value="Global" source="global"&gt;global&lt;/sys_package&gt;&lt;sys_policy/&gt;&lt;sys_scope display_value="Global"&gt;global&lt;/sys_scope&gt;&lt;sys_update_name&gt;sys_ws_operation_1cdb28022f334910cd01debcf699b626&lt;/sys_update_name&gt;&lt;sys_updated_by&gt;blaine&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2022-06-20 16:06:52&lt;/sys_updated_on&gt;&lt;web_service_definition display_value="sndev"&gt;97c2ac4a2fff0910cd01debcf699b660&lt;/web_service_definition&gt;&lt;web_service_version/&gt;&lt;/sys_ws_operation&gt;&lt;/record_update&gt;</payload>
-<payload_hash>-983503609</payload_hash>
-<remote_update_set display_value="sn-developer_service">b0a547002f9cd110cd01debcf699b68b</remote_update_set>
+})();]]&gt;&lt;/operation_script&gt;&lt;operation_uri&gt;/api/admc/sndev/{table}/{field}&lt;/operation_uri&gt;&lt;produces&gt;text/plain&lt;/produces&gt;&lt;produces_customized&gt;true&lt;/produces_customized&gt;&lt;relative_path&gt;/{table}/{field}&lt;/relative_path&gt;&lt;request_example/&gt;&lt;requires_acl_authorization&gt;false&lt;/requires_acl_authorization&gt;&lt;requires_authentication&gt;true&lt;/requires_authentication&gt;&lt;requires_snc_internal_role&gt;true&lt;/requires_snc_internal_role&gt;&lt;short_description/&gt;&lt;sys_class_name&gt;sys_ws_operation&lt;/sys_class_name&gt;&lt;sys_created_by&gt;blaine&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2022-06-01 13:59:30&lt;/sys_created_on&gt;&lt;sys_id&gt;1cdb28022f334910cd01debcf699b626&lt;/sys_id&gt;&lt;sys_mod_count&gt;48&lt;/sys_mod_count&gt;&lt;sys_name&gt;update&lt;/sys_name&gt;&lt;sys_package display_value="Global" source="global"&gt;global&lt;/sys_package&gt;&lt;sys_policy/&gt;&lt;sys_scope display_value="Global"&gt;global&lt;/sys_scope&gt;&lt;sys_update_name&gt;sys_ws_operation_1cdb28022f334910cd01debcf699b626&lt;/sys_update_name&gt;&lt;sys_updated_by&gt;blaine&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2022-06-22 20:17:48&lt;/sys_updated_on&gt;&lt;web_service_definition display_value="sndev"&gt;97c2ac4a2fff0910cd01debcf699b660&lt;/web_service_definition&gt;&lt;web_service_version/&gt;&lt;/sys_ws_operation&gt;&lt;/record_update&gt;</payload>
+<payload_hash>-1523665630</payload_hash>
+<remote_update_set display_value="sn-developer_service">5bac4e742f509510cd01debcf699b64f</remote_update_set>
 <replace_on_upgrade>false</replace_on_upgrade>
 <sys_created_by>blaine</sys_created_by>
-<sys_created_on>2022-06-20 16:33:24</sys_created_on>
-<sys_id>b0a547002f9cd110cd01debcf699b68c</sys_id>
+<sys_created_on>2022-06-22 20:20:00</sys_created_on>
+<sys_id>57ac4e742f509510cd01debcf699b650</sys_id>
 <sys_mod_count>0</sys_mod_count>
-<sys_recorded_at>18181dde5de0000001</sys_recorded_at>
+<sys_recorded_at>1818d105be10000001</sys_recorded_at>
 <sys_updated_by>blaine</sys_updated_by>
-<sys_updated_on>2022-06-20 16:33:24</sys_updated_on>
+<sys_updated_on>2022-06-22 20:20:00</sys_updated_on>
 <table/>
 <target_name>update</target_name>
 <type>Scripted REST Resource</type>
 <update_domain>global</update_domain>
-<update_guid>3f8f3ac8ce5cd11004aec65bad41db8c</update_guid>
-<update_guid_history>3f8f3ac8ce5cd11004aec65bad41db8c:-983503609,781b32441a5cd110aa42899317d8aecb:-2006921439,5d083244975cd110fad037da046bdc0b:939148936,a6973244ec5cd110e7f0348b2af85108:2072189826,fb677ac0465cd1102a362f704cdd38b7:908122578,6417f204fa5cd11030aeebb3ce8a5748:-1937890092,3796fac0e65cd110ffbbab4de21ba59d:20662745,e7563204b35cd110ba24eedb29d02f00:-1713449191,4ff5bac0f95cd1109f6db2f6dfd5904f:-1229258679,a625fe80275cd110a9db14d80f0c2d7c:-194324506,94157e40575cd11046b5e49aec6aaf45:2006664270,2473be081a1cd110727fc9e61e7d454f:112216940,7470b2cc891cd11021bb44e91019c7e6:1870099730,9cfb6ac8761cd110cda91e79517ca052:863237962,ff4c514631b3491029bac997ad6cbc6d:-389306331,9adbddc6a6734910f3c2219d7725ed89:-1049856193,c1abd9c60c734910b59d0a447adbca66:-1492280584,cb7cb04e86334910b29e3cdd8525ac72:1726762831,724e204209334910f35c4c6836e76452:354409832,013c2c02ba3349107825662638d68186:-1821950439</update_guid_history>
+<update_guid>132cc2b4305095108dfdb3ad8fcc907f</update_guid>
+<update_guid_history>132cc2b4305095108dfdb3ad8fcc907f:-1523665630,446bc2b408509510b31f33f35fcafe77:1277269180,eb0d95fca09c5510da297ffeab419bd1:-1741566357,d0bc9dbcd09c5510ae280b4e0eaf0fb6:-1617048376,27dbd5bcc09c551086d9df966d2f61a6:-715738739,8d9619b85e9c551004bae69d732e0c71:1143574197,8286d1b8da9c55108267f2cc42407c59:-242075627,53f55d38559c5510b28cd91b341931b4:-1094399782,8fe551b8a79c551020bd033e2326f0ac:-1787700486,0df2d9f4069c55104f877a0fb6158d36:-323405800,97e299f4349c55100e8f2b74f86f42cf:1138370424,1a329db4729c55105cd73230ca45facc:1956957027,a0321db49f9c55106975db60a770c7bd:-200785725,2c029db41a9c55106c17113af2ba18c4:-1051010968,cff159b4e49c5510fad4021246a535ea:-345038712,5ab159b46c9c551041550dcb3446e8e6:100499584,50b19974629c5510b84f456a8aafccee:1199470880,3831dd74429c5510e47908ac7ddd77b8:-121387328,bb115d74359c5510f36fce1f223c7fec:1556616802,63bf0174b59c55104aef4ffb53815e1f:207906796,65bf8134e59c55104cffafd1b559143c:2140120076,184f0534729c5510ee293a5a9ad7c0f5:-973288254,483f4934b09c5510cb5e02f13a580311:1381333886,dfde0534bb9c5510dfdc8677ad9460ee:-1357547531,59de89f0a69c551087194e3a31903191:-1289511751,a84e89f0059c5510d900ae195436c509:-1628861910,552e89f0d79c55109ebd2896127b0505:-1810651747,1e0e49f0559c551012432a895f991aff:-177592204,b6dd8db0f89c5510a429b53433b4c88f:1647268600,3f8f3ac8ce5cd11004aec65bad41db8c:-983503609,781b32441a5cd110aa42899317d8aecb:-2006921439,5d083244975cd110fad037da046bdc0b:939148936,a6973244ec5cd110e7f0348b2af85108:2072189826,fb677ac0465cd1102a362f704cdd38b7:908122578,6417f204fa5cd11030aeebb3ce8a5748:-1937890092,3796fac0e65cd110ffbbab4de21ba59d:20662745,e7563204b35cd110ba24eedb29d02f00:-1713449191,4ff5bac0f95cd1109f6db2f6dfd5904f:-1229258679,a625fe80275cd110a9db14d80f0c2d7c:-194324506,94157e40575cd11046b5e49aec6aaf45:2006664270,2473be081a1cd110727fc9e61e7d454f:112216940,7470b2cc891cd11021bb44e91019c7e6:1870099730,9cfb6ac8761cd110cda91e79517ca052:863237962,ff4c514631b3491029bac997ad6cbc6d:-389306331,9adbddc6a6734910f3c2219d7725ed89:-1049856193,c1abd9c60c734910b59d0a447adbca66:-1492280584,cb7cb04e86334910b29e3cdd8525ac72:1726762831,724e204209334910f35c4c6836e76452:354409832,013c2c02ba3349107825662638d68186:-1821950439</update_guid_history>
 <update_set display_value=""/>
 <view/>
 </sys_update_xml>
@@ -255,23 +211,49 @@ gs.logWarning("B: " + parseInt(checkGA.getAggregate("COUNT")), fName);
 <category>customer</category>
 <comments/>
 <name>sys_ws_definition_97c2ac4a2fff0910cd01debcf699b660</name>
-<payload><![CDATA[<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ws_definition"><sys_ws_definition action="INSERT_OR_UPDATE"><active>true</active><base_uri>/api/615244/sndev</base_uri><consumes>application/json,application/xml,text/xml</consumes><consumes_customized>false</consumes_customized><default_version>No active default version</default_version><doc_link/><enforce_acl>cf9d01d3e73003009d6247e603f6a990</enforce_acl><is_versioned>false</is_versioned><name>sndev</name><namespace>615244</namespace><produces>application/json,application/xml,text/xml</produces><produces_customized>false</produces_customized><service_id>sndev</service_id><short_description/><sys_class_name>sys_ws_definition</sys_class_name><sys_created_by>blaine</sys_created_by><sys_created_on>2022-06-01 13:56:50</sys_created_on><sys_id>97c2ac4a2fff0910cd01debcf699b660</sys_id><sys_mod_count>1</sys_mod_count><sys_name>sndev</sys_name><sys_package display_value="Global" source="global">global</sys_package><sys_policy/><sys_scope display_value="Global">global</sys_scope><sys_update_name>sys_ws_definition_97c2ac4a2fff0910cd01debcf699b660</sys_update_name><sys_updated_by>blaine</sys_updated_by><sys_updated_on>2022-06-20 14:19:12</sys_updated_on></sys_ws_definition></record_update>]]></payload>
-<payload_hash>-615053362</payload_hash>
-<remote_update_set display_value="sn-developer_service">b0a547002f9cd110cd01debcf699b68b</remote_update_set>
+<payload><![CDATA[<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ws_definition"><sys_ws_definition action="INSERT_OR_UPDATE"><active>true</active><base_uri>/api/admc/sndev</base_uri><consumes>application/json,application/xml,text/xml</consumes><consumes_customized>false</consumes_customized><default_version>No active default version</default_version><doc_link/><enforce_acl>cf9d01d3e73003009d6247e603f6a990</enforce_acl><is_versioned>false</is_versioned><name>sndev</name><namespace>admc</namespace><produces>application/json,application/xml,text/xml</produces><produces_customized>false</produces_customized><service_id>sndev</service_id><short_description/><sys_class_name>sys_ws_definition</sys_class_name><sys_created_by>blaine</sys_created_by><sys_created_on>2022-06-01 13:56:50</sys_created_on><sys_id>97c2ac4a2fff0910cd01debcf699b660</sys_id><sys_mod_count>2</sys_mod_count><sys_name>sndev</sys_name><sys_package display_value="Global" source="global">global</sys_package><sys_policy/><sys_scope display_value="Global">global</sys_scope><sys_update_name>sys_ws_definition_97c2ac4a2fff0910cd01debcf699b660</sys_update_name><sys_updated_by>blaine</sys_updated_by><sys_updated_on>2022-06-22 20:18:11</sys_updated_on></sys_ws_definition></record_update>]]></payload>
+<payload_hash>-1154695220</payload_hash>
+<remote_update_set display_value="sn-developer_service">5bac4e742f509510cd01debcf699b64f</remote_update_set>
 <replace_on_upgrade>false</replace_on_upgrade>
 <sys_created_by>blaine</sys_created_by>
-<sys_created_on>2022-06-20 16:33:24</sys_created_on>
-<sys_id>fca547002f9cd110cd01debcf699b68b</sys_id>
+<sys_created_on>2022-06-22 20:20:00</sys_created_on>
+<sys_id>93ac4e742f509510cd01debcf699b650</sys_id>
 <sys_mod_count>0</sys_mod_count>
-<sys_recorded_at>181817b53d30000001</sys_recorded_at>
+<sys_recorded_at>1818d10b4500000001</sys_recorded_at>
 <sys_updated_by>blaine</sys_updated_by>
-<sys_updated_on>2022-06-20 16:33:24</sys_updated_on>
+<sys_updated_on>2022-06-22 20:20:00</sys_updated_on>
 <table/>
 <target_name>sndev</target_name>
 <type>Scripted REST API</type>
 <update_domain>global</update_domain>
-<update_guid>72e6e284c81cd110ec577c95a5cb7611</update_guid>
-<update_guid_history>72e6e284c81cd110ec577c95a5cb7611:-615053362,399b2c4a98ff091008174b7d811f39c0:1911835726</update_guid_history>
+<update_guid>f04cc2b44b50951018f15a6a7f8e899f</update_guid>
+<update_guid_history>f04cc2b44b50951018f15a6a7f8e899f:-1154695220,304cc2b41a509510ebb131720ac8a69e:-1154695220,fd744efc681095108798c6ba331dab81:620996165,72e6e284c81cd110ec577c95a5cb7611:-615053362,399b2c4a98ff091008174b7d811f39c0:1911835726</update_guid_history>
+<update_set display_value=""/>
+<view/>
+</sys_update_xml>
+<sys_update_xml action="INSERT_OR_UPDATE">
+<action>INSERT_OR_UPDATE</action>
+<application display_value="Global">global</application>
+<category>customer</category>
+<comments/>
+<name>sys_user_role_9736e2442f1cd110cd01debcf699b6b8</name>
+<payload><![CDATA[<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_user_role"><sys_user_role action="INSERT_OR_UPDATE"><assignable_by/><can_delegate>true</can_delegate><description>User of sn-developer utility package</description><elevated_privilege>false</elevated_privilege><grantable>true</grantable><includes_roles/><name>sndev</name><requires_subscription>-1</requires_subscription><scoped_admin>false</scoped_admin><suffix/><sys_class_name>sys_user_role</sys_class_name><sys_created_by>blaine</sys_created_by><sys_created_on>2022-06-20 14:17:23</sys_created_on><sys_id>9736e2442f1cd110cd01debcf699b6b8</sys_id><sys_mod_count>0</sys_mod_count><sys_name>sndev</sys_name><sys_package display_value="Global" source="global">global</sys_package><sys_policy/><sys_scope display_value="Global">global</sys_scope><sys_update_name>sys_user_role_9736e2442f1cd110cd01debcf699b6b8</sys_update_name><sys_updated_by>blaine</sys_updated_by><sys_updated_on>2022-06-20 14:17:23</sys_updated_on></sys_user_role></record_update>]]></payload>
+<payload_hash>2120096774</payload_hash>
+<remote_update_set display_value="sn-developer_service">5bac4e742f509510cd01debcf699b64f</remote_update_set>
+<replace_on_upgrade>false</replace_on_upgrade>
+<sys_created_by>blaine</sys_created_by>
+<sys_created_on>2022-06-22 20:20:00</sys_created_on>
+<sys_id>dfac4e742f509510cd01debcf699b64f</sys_id>
+<sys_mod_count>0</sys_mod_count>
+<sys_recorded_at>1818179aa800000001</sys_recorded_at>
+<sys_updated_by>blaine</sys_updated_by>
+<sys_updated_on>2022-06-22 20:20:00</sys_updated_on>
+<table/>
+<target_name>sndev</target_name>
+<type>Role</type>
+<update_domain>global</update_domain>
+<update_guid>0486ea44171cd110141fa2e5435ba167</update_guid>
+<update_guid_history>0486ea44171cd110141fa2e5435ba167:2120096774</update_guid_history>
 <update_set display_value=""/>
 <view/>
 </sys_update_xml>
