@@ -18,6 +18,8 @@ Most users will want to install globally:
 ```
     npm i -g @admc.com/sn-developer
 ```
+UNIX users will need root privileges, so run as root or under sudo.
+
 To bundle with your own project, install locally:
 ```
     npm i @admc.com/sn-developer
