@@ -1,1 +1,2 @@
-All caught up
+Somehow support separation from serverside/global vs.serverside/scoped apps, because they have
+very different ESLint globals settings.
