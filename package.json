@@ -4,8 +4,8 @@
   "description": "ServiceNow desktop developer utilities",
   "main": "upload.js",
   "bin": {
-    "snUpload": "upload.js",
-    "snVersions": "versionCf.js",
+    "snUpload": "snUpload.js",
+    "snVersions": "snVersions.js",
     "suxList": "suxList.js"
   },
   "scripts": {
