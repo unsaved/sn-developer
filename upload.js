@@ -13,8 +13,7 @@ const checksum = require("checksum");
 const path = require("path");
 const child_process = require("child_process"); // eslint-disable-line camelcase
 
-// We keep a copy of the yargs instance so we can invoke methods on it like
-// .help().
+// We keep a copy of the yargs instance so we can invoke methods on it like .help().
 const yargs = require("yargs")(process.argv.slice(2)).
   strictOptions().
   usage(`SYNTAX: $0 [-dnqrv] [-p username] [-m POLL_MS] file.ext    OR   $0 -e|h|u

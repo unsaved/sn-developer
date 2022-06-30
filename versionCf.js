@@ -18,8 +18,7 @@ const { patterns } = require("./lib/snJs");
 const entities = require("entities");
 const path = require("path");
 
-// We keep a copy of the yargs instance so we can invoke methods on it like
-// .help().
+// We keep a copy of the yargs instance so we can invoke methods on it like .help().
 const yargs = require("yargs")(process.argv.slice(2)).
   strictOptions().
   usage(`SYNTAX: $0 [-dqv] [-p username] [-t filetype] table.field REC_ID EARLIER_VER [LATER_VER]
