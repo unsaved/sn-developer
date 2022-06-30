@@ -1,25 +1,81 @@
 // This is for checking js files in the sn-developer implementation itself.
-// Don't use this for checking ServiceNow scirptles.
+// Don't use this for checking ServiceNow scriptlets.
 {
-  "env": {
-      "commonjs": true,
-      "es2021": true,
-      "node": true
-  },
+  "env": { "es2022": true, "node": true },
   "extends": "eslint:recommended",
-  "parserOptions": {
-      "ecmaVersion": "latest"
-  },
+  "parserOptions": { "ecmaVersion": "latest" },
   "rules": {
-    "max-len": ["error", { "code": 100, "ignoreUrls": true }],
-    "no-tabs": "error",
-    "no-trailing-spaces": "error",
     "camelcase": "warn",
     "eqeqeq": "error",
     "no-var": "error",
     "prefer-const": "error",
     "semi": "error",
     "no-unreachable-loop": "error",
-    "no-use-before-define": "error"
+    "no-use-before-define": ["error", { "functions": false, "classes": false }],
+    "no-extra-parens": "warn",
+
+    // Node-like-specific
+    "no-duplicate-imports": "error",
+
+    "operator-assignment": "error",
+    "no-useless-return": "error",
+    "prefer-regex-literals": ["error", { "disallowRedundantWrapping": true}],
+    "no-useless-concat": "error",
+    "no-useless-computed-key": "error",
+    "no-useless-call": "error",
+    "no-unused-expressions": "error",
+    "no-undef-init": "error",
+    "no-proto": "error",
+    "no-new-wrappers": "error",
+    "no-new-object": "error",
+    "no-negated-condition": "error",
+    "no-loop-func": "error",
+    "no-lonely-if": "error",
+    "no-lone-blocks": "error",
+    "no-implied-eval": "warn",
+    "no-eval": "warn",
+    "no-extra-label": "error",
+    "no-extra-bind": "error",
+    "no-else-return": "error",
+    "no-array-constructor": "warn",
+    "new-cap": "error",
+    "max-depth": "warn",
+    "dot-notation": "error",
+    "consistent-return": "error",
+    "class-methods-use-this": "error",
+    "block-scoped-var": "error",
+    "no-template-curly-in-string": "warn",
+    "no-self-compare": "error",
+    "no-constructor-return": "error",
+    "no-constant-binary-expression": "error",
+    "array-callback-return": ["error", { "checkForEach": true }],
+
+    // Post-ES6
+    "strict": ["error", "safe"],
+    "prefer-exponentiation-operator": "error",
+    "prefer-arrow-callback": "error",
+    "object-shorthand": "error",
+    "no-useless-rename": "error",
+    "no-useless-constructor": "error",
+    "prefer-template": "error",
+    "no-iterator": "error",
+    "require-atomic-updates": "error",
+    "no-unused-private-class-members": "error",
+    "no-promise-executor-return": "error",
+
+    // formatting
+    "comma-spacing": "warn",
+    "dot-location": "warn",
+    "eol-last": "error",
+    "func-call-spacing": "error",
+    "keyword-spacing": "error",
+    "linebreak-style": "error",
+    "max-len": ["error", { "code": 100, "ignoreUrls": true }],
+    "no-multi-spaces": ["error", { "ignoreEOLComments": true }],
+    "no-tabs": "error",
+    "no-trailing-spaces": "error",
+    "no-whitespace-before-property": "error",
+    "padded-blocks": ["error", "never"],
+    "rest-spread-spacing": "error"
   }
 }
