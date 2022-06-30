@@ -6,12 +6,11 @@
   "bin": {
     "snUpload": "upload.js",
     "snVersions": "versionCf.js",
-    "suxList": "suxList.js",
-    "lintSnScriptlet": "lintSnScriptlet.js"
+    "suxList": "suxList.js"
   },
   "scripts": {
-    "lint": "eslint .",
-    "lintHtml": "eslint -f html -o local/eslint.html .",
+    "lint": "eslint",
+    "lintHtml": "eslint -f html -o local/eslint.html",
     "require+": "echo disabled node -p 'const { validate, is } = require(\"./index\"); validate(\"str\", \"string\");'",
     "require-": "echo disabled node -p 'const { validate, is } = require(\"./index\"); validate(\"str\", \"int\");'",
     "import+": "echo disabled node -r esm -p 'import { validate, is } from \"./index\"; validate(\"str\", \"string\");'",
