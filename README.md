@@ -17,10 +17,6 @@ Major components
 To install globally (accessible to all npm projects):
 ```
     npm i -g @admc.com/sn-developer
-    # If you don't have a good sneslintrc.json file and 'snglobals' directory by
-    # some other means, or if you want to be able to run the linter standalone,
-    # then also do a global install of @admc.com/eslint-plugin-sn:
-    npm i -g @admc.com/eslint-plugin-sn
 ```
 UNIX users will need root privileges, so run this as root or under sudo.
 
@@ -28,8 +24,6 @@ To use just with your own project, install locally:
 ```
     npm i @admc.com/sn-developer
 ```
-Local installations automatically make the snLint executable available (for
-'npm exec' and 'npm run' commands).
 
 ##  REST Service
 snUpload requires installation of a Scripted REST API to serve the upload requests.
@@ -52,18 +46,16 @@ You will probably want to set in a UNIX ~/.profile (don't forget to export) or v
 sysdm.cpl or a CMD script.
 
 snLint and snUpload (unless you use -n switch to skip syntax/lint checking)
-require setup of ESLint RC files.
-You can use "snLint -s" to create a sample "sneslintrc.json" file that you should
-edit and adjust according to the comments in it.
-Also run "snLint -g ." to populate the global variable lists.
+require setup of ESLint files.
+```
+    npm exec snLint -- -s
+    npm exec snLint -- -g .
+```
 
 To get invocation syntax help:
 ```
-    snUpload -h      #if you have a global installation of eslint-plugin-so 
-    snVersions -h    # if you have a global installation of eslint-plugin-so
-
-    npm exec snUpload -- -h     # for local sn-developer installation
-    npm exec snVersions -- -h   # for local sn-developer installation
+    npm exec snUpload -- -h
+    npm exec snVersions -- -h
 ```
 
 To start managing a new source file with snUpload, it usually makes sense to
