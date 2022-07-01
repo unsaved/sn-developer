@@ -10,13 +10,17 @@ Major components
 * **suxList**  Displays sys_update_xml records with the crucial attributes for the specified local
                Update Set XML file(s).
 * **snLint**  Executes ESLint against one specified ServiceNow JavaScript scriptlet file.
-              (This is actually provided by module @admc.com/eslint-plugin-sn, which sn-developer
-              depends on and bundles).
+              (This is actually provided by module @admc.com/eslint-plugin-sn.
+              Details about that below).
 
 # Installation
 To install globally (accessible to all npm projects):
 ```
     npm i -g @admc.com/sn-developer
+    # If you don't have a good eslintrc.json file and 'snglobals' directory by
+    # some other means, or if you want to be able to run the linter standalone,
+    # then also do a global install of @admc.com/eslint-plugin-sn:
+    npm i -g @admc.com/eslint-plugin-sn
 ```
 UNIX users will need root privileges, so run this as root or under sudo.
 
@@ -24,6 +28,8 @@ To use just with your own project, install locally:
 ```
     npm i @admc.com/sn-developer
 ```
+Local installations automatically make the snLint executable available (for
+'npm exec' and 'npm run' commands).
 
 ##  REST Service
 snUpload requires installation of a Scripted REST API to serve the upload requests.
@@ -51,15 +57,13 @@ You can use "snLint -s" to create a sample ".eslintrc.json" file that you should
 edit and adjust according to the comments in it.
 Also run "snLint -g ." to populate the global variable lists.
 
-With global installaton
+To get invocation syntax help:
 ```
-    snLint -s
-    snLint -g .
-```
-With local installaton
-```
-    npm exec snLint -- -s
-    npm exec snLint -- -g .
+    snUpload -h      #if you have a global installation of eslint-plugin-so 
+    snVersions -h    # if you have a global installation of eslint-plugin-so
+
+    npm exec snUpload -- -h     # for local sn-developer installation
+    npm exec snVersions -- -h   # for local sn-developer installation
 ```
 
 To start managing a new source file with snUpload, it usually makes sense to
