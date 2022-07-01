@@ -1,10 +1,5 @@
 /* N.b. this file is used by 'snLint'.
- * It would not be honored by 'eslint' directly unless you use the -c switch.
- * Override settings must specify source files with path format
- *  'TABLENAME/BASENAME.js' or 'TABLENAME/ALTSCOPE/BASENAME.js'.
- * Example: "sys_script/global/sane.js"
- * Use snLint's -d switch can be used to display the generated pseudo path.
- */
+ * This file in this project is used to snLint the scripts in resources/.  */
 {
   "root": true,
   "plugins": ["@admc.com/sn"],

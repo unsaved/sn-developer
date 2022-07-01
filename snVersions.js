@@ -227,13 +227,11 @@ conciseCatcher(async function() {
       "ORDERBYDESCsys_created_on",
     ];
     opts = { params: {
-        /* eslint-disable camelcase */
         sysparm_query: queryClauses.join("^"),
         sysparm_fields: "sys_id,sys_created_on,action,source,application,sys_created_by",
         sysparm_display_value: true,
         sysparm_exclude_reference_link: true,
         sysparm_limit: listLimit,
-        /* eslint-enable camelcase */
     } };
     if (proxyClause !== undefined) opts.proxy = proxyClause;
 
@@ -298,13 +296,11 @@ conciseCatcher(async function() {
           "Makes no sense to compare one record to itself: '%s' vs. '%s'", verA, verB);
     console.info("Fetching %s and %s", sysidA, sysidB);
     opts = { params: {
-        /* eslint-disable camelcase */
         sysparm_query: `sys_idIN${sysidA},${sysidB}`,
         sysparm_fields: "sys_created_on,payload",
         sysparm_display_value: true,
         sysparm_exclude_reference_link: true,
         sysparm_limit: 3,
-        /* eslint-enable camelcase */
     } };
     if (proxyClause !== undefined) opts.proxy = proxyClause;
 

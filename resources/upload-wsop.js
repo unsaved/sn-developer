@@ -80,7 +80,7 @@ try {
     return undefined;
 } catch (e) {
     gs.sleep(1000);
-    const snErr = new sn_ws_err.ServiceError();  // eslint-disable-line camelcase
+    const snErr = new sn_ws_err.ServiceError();
     if (e instanceof HttpCodeError) {
         e.log(fName);
         snErr.setStatus(e.code);

@@ -197,18 +197,16 @@ conciseCatcher(function(inFile) {
             method: yargsDict.r ? 'get' : 'patch',
             url,
             params: yargsDict.r ? {
-              /* eslint-disable camelcase */
               sysparm_query: `${uploadEntry.keyField}=${uploadEntry.keyValue}`,
               sysparm_fields: uploadEntry.dataField,
               sysparm_limit: 2,
-              /* eslint-enable camelcase */
             } : {
                 query: `${uploadEntry.keyField}=${uploadEntry.keyValue}`
             },
         };
         if (uploadEntry.appScope) {
             if (yargsDict.r)
-                opts.params.sysparam_query =  // eslint-disable-line camelcase
+                opts.params.sysparam_query =
                   `${opts.params.sysparam_query}^sys_scope=${uploadEntry.appScope}`;
             else
                 opts.params.appscope = uploadEntry.appScope;
