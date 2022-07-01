@@ -52,11 +52,20 @@ require setup of ESLint files.
     npm exec snLint -- -g .
 ```
 
+GOTCHA!  For unknown reason, on Windows with global installation of developer-sn, 'npm exec' can't
+find snLint even though it is present.  If you hit this, install eslint-plugin-sn globally:
+```
+    npm i -g @admc.com/eslint-plugin-sn
+```
+
 To get invocation syntax help:
 ```
     npm exec snUpload -- -h
     npm exec snVersions -- -h
 ```
+Read the syntax messages about required and optional environmental variables.
+Of course make a script file, use sysdm.cpl, or similar so you only have to set up the variables
+once.
 
 To start managing a new source file with snUpload, it usually makes sense to
 1. Make sure it's covered correctly by your sneslintrc.json file.
