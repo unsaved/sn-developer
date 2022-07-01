@@ -17,7 +17,7 @@ Major components
 To install globally (accessible to all npm projects):
 ```
     npm i -g @admc.com/sn-developer
-    # If you don't have a good eslintrc.json file and 'snglobals' directory by
+    # If you don't have a good sneslintrc.json file and 'snglobals' directory by
     # some other means, or if you want to be able to run the linter standalone,
     # then also do a global install of @admc.com/eslint-plugin-sn:
     npm i -g @admc.com/eslint-plugin-sn
@@ -53,7 +53,7 @@ sysdm.cpl or a CMD script.
 
 snLint and snUpload (unless you use -n switch to skip syntax/lint checking)
 require setup of ESLint RC files.
-You can use "snLint -s" to create a sample ".eslintrc.json" file that you should
+You can use "snLint -s" to create a sample "sneslintrc.json" file that you should
 edit and adjust according to the comments in it.
 Also run "snLint -g ." to populate the global variable lists.
 
@@ -67,7 +67,7 @@ To get invocation syntax help:
 ```
 
 To start managing a new source file with snUpload, it usually makes sense to
-1. Make sure it's covered correctly by your .eslintrc.json file(s).
+1. Make sure it's covered correctly by your sneslintrc.json file.
    Add to overrides/files lists or whatever is necessary.
 1. Add an entry to "updatemap.txt", unless already covered by a regex entry
 1. Assuming that you don't already have the starting script file locally, run

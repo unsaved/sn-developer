@@ -1,7 +1,7 @@
 # Useful shell functions
 
 function rchead() {
-    local TARGET_FILE=eslintrc.json
+    local TARGET_FILE=sneslintrc.json
     local SYNTAX_MSG='SYNTAX: rchead n   # where n is a positive integer'
     [ -f "$TARGET_FILE" ] || {
         echo "rchead file '$TARGET_FILE' not present or not a file" 1>&2
