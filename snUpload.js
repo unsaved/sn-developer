@@ -157,9 +157,9 @@ conciseCatcher(function(inFile) {
                     uploadEntry.table
                 ];
                 if (yargsDict.d) lintSnArgs.push("-d");
-                if (yargsDict.lintAlt) {
+                if (uploadEntry.lintAlt) {
                     lintSnArgs.push("-a");
-                    lintSnArgs.push(yargsDict.lintAlt);
+                    lintSnArgs.push(uploadEntry.lintAlt);
                 }
                 lintSnArgs.push(file);
                 try {
