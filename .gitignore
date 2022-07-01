@@ -9,3 +9,4 @@ local/
 /build
 /node_modules
 /*?jre.?*
+/snglobals

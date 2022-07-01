@@ -1,13 +1,10 @@
 (function() {
-
-/* global response, HttpCodeError, request, sn_ws_err */
-
+/* global HttpCodeError */
 const fName = "admc/sndev/upload:rest";
 var eMsg, dict, oldContent;
 //const callerId = gs.getUserID();
 
 try {
-
     if (!gs.hasRole("sndev"))
         throw new HttpCodeError(403, gs.getUserName() + " not a member of required role");
     /*
@@ -57,21 +54,20 @@ try {
 
     const ds = request.body.dataString;
     if (typeof ds !== "string")
-        throw new HttpCodeError(400, "PATCH body not a JSON string but a " + typeof(ds));
+        throw new HttpCodeError(400, "PATCH body not a JSON string but a " + typeof ds);
     try {
         dict = JSON.parse(ds);
-    } catch(e0) {
+    } catch (e0) {
         throw new HttpCodeError(400, "Body contains invalid JSON: " + e0);
     }
     //if (!AdmcUtil.isPlainObject(dict))  would be a much better test
-    if (typeof(dict) !== "object")
-        throw new HttpCodeError(400, "Decoded body is not a plain object but " + typeof(dict));
+    if (typeof dict !== "object")
+        throw new HttpCodeError(400, "Decoded body is not a plain object but " + typeof dict);
     if (typeof dict.content !== "string")  // to upload null, client needs to send "".
         throw new HttpCodeError(
-          400, "Provided content not a string but a " + typeof(dict.content));
+          400, "Provided content not a string but a " + typeof dict.content);
     oldContent = r.getValue(field);
     if (oldContent === null) oldContent = "";
-    // eslint-disable-next-line  servicenow/minimize-gs-log-print
     gs.log(table + "." + field + " content length: " + oldContent.length
       + " => " + dict.content.length, fName);
     r.setValue(field, dict.content);
@@ -82,8 +78,7 @@ try {
     response.setStatus(200);
     response.getStreamWriter().writeString(oldContent);
     return undefined;
-
-} catch(e) {
+} catch (e) {
     gs.sleep(1000);
     const snErr = new sn_ws_err.ServiceError();  // eslint-disable-line camelcase
     if (e instanceof HttpCodeError) {
@@ -94,13 +89,12 @@ try {
         if (firstNl > -1) snErr.setDetail(e.messageString.substring(firstNl+1));
     } else {
         if (typeof e === "object" && e !== null && "message" in e) try {
-            if (e.message) eMsg = String(e.message);
-        } catch (eNest) { } // Intentionally empty
+            if (e.message) eMsg = String(e.message);  // eslint-disable-line max-depth
+        } catch (eNest) { } // eslint-disable-line no-empty
         gs.logError("Caught: " + (eMsg === undefined ? String(e) : eMsg), fName);
         snErr.setStatus(500);
         snErr.setMessage(eMsg === undefined ? String(e) : eMsg);
     }
     return snErr;
 }
-
 })();

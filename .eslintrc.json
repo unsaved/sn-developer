@@ -4,11 +4,10 @@
   "env": { "es2022": true, "node": true },
   "extends": "eslint:recommended",
   "parserOptions": { "ecmaVersion": "latest" },
+  "ignorePatterns": ["resources/*.js"],
   "rules": {
     "camelcase": "warn",
     "eqeqeq": "error",
-    "no-var": "error",
-    "prefer-const": "error",
     "semi": "error",
     "no-unreachable-loop": "error",
     "no-use-before-define": ["error", { "functions": false, "classes": false }],
@@ -51,6 +50,8 @@
     "array-callback-return": ["error", { "checkForEach": true }],
 
     // Post-ES6
+    "no-var": "error",
+    "prefer-const": "error",
     "strict": ["error", "safe"],
     "prefer-exponentiation-operator": "error",
     "prefer-arrow-callback": "error",

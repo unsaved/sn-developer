@@ -1,3 +1,3 @@
 #datafile                  table              datafield         keyfield  kevalue     scope
 resources/upload-wsop.js   sys_ws_operation   operation_script  sys_id    1cdb28022f334910cd01debcf699b626
-resources/HttpCodeError.js sys_script_include script            name      <           global
+resources/HttpCodeError.js sys_script_include script            name      <           global -

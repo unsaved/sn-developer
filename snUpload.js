@@ -40,8 +40,8 @@ Honored environmental variables.  * variables are required:
   }).
   option("n", { describe: "No syntax/lint check for *.js file", type: "boolean", }).
   option("p", {
-      describe: ("Prompt for basic auth password for the specified user.  "
-        + "(By default uses name and passsword from netrc file)."),
+      describe: "Prompt for basic auth password for the specified user.  "
+        + "(By default uses name and passsword from netrc file).",
       type: "string",
   }).
   option("q", {
@@ -95,7 +95,7 @@ let file, fileExt, fileHasCRs, comparatorCmd, lastChecksum;
 if (yargsDict.m) { // yargsDict.m value validation
     if (isNaN(yargsDict.m) || !Number.isInteger(yargsDict.m)
       || yargsDict.m <= 0) {
-        console.error("Switch -m value not a positive integr: " + yargsDict.m);
+        console.error(`Switch -m value not a positive integr: ${yargsDict.m}`);
         yargs.showHelp();
         process.exit(9);
     }
@@ -123,15 +123,15 @@ conciseCatcher(function(inFile) {
         if (!fs.statSync(file).isFile()) throw new AppErr("Not a regular file:", file);
         try {
             fs.accessSync(file, fs.constants.R_OK);
-        } catch(nestedE) {
+        } catch (nestedE) {
             throw new AppErr(`Can't read file: [${file}]`);
         }
         fileExt = file.replace(/.*[.]/, "");
         if (fileExt === "") fileExt = null;
-        if (process.env.SN_CF_COMMAND !== undefined) {
-            comparatorCmd = process.env.SN_CF_COMMAND;
-        } else {
+        if (process.env.SN_CF_COMMAND === undefined) {
             comparatorCmd = isUnixShell ? DEFAULT_CF_CMD_UNIX : DEFAULT_CF_CMD_WIN;
+        } else {
+            comparatorCmd = process.env.SN_CF_COMMAND;
         }
         console.debug("comparatorCmd", comparatorCmd);
     }
@@ -142,25 +142,24 @@ conciseCatcher(function(inFile) {
     if (yargsDict.m) {
         lastChecksum = checksum(fs.readFileSync(file, "utf8"));
         if (!lastChecksum) throw new Error("Assertion failed.  First checksum empty.");
-        setInterval(transfer, yargsDict.m);  // eslint-disable-line no-use-before-define
+        setInterval(transfer, yargsDict.m);
     } else {
-        transfer();  // eslint-disable-line no-use-before-define
+        transfer();
     }
 
     function transfer() {
         let localFileText;
         if (!yargsDict.r) {
-            if (file.endsWith(".js") && !yargsDict.n) {
-                const lintSnArgs = [ path.join(__dirname, "lintSnScriptlet.js") ];
-                // TODO:  Developers may add their own fields, like my own u_text_file.content,
-                // which also allow fully support 'const'.  Think of some way to either auto-detect
-                // or allow end-user configuration.
-                switch (uploadEntry.table) {
-                    case "sys_script_client":
-                    case "catalog_script_client":
-                        break;
-                    default:
-                        lintSnArgs.push('-c');
+            if (!yargsDict.n && uploadEntry.doLint) {
+                const lintSnArgs = [
+                    path.join(__dirname, "../eslint-plugin-sn/snLint.js"),
+                    "-t",
+                    uploadEntry.table
+                ];
+                if (yargsDict.d) lintSnArgs.push("-d");
+                if (yargsDict.lintAlt) {
+                    lintSnArgs.push("-a");
+                    lintSnArgs.push(yargsDict.lintAlt);
                 }
                 lintSnArgs.push(file);
                 try {
@@ -169,6 +168,7 @@ conciseCatcher(function(inFile) {
                 } catch (e9) {
                     throw new AppErr("Lint check failed");
                 }
+                console.info("ESLint success");
             }
 
             localFileText = fs.readFileSync(file, "utf8");
@@ -181,21 +181,21 @@ conciseCatcher(function(inFile) {
             fileHasCRs = localFileText.includes("\r");
             if (!localFileText.includes("\r")) localFileText = localFileText.replace(/\n/g, "\r\n");
             if (localFileText.endsWith("\r\n")) localFileText = localFileText.slice(0, -2);
-
-
         }
 
+        /* eslint-disable prefer-template */
         const url = `https://${instName}.service-now.com` + (yargsDict.r ?
             `/api/now/v2/table/${uploadEntry.table}` :
             `/api/${apiScope}/${apiName}/${uploadEntry.table}/${uploadEntry.dataField}`);
-        const authOpts = { auth: (rcFile === undefined
+        /* eslint-enable */
+        const authOpts = { auth: rcFile === undefined
           ? { username: yargsDict.p, password: require("readline-sync").
               question(`Password for '${yargsDict.p}': `, {hideEchoBack: true}) }
           : rcFile.getAuthSettings(url)
-        )};
+        };
         const opts = {
             method: yargsDict.r ? 'get' : 'patch',
-            url: url,
+            url,
             params: yargsDict.r ? {
               /* eslint-disable camelcase */
               sysparm_query: `${uploadEntry.keyField}=${uploadEntry.keyValue}`,
@@ -208,7 +208,7 @@ conciseCatcher(function(inFile) {
         };
         if (uploadEntry.appScope) {
             if (yargsDict.r)
-                opts.params.sysparam_query =
+                opts.params.sysparam_query =  // eslint-disable-line camelcase
                   `${opts.params.sysparam_query}^sys_scope=${uploadEntry.appScope}`;
             else
                 opts.params.appscope = uploadEntry.appScope;
@@ -216,6 +216,7 @@ conciseCatcher(function(inFile) {
         if ("SN_HTTPS_PROXY" in process.env) {
             const ex = /^([^:]+):[/]+([^:]+)(?::(\d+))?$/.exec(process.env.SN_HTTPS_PROXY);
             if (!ex)
+                // eslint-disable-next-line prefer-template
                 throw new AppErr("Env var val for 'SN_HTTPS_PROXY' not a "
                   + "valid hostname/port URL: " + process.env.SN_HTTPS_PROXY);
             const proxyClause = {
@@ -224,21 +225,20 @@ conciseCatcher(function(inFile) {
             };
             if (ex[3] !== undefined) proxyClause.port = parseInt(ex[3]);
             opts.proxy = proxyClause;
-
         }
         if (yargsDict.v)
             console.info(`Will send request to: ${url}\nwith opts (- data):`,
               {...opts, ...authOpts});
         if (!yargsDict.r) opts.data = { "content": localFileText };
         axios({...opts, ...authOpts}).
-          then(conciseCatcher(responseHandler, 1),  // eslint-disable-line no-use-before-define
+          then(conciseCatcher(responseHandler, 1),
           e=>console.error("Caught failure.  Consider running with -d switch (debug) "
             + "and checking %s's syslog for messages written by %s.\n%s%s",
             instName, authOpts.auth.username, e.message,
-            (e.response !== undefined && e.response.data !== undefined
+            e.response !== undefined && e.response.data !== undefined
             && e.response.data.error !== undefined
             && e.response.data.error.message !== undefined
-              ? ("\n" + e.response.data.error.message) : ""))
+              ? "\n" + e.response.data.error.message : "")  // eslint-disable-line prefer-template
           );
     }
 }, 10)(yargsDict._.shift());
@@ -261,11 +261,13 @@ async function responseHandler(response) {
             throw new AppErr("Got something other than a plain object from server: %O",
               response.data.result[0]);
         if (Object.keys(response.data.result[0]).length !== 1)
+            // eslint-disable-next-line prefer-template
             throw new AppErr("Object from server has "
               + Object.keys(response.data.result[0]).length + " fields instead of just 1");
         prevRevData = Object.values(response.data.result[0])[0];
-        if (typeof(prevRevData) !== "string") throw new AppErr("Object from server has "
-          + typeof(prevRevData) + " instead of string content");
+        // eslint-disable-next-line prefer-template
+        if (typeof prevRevData !== "string") throw new AppErr("Object from server has "
+          + typeof prevRevData + " instead of string content");
         fileHasCRs = prevRevData.includes("\r");
         fs.writeFileSync(path.normalize(file), prevRevData + (fileHasCRs ? "\r\n" : "\n"));
         console.debug("Wrote %s", path.normalize(file));
@@ -280,11 +282,10 @@ async function responseHandler(response) {
     console.debug("Writing prevRevFile file:", prevRevFile);
     if (fileHasCRs) {
         if (!prevRevData.includes("\r")) prevRevData = prevRevData.replace(/\n/g, "\r\n");
-    } else {
+    } else
         if (prevRevData.includes("\r")) prevRevData = prevRevData.replace(/\r/g, "");
-    }
     fs.writeFileSync(prevRevFile, prevRevData + (fileHasCRs ? "\r\n" : "\n"));
-    console.info("Executing: " + comparatorCmd, prevRevFile, path.normalize(file));
+    console.info(`Executing: ${comparatorCmd}`, prevRevFile, path.normalize(file));
     const pObj = child_process.spawnSync(  // eslint-disable-line camelcase
       format(comparatorCmd, prevRevFile, path.normalize(file)), {
         shell: true,
@@ -295,7 +296,7 @@ async function responseHandler(response) {
     // we intend.  So use stderr Buffer rather than .exitCode to determine
     // success.
     if (pObj.stderr.length > 0)
-        console.error("Did the command fail?\n" + pObj.stderr.toString("utf8"));
+        console.error(`Did the command fail?\n${pObj.stderr.toString("utf8")}`);
     fs.unlinkSync(prevRevFile);
     console.info(pObj.stdout.toString("utf8"));
 }

@@ -24,10 +24,17 @@
 # specified where there are alternate records for different sys_scopes.
 # You could always set 'keyfield' to "sys_id".
 
-# Specifications lines must have 5 or 6 tokens in this order:
+# Specifications lines must have 5 to 7 tokens in this order:
+# Files without lint checking:
 #   localFileSpec table datafield keyfield kevalue [sys_scope]
+# Files to be lint-checked:
+#   localFileSpec table datafield keyfield kevalue sys_scope lint_alt
+# sys_scope value unspecified (without lint-checking) or - (with lint-checking)
+# mean to not constrain scope.
+# lint_alt value (even if -) must be specified if lint checking will be done.
+# A value of - means no snLint alternate.
 
-#localFileSpec   table        datafield  keyfield  keyvalue     sys_scope
-play.js          u_text_file  u_content  u_path    *
+#localFileSpec   table        datafield  keyfield  keyvalue         sys_scope  lint_alt
+play.js          u_text_file  u_content  u_path    *                -          -
 subdir/gplay.txt u_text_file  u_content  u_path    global-play.txt
-/.+[.]js$/       sys_script_include script u_path  <            global
+/.+[.]js$/       sys_script_include script u_path  <                global     global

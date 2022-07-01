@@ -1,0 +1,43 @@
+/* N.b. this file is used by 'snLint'.
+ * It would not be honored by 'eslint' directly unless you use the -c switch.
+ * Override settings must specify source files with path format
+ *  'TABLENAME/BASENAME.js' or 'TABLENAME/ALTSCOPE/BASENAME.js'.
+ * Example: "sys_script/global/sane.js"
+ * Use snLint's -d switch can be used to display the generated pseudo path.
+ */
+{
+  "root": true,
+  "plugins": ["@admc.com/sn"],
+  "extends": ["plugin:@admc.com/sn/servicenow"],
+  "rules": {
+    "eqeqeq": "error",
+    "semi": "error",
+    "dot-notation": "error",
+
+    // formatting
+    "comma-spacing": "warn",
+    "dot-location": "warn",
+    "eol-last": "error",
+    "func-call-spacing": "error",
+    "keyword-spacing": "error",
+    "linebreak-style": "error",
+    "max-len": ["error", { "code": 100, "ignoreUrls": true }],
+    "no-multi-spaces": ["error", { "ignoreEOLComments": true }],
+    "no-tabs": "error",
+    "no-trailing-spaces": "error",
+    "no-whitespace-before-property": "error",
+    "padded-blocks": ["error", "never"],
+    "rest-spread-spacing": "error"
+  },
+  "overrides": [{  // ES6 additions
+    "files": ["**/@(sys|catalog|expert)_script_client/@(noniso|iso)/*.js"],
+    "rules": {
+      "no-var": "error",
+      "strict": ["error", "safe"],
+      "prefer-arrow-callback": "error",
+      "object-shorthand": "error",
+      "no-useless-rename": "error",
+      "prefer-template": "error"
+    }
+  }]
+}

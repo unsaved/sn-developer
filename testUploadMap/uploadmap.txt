@@ -1,0 +1,8 @@
+#datafile    table               datafield         keyfield  kevalue     scope   alt
+5            sys_ws_operation    operation_script  sys_id    1cdb28
+6            sys_ws_operation    operation_script  sys_id    1cdb28      scp
+7            sys_script_include  script            name      <           global  altval
+6-           sys_ws_operation    operation_script  sys_id    1cdb28      -
+7-           sys_script_include  script            name      <           global  -
+6-7          sys_script_include  script            name      <           -       altval
+6-7-         sys_script_include  script            name      <           -       -

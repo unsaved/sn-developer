@@ -4,7 +4,7 @@ function HttpCodeError(code, messageString, srcLocation) {
     this.messageString = messageString;
     this.srcLocation = srcLocation;
     //if (!AdmcUtil.isInteger(this.code))
-    if (typeof(this.code) !== "number" || parseInt(this.code) !== this.code)
+    if (typeof this.code !== "number" || parseInt(this.code) !== this.code)
         throw new Error("Bad HttpCodeError instantiation.  Code " + code + " not an integer");
     if (typeof messageString !== "string") throw new Error(
       "Bad HttpCodeError instantiation.  Message " + messageString + " not a string");

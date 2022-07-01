@@ -56,8 +56,8 @@ Honored environmental variables:
       type: "boolean",
   }).
   option("p", {
-      describe: ("Prompt for basic auth password for the specified user.  "
-        + "(By default uses name and passsword from netrc file)."),
+      describe: "Prompt for basic auth password for the specified user.  "
+        + "(By default uses name and passsword from netrc file).",
       type: "string",
   }).
   option("q", {
@@ -128,22 +128,22 @@ if (yargsDict._.length > 0) {
     ex = patterns.AMPM_TIME.exec(yargsDict._[0]);
     if (ex)
         verA = yargsDict._.shift();
-    else if (typeof(yargsDict._[0]) === "number") {
+    else if (typeof yargsDict._[0] === "number") {
         verA = yargsDict._.shift();
         if (!Number.isInteger(verA) || verA > 0) {
-            console.error("Earlier version spec not a non-negative integer: " + verA);
+            console.error(`Earlier version spec not a non-negative integer: ${verA}`);
             yargs.showHelp();
             process.exit(9);
         }
     } else {
-        console.error("Malformatted earlier version spec: " + yargsDict._[0]);
+        console.error(`Malformatted earlier version spec: ${yargsDict._[0]}`);
         yargs.showHelp();
         process.exit(9);
     }
 }
 if (verA === undefined) {
     if (!patterns.TABLE_OR_FIELD.test(tableField)) {
-        console.error("Malformatted table specification" + tableField);
+        console.error(`Malformatted table specification ${tableField}`);
         yargs.showHelp();
         process.exit(9);
     }
@@ -151,7 +151,7 @@ if (verA === undefined) {
 } else {
     ex = patterns.TABLE_DOT_FIELD.exec(tableField);
     if (!ex) {
-        console.error("Malformatted table.field specification" + tableField);
+        console.error(`Malformatted table.field specification ${tableField}`);
         yargs.showHelp();
         process.exit(9);
     }
@@ -166,15 +166,15 @@ if (verA === undefined) {
     ex = patterns.AMPM_TIME.exec(yargsDict._[0]);
     if (ex)
         verB = yargsDict._.shift();
-    else if (typeof(yargsDict._[0]) === "number") {
+    else if (typeof yargsDict._[0] === "number") {
         verB = yargsDict._.shift();
         if (!Number.isInteger(verB) || verB > 0) {
-            console.error("Later version spec not a non-negative integer: " + verB);
+            console.error(`Later version spec not a non-negative integer: ${verB}`);
             yargs.showHelp();
             process.exit(9);
         }
     } else {
-        console.error("Malformatted later version spec: " + yargsDict._[0]);
+        console.error(`Malformatted later version spec: ${yargsDict._[0]}`);
         yargs.showHelp();
         process.exit(9);
     }
@@ -188,15 +188,16 @@ conciseCatcher(async function() {
         throw new AppErr("Set required env var 'SN_DEVELOPER_INST' to "
           + "unqualified SN host name (like 'acmedev')");
     if (!yargsDict.p) rcFile = new NetRC();
-    if (process.env.CF_COMMAND !== undefined) {
-        comparatorCmd = process.env.CF_COMMAND;
+    if (process.env.CF_COMMAND === undefined) {
+        comparatorCmd = isUnixShell ? DEFAULT_CF_CMD_UNIX : DEFAULT_CF_CMD_WIN;
     } else {
-        comparatorCmd = isUnixShell ?  DEFAULT_CF_CMD_UNIX : DEFAULT_CF_CMD_WIN;
+        comparatorCmd = process.env.CF_COMMAND;
     }
     console.debug("comparatorCmd", comparatorCmd);
 
     if ("VERSION_LIST_LIMIT" in process.env) {
         if (!/^\d+$/.test(process.env.VERSION_LIST_LIMIT))
+            // eslint-disable-next-line prefer-template
             throw new AppErr("Env var 'VERSION_LIST_LIMIT' value is not a positive integer: "
               + process.env.VERSION_LIST_LIMIT);
         listLimit = Number(process.env.VERSION_LIST_LIMIT);
@@ -204,6 +205,7 @@ conciseCatcher(async function() {
     if ("SN_HTTPS_PROXY" in process.env) {
         const ex = /^([^:]+):[/]+([^:]+)(?::(\d+))?$/.exec(process.env.SN_HTTPS_PROXY);
         if (!ex)
+            // eslint-disable-next-line prefer-template
             throw new AppErr("Env var val for 'SN_HTTPS_PROXY' not a valid hosname/port URL: " +
               process.env.SN_HTTPS_PROXY);
         proxyClause = {
@@ -214,14 +216,14 @@ conciseCatcher(async function() {
     }
 
     const url = `https://${instName}.service-now.com/api/now/table/sys_update_version`;
-    const authOpts = { auth: (rcFile === undefined
+    const authOpts = { auth: rcFile === undefined
       ? { username: yargsDict.p, password: require("readline-sync").
           question(`Password for '${yargsDict.p}': `, {hideEchoBack: true}) }
       : rcFile.getAuthSettings(url)
-    )};
+    };
     const queryClauses = [
-      "nameSTARTSWITH" + table + "_",
-      ((keyBySysId ? "nameENDSWITH" : "record_name=") + recId),
+      `nameSTARTSWITH${table}_`,
+      (keyBySysId ? "nameENDSWITH" : "record_name=") + recId,
       "ORDERBYDESCsys_created_on",
     ];
     opts = { params: {
@@ -238,21 +240,21 @@ conciseCatcher(async function() {
     // First get version list
     if (yargsDict.v)
         console.info(`Will send request to: ${url}\nwith opts:`, {...opts, ...authOpts});
-    // eslint-disable-next-line no-use-before-define
     conciseCatcher(versionListHandler, 1)(await axios.get(url, {...opts, ...authOpts}).catch(e => {
         console.error("Caught failure.  Consider checking %s's syslog "
           + "for messages written by %s.\n%s%s",
           instName, authOpts.auth.username, e.message,
-          (e.response !== undefined && e.response.data !== undefined
+          e.response !== undefined && e.response.data !== undefined
           && e.response.data.error !== undefined
           && e.response.data.error.message !== undefined
-            ? ("\n" + e.response.data.error.message) : ""));
+            ? "\n" + e.response.data.error.message : "");  // eslint-disable-line prefer-template
         process.exit(1);
     }));
     if (currentData.length < 2)
         throw new AppErr("No comparison possible with only %i versions", currentData.length);
     console.debug("Received list of %i versions", currentData.length);
     if (verA === undefined) {
+        /* eslint-disable prefer-template */
         process.stdout.write(format("%s %s %s  %s  %s %s",
           "Index", "Op", "Created".padEnd(19), "Created by".padEnd(10),
           "Source".padEnd(16), "Scope")
@@ -267,11 +269,12 @@ conciseCatcher(async function() {
                 replace(/^Update Set: /, "US:").substring(0, 16).padEnd(16),
               r.application.substring(0, 16))
           ).reverse().join("\n") + "\n");
+        /* eslint-enable prefer-template */
         return;
     }
 
     let sysidA, sysidB, hit;
-    if (typeof(verA) === "number") {
+    if (typeof verA === "number") {
         if (-verA >= currentData.length)
             throw new AppErr("Found %i versions but you requested #%i", currentData.length, verA);
         sysidA = currentData[-verA].sys_id;
@@ -280,7 +283,7 @@ conciseCatcher(async function() {
         if (hit === undefined) throw new AppErr("Found no version created '%s'", verA);
         sysidA = hit.sys_id;
     }
-    if (typeof(verB) === "number") {
+    if (typeof verB === "number") {
         if (-verB >= currentData.length)
             throw new AppErr("Found %i versions but you requested #%i", currentData.length, verB);
         sysidB = currentData[-verB].sys_id;
@@ -296,7 +299,7 @@ conciseCatcher(async function() {
     console.info("Fetching %s and %s", sysidA, sysidB);
     opts = { params: {
         /* eslint-disable camelcase */
-        sysparm_query: "sys_idIN" + sysidA + "," + sysidB + "",
+        sysparm_query: `sys_idIN${sysidA},${sysidB}`,
         sysparm_fields: "sys_created_on,payload",
         sysparm_display_value: true,
         sysparm_exclude_reference_link: true,
@@ -308,26 +311,24 @@ conciseCatcher(async function() {
     // First payloads to compare
     if (yargsDict.v)
         console.info(`Will send request to: ${url}\nwith opts:`, {...opts, ...authOpts});
-    // eslint-disable-next-line no-use-before-define
     conciseCatcher(versionListHandler, 1)(await axios.get(url, {...opts, ...authOpts}).catch(
       e=>console.error(
         "Caught failure.  Consider checking %s's syslog "
         + "for messages written by %s.\n%s%s",
         instName, authOpts.auth.username, e.message,
-        (e.response !== undefined && e.response.data !== undefined
+        e.response !== undefined && e.response.data !== undefined
         && e.response.data.error !== undefined
         && e.response.data.error.message !== undefined
-          ? ("\n" + e.response.data.error.message) : ""))
+          ? `\n${e.response.data.error.message}` : "")
     ));
     if (currentData.length !== 2)
         throw new AppErr("Somehow got %i records when querying for % s and %s",
           currentData.length, sysidA, sysidB);
+    // eslint-disable-next-line prefer-template
     const payloadRe = new RegExp("<" + field + ">([\\s\\S]*)</" + field + ">");
-    /* eslint-disable no-use-before-define */
     const fileA = genCfFile(currentData[0].sys_created_on, currentData[0].payload, payloadRe);
     const fileB = genCfFile(currentData[1].sys_created_on, currentData[1].payload, payloadRe);
-    /* eslint-enable no-use-before-define */
-    console.info("Executing: " + comparatorCmd, fileA, fileB);
+    console.info(`Executing: ${comparatorCmd}`, fileA, fileB);
     const pObj = require("child_process").spawnSync(
       format(comparatorCmd, fileA, fileB), {
         cwd: tmpDir,
@@ -338,7 +339,7 @@ conciseCatcher(async function() {
     // Many of the comparators will return non-0 if the files differ, as
     // we intend.  So use stderr Buffer rather than .exitCode to determine
     // success.
-    if (pObj.stderr.length > 0)
+    if (pObj.stderr.length > 0)  // eslint-disable-next-line prefer-template
         console.error("Did the command fail?\n" + pObj.stderr.toString("utf8"));
     fs.unlinkSync(path.join(tmpDir, fileA));
     fs.unlinkSync(path.join(tmpDir, fileB));
@@ -362,6 +363,6 @@ function genCfFile(timestamp, payload, re) {
     console.debug(`Payload for '${fileName}'\n[${content}]`);
     const fileHasCRs = content.includes("\r");
     fs.writeFileSync(path.join(tmpDir, fileName),
-      content + (content.endsWith(fileHasCRs ? "\r\n" : "\n") ? "" : (fileHasCRs ? "\r\n" : "\n")));
+      content + content.endsWith(fileHasCRs ? "\r\n" : "\n") ? "" : fileHasCRs ? "\r\n" : "\n");
     return fileName;
 }

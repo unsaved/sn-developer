@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+"use strict";
 
 /**
  * TODO:
@@ -12,13 +13,14 @@ const fs = require("fs");
 const progName = process.argv[1].replace(/^.*[\\/]/, "");
 
 if (process.argv.length !== 3 || !/^\d+$/.test(process.argv[2])) {
-console.error("len " + process.argv.length);
+console.error(`len ${process.argv.length}`);
     console.error("SYNTAX:  %s N\nwhere N is non-negative integer seconds threshold.", progName);
     process.exit(2);
 }
 const threshold = Number(process.argv.pop());
 console.debug("Using threshold %i", threshold);
 let prevS, lineNum;
+// eslint-disable-next-line prefer-template
 fs.readFileSync(require("os").homedir() + "/tmp/timings.txt", "utf8").
   split("\n").filter((line, i) => {
       lineNum = i+1;
@@ -32,8 +34,8 @@ fs.readFileSync(require("os").homedir() + "/tmp/timings.txt", "utf8").
         }
         prevS = s;
         //console.log(`First line: (${line})`); process.exit(0);
-    } catch(e) {
-        e.message = "Input line #" + (lineNum) + ": " + e.message;
+    } catch (e) {
+        e.message = `Input line #${lineNum}: ${e.message}`;
         throw e;
     }
 });

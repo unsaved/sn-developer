@@ -2,7 +2,7 @@
   "name": "@admc.com/sn-developer",
   "version": "1.0.8",
   "description": "ServiceNow desktop developer utilities",
-  "main": "upload.js",
+  "main": "snUpload.js",
   "bin": {
     "snUpload": "snUpload.js",
     "snVersions": "snVersions.js",
@@ -10,7 +10,9 @@
   },
   "scripts": {
     "lint": "eslint",
+    "upload": "snUpload.js",
     "lintHtml": "eslint -f html -o local/eslint.html",
+    "snLint": "snLint -t sys_script_include -a global resources/HttpCodeError.js && snLint -t sys_ws_operation -a global resources/upload-wsop.js",
     "require+": "echo disabled node -p 'const { validate, is } = require(\"./index\"); validate(\"str\", \"string\");'",
     "require-": "echo disabled node -p 'const { validate, is } = require(\"./index\"); validate(\"str\", \"int\");'",
     "import+": "echo disabled node -r esm -p 'import { validate, is } from \"./index\"; validate(\"str\", \"string\");'",
@@ -34,10 +36,12 @@
     "axios": "^0.26.1",
     "checksum": "^1.0.0",
     "entities": "^4.1.1",
+    "eslint": "^8.18.0",
     "npm": "^8.12.2",
     "readline-sync": "^1.4.10",
-    "yargs": "^17.4.0",
-    "eslint-plugin-servicenow": "^0.1.0",
-    "eslint": "^8.18.0"
+    "yargs": "^17.4.0"
+  },
+  "peerDependencies": {
+    "@admc.com/eslint-plugin-sn": "^1.0.2"
   }
 }

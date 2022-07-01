@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 
-"use srict";
+"use strict";
 
 const { AppErr, conciseCatcher, conciseErrorHandler } = require("@admc.com/apputil");
 const { validate } = require("@admc.com/bycontract-plus");
-const { SNInternalToSNLocalString } = require("./lib/snJs");
+const { snInternalToSNLocalString } = require("./lib/snJs");
 
 /*
  * In platform Local Update Set's Customer Updates related list,
@@ -29,6 +29,7 @@ const progName = process.argv[1].replace(/.*[/\\]/, "");
 conciseCatcher(async function() {
     validate(arguments, []);
     if (badFileSpecs.length > 0)
+        // eslint-disable-next-line prefer-template
         throw new AppErr(badFileSpecs.length + " missing input files: " + badFileSpecs.join(", "));
     if (argsArray.length < 1)
         throw new AppErr(`SYNTAX:  ${progName} [-u] us1.xml [us2.xml...]`);
@@ -40,6 +41,7 @@ conciseCatcher(async function() {
 
         xml.replace(/^<payload>.+?<[/]payload>$/mgs, matchedSub => payloads.push(matchedSub));
         if (suxCount !== payloads.length) throw new AppErr(
+          // eslint-disable-next-line prefer-template
           "Mismatch between $suxCount SUX records and " + payloads.length
           + " payload elements for " + usPath);
         payloads.forEach(pl => {
@@ -72,12 +74,14 @@ conciseCatcher(async function() {
             return 0;
         }).map(entry =>
             util.format("    %s  %s %s", utcZone ?
-              (entry.time.replace(" ", "T")+"Z") : SNInternalToSNLocalString(entry.time),
+              // eslint-disable-next-line prefer-template
+              entry.time.replace(" ", "T")+"Z" : snInternalToSNLocalString(entry.time),
               entry.table.padEnd(29), entry.sysId)
         );
         console.info(
           "%s has %d sys_update_xml records w/ %d update %s timestamps%s",
           usPath, suxCount, entries.length, utcZone ? "UTC" : "local",
-            (entrySummaries.length < 0 ? "" : "\n" + entrySummaries.join("\n")));
+            // eslint-disable-next-line prefer-template
+            entrySummaries.length < 0 ? "" : "\n" + entrySummaries.join("\n"));
     });
 }, 10)().catch(e0=>conciseErrorHandler(e0, 1));
