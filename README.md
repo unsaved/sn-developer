@@ -9,9 +9,9 @@ Major components
                   or displays delta between two specified versions for specified field of the table.
 * **suxList**  Displays sys_update_xml records with the crucial attributes for the specified local
                Update Set XML file(s).
-* **lintSnScriptlet**  Executes ESLint against one specified ServiceNow JavaScript scriptlet file.
-
-
+* **snLint**  Executes ESLint against one specified ServiceNow JavaScript scriptlet file.
+              (This is actually provided by module @admc.com/eslint-plugin-sn, which sn-developer
+              depends on and bundles).
 
 # Installation
 Most users will want to install globally:
@@ -20,7 +20,7 @@ Most users will want to install globally:
 ```
 UNIX users will need root privileges, so run as root or under sudo.
 
-To bundle with your own project, install locally:
+To use just with your own project, install locally:
 ```
     npm i @admc.com/sn-developer
 ```
@@ -45,10 +45,22 @@ need to set.
 You will probably want to set in a UNIX ~/.profile (don't forget to export) or via Windows
 sysdm.cpl or a CMD script.
 
-lintSnScriptlet and snUpload (unless you use -n switch to skip syntax/lint checking)
+snLint and snUpload (unless you use -n switch to skip syntax/lint checking)
 require setup of ESLint RC files.
-You can use "lintSnScriptlet -s" to create a sample ".eslintrc.json" file that you should
+You can use "snLint -s" to create a sample ".eslintrc.json" file that you should
 edit and adjust according to the comments in it.
+Also run "snLint -g ." to populate the global variable lists.
+
+With global installaton
+```
+    snLint -s
+    snLint -g .
+```
+With local installaton
+```
+    npm exec snLint -- -s
+    npm exec snLint -- -g .
+```
 
 To start managing a new source file with snUpload, it usually makes sense to
 1. Make sure it's covered correctly by your .eslintrc.json file(s).
@@ -56,7 +68,8 @@ To start managing a new source file with snUpload, it usually makes sense to
 1. Add an entry to "updatemap.txt", unless already covered by a regex entry
 1. Assuming that you don't already have the starting script file locally, run
     ```
-    snUpload -r path/to/script.js
+    snUpload -r path/to/script.js  # for global sn-develore installation
+    npm exec snUpload -- -r path/to/script.js  # for local sn-develore installation
     ```
     This will give you the code to start with.
 1. Check the EOL style of the text file.  -r will give you whatever format the ServiceNow
