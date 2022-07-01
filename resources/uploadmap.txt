@@ -7,6 +7,9 @@
 #    local relative file paths; or a regular expression matching the same.
 #    Regular expression localFileSpecs are coded like '/expr/' or '/expr/i'.
 #    No literal space or tab characters allowed inside /regexp/s.
+#    Since you are not writing JavaScript, you don't need to double-up backslashes,
+#    but as always with regexs, you do need to escape all forward slashes and dots;
+#    and don't forget to sandwich with ^...$ if you want to start or end as specified.
 # keyvalue values may be special constant * or <, with meanings:
 #  * = same as datafile value (with directory path removed, if any),
 #  < = basename of datafile (i.e. without directory path and suffix).
