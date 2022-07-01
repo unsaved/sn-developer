@@ -136,7 +136,7 @@ conciseCatcher(function(inFile) {
         console.debug("comparatorCmd", comparatorCmd);
     }
 
-    const uploadEntry = new UploadMap().getEntry(file);
+    const uploadEntry = new UploadMap().validate().getEntry(file);
     if (uploadEntry === null)
         throw new AppErr(`You must add an entry for '${file}' in a 'uploadmap.txt' file.`);
     if (yargsDict.m) {
@@ -187,7 +187,7 @@ conciseCatcher(function(inFile) {
         const url = `https://${instName}.service-now.com` + (yargsDict.r ?
             `/api/now/v2/table/${uploadEntry.table}` :
             `/api/${apiScope}/${apiName}/${uploadEntry.table}/${uploadEntry.dataField}`);
-        /* eslint-enable */
+        /* eslint-enable prefer-template */
         const authOpts = { auth: rcFile === undefined
           ? { username: yargsDict.p, password: require("readline-sync").
               question(`Password for '${yargsDict.p}': `, {hideEchoBack: true}) }

@@ -8,6 +8,7 @@ if (process.cwd() !== __dirname)
     throw new Error(`${__filename} can only be run from it's directory, '${__dirname}'`);
 const uploadMap = new (require("../lib/UploadMap"))();
 console.info(uploadMap);
+uploadMap.validate();
 const entry = uploadMap.getEntry(process.argv[2]);
 if (entry === null) throw new Error(`No uploadmap entry for '${process.argv[2]}'`);
 console.info(entry);

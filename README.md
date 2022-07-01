@@ -14,11 +14,11 @@ Major components
               depends on and bundles).
 
 # Installation
-Most users will want to install globally:
+To install globally (accessible to all npm projects):
 ```
     npm i -g @admc.com/sn-developer
 ```
-UNIX users will need root privileges, so run as root or under sudo.
+UNIX users will need root privileges, so run this as root or under sudo.
 
 To use just with your own project, install locally:
 ```
@@ -68,8 +68,8 @@ To start managing a new source file with snUpload, it usually makes sense to
 1. Add an entry to "updatemap.txt", unless already covered by a regex entry
 1. Assuming that you don't already have the starting script file locally, run
     ```
-    snUpload -r path/to/script.js  # for global sn-develore installation
-    npm exec snUpload -- -r path/to/script.js  # for local sn-develore installation
+    snUpload -r path/to/script.js              # for global sn-developer installation
+    npm exec snUpload -- -r path/to/script.js  # for local sn-developer installation
     ```
     This will give you the code to start with.
 1. Check the EOL style of the text file.  -r will give you whatever format the ServiceNow
