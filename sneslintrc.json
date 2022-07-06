@@ -5,6 +5,7 @@
   "plugins": ["@admc.com/sn"],
   "extends": ["plugin:@admc.com/sn/servicenow"],
   "rules": {
+    "@admc.com/sn/prefer-array-iterator": "error",
     "eqeqeq": "error",
     "semi": "error",
     "dot-notation": "error",
