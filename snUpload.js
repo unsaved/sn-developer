@@ -38,6 +38,7 @@ Honored environmental variables.  * variables are required:
       requiresArg: true,
       type: "number",
   }).
+  option("l", { describe: "only run snLint on specified file, don't upload", type: "boolean", }).
   option("n", { describe: "No syntax/lint check for *.js file", type: "boolean", }).
   option("p", {
       describe: "Prompt for basic auth password for the specified user.  "
@@ -72,8 +73,8 @@ if (yargsDict.e) {
       "resources/SN_CF_COMMANDS-examples.txt"), "utf8"));
     process.exit(0);
 }
-if (yargsDict.m && yargsDict.r) {
-    console.error("Switches -m  and -r are mutually exclusive");
+if (yargsDict.m && yargsDict.r || yargsDict.l && yardsDict.m || yargsDict.r && yargsDict.l) {
+    console.error("Switches -m and -m  and -r are mutually exclusive");
     yargs.showHelp();
     process.exit(9);
 }
@@ -139,6 +140,8 @@ conciseCatcher(function(inFile) {
     const uploadEntry = new UploadMap().validate().getEntry(file);
     if (uploadEntry === null)
         throw new AppErr(`You must add an entry for '${file}' in a 'uploadmap.txt' file.`);
+    if (yargsDict.l && !uploadEntry.doLint) throw new AppErr(
+      `Add sys_scope and lint_alt values for the '${file}' entry your 'uploadmap.txt' file.`);
     if (yargsDict.m) {
         lastChecksum = checksum(fs.readFileSync(file, "utf8"));
         if (!lastChecksum) throw new Error("Assertion failed.  First checksum empty.");
@@ -177,6 +180,7 @@ conciseCatcher(function(inFile) {
                     throw new AppErr("Lint check failed");
                 }
                 console.info("ESLint success");
+                if (yargsDict.l) return;
             }
 
             localFileText = fs.readFileSync(file, "utf8");
