@@ -73,7 +73,7 @@ if (yargsDict.e) {
       "resources/SN_CF_COMMANDS-examples.txt"), "utf8"));
     process.exit(0);
 }
-if (yargsDict.m && yargsDict.r || yargsDict.l && yardsDict.m || yargsDict.r && yargsDict.l) {
+if (yargsDict.m && yargsDict.r || yargsDict.l && yargsDict.m || yargsDict.r && yargsDict.l) {
     console.error("Switches -m and -m  and -r are mutually exclusive");
     yargs.showHelp();
     process.exit(9);
