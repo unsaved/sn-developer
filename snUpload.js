@@ -39,6 +39,7 @@ Honored environmental variables.  * variables are required:
       type: "number",
   }).
   option("l", { describe: "only run snLint on specified file, don't upload", type: "boolean", }).
+  option("L", { describe: "only run snLint on specified file with HTML output", type: "boolean", }).
   option("n", { describe: "No syntax/lint check for *.js file", type: "boolean", }).
   option("p", {
       describe: "Prompt for basic auth password for the specified user.  "
@@ -67,6 +68,7 @@ const DEFAULT_CF_CMD_WIN = 'fc "%s" "%s"';
 
 if (!yargsDict.d) console.debug = () => {};
 if (yargsDict.q) console.debug = console.log = console.info = () => {};
+if (yargsDict.L) yargsDict.l = true;
 
 if (yargsDict.e) {
     process.stdout.write(fs.readFileSync(path.join(__dirname,
@@ -74,7 +76,7 @@ if (yargsDict.e) {
     process.exit(0);
 }
 if (yargsDict.m && yargsDict.r || yargsDict.l && yargsDict.m || yargsDict.r && yargsDict.l) {
-    console.error("Switches -m and -m  and -r are mutually exclusive");
+    console.error("Switches -l/-L and -m  and -r are mutually exclusive");
     yargs.showHelp();
     process.exit(9);
 }
@@ -167,6 +169,7 @@ conciseCatcher(function(inFile) {
                     "-t",
                     uploadEntry.table
                 ];
+                if (yargsDict.L) lintSnArgs.push("-H");
                 if (yargsDict.d) lintSnArgs.push("-d");
                 if (uploadEntry.lintAlt) {
                     lintSnArgs.push("-a");
