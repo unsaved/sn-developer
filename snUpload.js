@@ -156,10 +156,10 @@ conciseCatcher(function(inFile) {
         let localFileText;
         if (!yargsDict.r) {
             if (!yargsDict.n && uploadEntry.doLint) {
-                let eslintPath = path.join(__dirname, "../eslint-plugin-sn/snLint.js");
-                if (!fs.existsSync(eslintPath)) {
-                    eslintPath = path.join(__dirname,
+                let eslintPath = path.join(__dirname, 
                       "node_modules/@admc.com/eslint-plugin-sn/snLint.js");
+                if (!fs.existsSync(eslintPath)) {
+                    eslintPath = path.join(__dirname, "../eslint-plugin-sn/snLint.js");
                     if (!fs.existsSync(eslintPath))
                         throw new Error("Installation consistency failure.  "
                           + "'snLint.js' from eslint-plugin-sn module not found.");
