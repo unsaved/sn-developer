@@ -221,8 +221,8 @@ conciseCatcher(function(inFile) {
         };
         if (uploadEntry.appScope) {
             if (yargsDict.r)
-                opts.params.sysparam_query =
-                  `${opts.params.sysparam_query}^sys_scope=${uploadEntry.appScope}`;
+                opts.params.sysparm_query =
+                  `${opts.params.sysparm_query}^sys_scope=${uploadEntry.appScope}`;
             else
                 opts.params.appscope = uploadEntry.appScope;
         }
