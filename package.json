@@ -6,7 +6,8 @@
   "bin": {
     "snUpload": "snUpload.js",
     "snVersions": "snVersions.js",
-    "suxList": "suxList.js"
+    "suxList": "suxList.js",
+    "snMultiUpload": "snMultiUpload.js"
   },
   "scripts": {
     "lint": "eslint",

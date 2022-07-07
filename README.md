@@ -5,6 +5,9 @@ Major components
 * **snUpload**  Uploads locally edited or managed scripts to target ServiceNow instance.
                 Displays difference from previous version on the instance.
                 Has option to fetch the current version from the instance (for example to revert).
+                Can only be invoked for a single script.
+* **snMultiUpload**  Invokes snUpload with same switches (or none) for multiple files.
+                For sample switch -l you could run like:  snMultiUpload -l -- path/1.js sub/dir
 * **snVersions**  Displays versions of records for the specified SN-version-tracked table;
                   or displays delta between two specified versions for specified field of the table.
 * **suxList**  Displays sys_update_xml records with the crucial attributes for the specified local
