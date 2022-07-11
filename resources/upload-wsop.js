@@ -97,4 +97,4 @@ try {
     }
     return snErr;
 }
-})();
+})(request, response);
