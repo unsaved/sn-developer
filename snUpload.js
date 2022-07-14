@@ -20,7 +20,6 @@ const yargs = require("yargs")(process.argv.slice(2)).
 Honored environmental variables.  * variables are required:
     SN_CF_COMMAND:      Comparison command template  (-e to display examples)
    *SN_DEVELOPER_INST:  Short (unqualified) ServiceNow instancename
-    SN_FORCE_COLOR:     Set to true to force color output from ESLint
     SN_HTTPS_PROXY:     HTTPS Proxy URL
    *SN_RESTAPI_SCOPE:   Scope of the WS Op upload resource path after '/api/'
     SN_RESTAPI_NAME:    Name of the WS upload definition name.  Defaults to 'sndev'.`).
