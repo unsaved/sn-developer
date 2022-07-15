@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 
-const { AppErr, conciseCatcher, conciseErrorHandler, getAppVersion } = require("@admc.com/apputil");
+"use strict";
+
+const { AppErr, conciseCatcher, conciseErrorHandler } = require("@admc.com/apputil");
 const fs = require("fs");
 const path = require("path");
-const child_process = require("child_process"); // eslint-disable-line camelcase
+const childProcess = require("child_process");
 
 /**
  * Skips directories matching .* and 'node_modules'
@@ -39,7 +41,7 @@ if (passThruEnd > -1) {
     //console.debug(passThruParams.length + " passThruParams:\n" + passThruParams.join("\n"));
 }
 const files = [];
-conciseCatcher(async function() {
+conciseCatcher(() => {
     args.forEach(inputNode => {
         if (!fs.existsSync(inputNode)) throw new AppErr(`'${inputNode}' does not exists`);
         if (fs.statSync(inputNode).isDirectory(inputNode)) {
@@ -57,7 +59,7 @@ conciseCatcher(async function() {
         uploadArgs.push(file);
         //console.info(`Invocation with ${uploadArgs.length} params:\n` + uploadArgs.join("\n"));
         const returnObj =
-          child_process.spawnSync(process.execPath, uploadArgs, { stdio: "inherit" });
+          childProcess.spawnSync(process.execPath, uploadArgs, { stdio: "inherit" });
         if (returnObj.status !== 0) console.error(
           `snUpload invocation for '${file}' failed with exit value ${returnObj.status}`);
     });

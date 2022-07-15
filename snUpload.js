@@ -22,7 +22,8 @@ Honored environmental variables.  * variables are required:
    *SN_DEVELOPER_INST:  Short (unqualified) ServiceNow instancename
     SN_HTTPS_PROXY:     HTTPS Proxy URL
    *SN_RESTAPI_SCOPE:   Scope of the WS Op upload resource path after '/api/'
-    SN_RESTAPI_NAME:    Name of the WS upload definition name.  Defaults to 'sndev'.`).
+    SN_RESTAPI_NAME:    Name of the WS upload definition name.  Defaults to 'sndev'.`.
+        replace(/ /g, "\u2009")).
   option("e", {
       describe: "display Environment settings for different comparators",
       type: "boolean",
@@ -50,7 +51,15 @@ Honored environmental variables.  * variables are required:
       type: "boolean",
   }).
   option("r", {
-      describe: "Refresh local file. Replace (or create) local file from instance",
+      describe:
+        "Retrieve to stdout the instance script field value targeted by specified local file path."
+       + "  Beware that log messages may be intermixed with normal stdout, such as with -r switch.",
+      type: "boolean",
+  }).
+  option("R", {
+      describe:
+        "Same as -r switch except instead of perserving instance-side EOLs we output with UNIX "
+        + "newlines.  That's the same as removing all carraige Returns (if any)",
       type: "boolean",
   }).
   option("u", {
@@ -67,18 +76,26 @@ const DEFAULT_CF_CMD_WIN = 'fc "%s" "%s"';
 
 if (!yargsDict.d) console.debug = () => {};
 if (yargsDict.q) console.debug = console.log = console.info = () => {};
-if (yargsDict.L) yargsDict.l = true;
 
 if (yargsDict.e) {
     process.stdout.write(fs.readFileSync(path.join(__dirname,
       "resources/SN_CF_COMMANDS-examples.txt"), "utf8"));
     process.exit(0);
 }
-if (yargsDict.m && yargsDict.r || yargsDict.l && yargsDict.m || yargsDict.r && yargsDict.l) {
-    console.error("Switches -l/-L and -m  and -r are mutually exclusive");
+let lmrCount = 0;
+if (yargsDict.l) lmrCount++;
+if (yargsDict.L) lmrCount++;
+if (yargsDict.m) lmrCount++;
+if (yargsDict.r) lmrCount++;
+if (yargsDict.R) lmrCount++;
+if (lmrCount > 1) {
+    console.error("Switches -l, -L, -m , -r, -R are all mutually exclusive");
     yargs.showHelp();
     process.exit(9);
 }
+// Derived switch vals:
+if (yargsDict.L) yargsDict.l = true;
+if (yargsDict.R) yargsDict.r = true;
 if (yargsDict.u) {
     if (fs.existsSync("uploadmap.txt")) {
         console.error("Refusing to write 'uploadmap.txt' because one already exists here.");
@@ -155,7 +172,7 @@ conciseCatcher(function(inFile) {
         let localFileText;
         if (!yargsDict.r) {
             if (!yargsDict.n && uploadEntry.doLint) {
-                let eslintPath = path.join(__dirname, 
+                let eslintPath = path.join(__dirname,
                       "node_modules/@admc.com/eslint-plugin-sn/snLint.js");
                 if (!fs.existsSync(eslintPath)) {
                     eslintPath = path.join(__dirname, "../eslint-plugin-sn/snLint.js");
@@ -277,12 +294,11 @@ async function responseHandler(response) {
             throw new AppErr("Object from server has "
               + Object.keys(response.data.result[0]).length + " fields instead of just 1");
         prevRevData = Object.values(response.data.result[0])[0];
-        // eslint-disable-next-line prefer-template
-        if (typeof prevRevData !== "string") throw new AppErr("Object from server has "
-          + typeof prevRevData + " instead of string content");
+        if (typeof prevRevData !== "string") throw new AppErr(
+          `Object from server has ${typeof prevRevData} instead of string content`);
         fileHasCRs = prevRevData.includes("\r");
-        fs.writeFileSync(path.normalize(file), prevRevData + (fileHasCRs ? "\r\n" : "\n"));
-        console.debug("Wrote %s", path.normalize(file));
+        if (fileHasCRs && yargsDict.R) prevRevData = prevRevData.replace(/\r/g, "");
+        process.stdout.write(prevRevData + (fileHasCRs && !yargsDict.R ? "\r\n" : "\n"));
         return;
     }
     validate(arguments, [{data: "string"}]);

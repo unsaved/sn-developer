@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 
-const { AppErr, conciseCatcher, conciseErrorHandler, getAppVersion } = require("@admc.com/apputil");
+"use strict";
+
+const { AppErr, conciseCatcher, conciseErrorHandler } = require("@admc.com/apputil");
 const fs = require("fs");
 const path = require("path");
-const child_process = require("child_process"); // eslint-disable-line camelcase
+const childProcess = require("child_process"); // eslint-disable-line camelcase
 
 /**
  * Skips directories matching .* and 'node_modules'
@@ -42,8 +44,8 @@ if (passThruEnd > -1) {
 }
 passThruParams.unshift("-L");
 const files = [];
-conciseCatcher(async function() {
-    const mergerPath = path.join(__dirname, "../eslint-plugin-sn/mergeEslintHtml.js");
+conciseCatcher(() => {
+    let mergerPath = path.join(__dirname, "../eslint-plugin-sn/mergeEslintHtml.js");
     if (!fs.existsSync(mergerPath)) {
         mergerPath = path.join(__dirname,
           "node_modules/@admc.com/eslint-plugin-sn/mergeEslintHtml.js");
@@ -73,7 +75,7 @@ conciseCatcher(async function() {
         uploadArgs.push(file);
         //console.info(`Invocation with ${uploadArgs.length} params:\n` + uploadArgs.join("\n"));
         const returnObj =
-          child_process.spawnSync(process.execPath, uploadArgs,
+          childProcess.spawnSync(process.execPath, uploadArgs,
               { stdio: ["inherit", "pipe", "inherit"] });
         if (returnObj.status !== 0) console.error(
           `snUpload invocation for '${file}' failed with exit value ${returnObj.status}`);
@@ -82,7 +84,7 @@ conciseCatcher(async function() {
     });
     console.error(`WORKDIR: ${workDir}`);
     try {
-        child_process.execFileSync(process.execPath, mergeParams, { stdio: "inherit" });
+        childProcess.execFileSync(process.execPath, mergeParams, { stdio: "inherit" });
     } catch (e9) {
         throw new AppErr(`Failed to merge HTML files.  Temp directory retained: ${workDir}.`);
     }
