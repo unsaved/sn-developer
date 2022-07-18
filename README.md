@@ -1,6 +1,6 @@
-# Description
-Development Workstation Utility scripts for ServiceNow Developers
+#Development Workstation Utility scripts for ServiceNow Developers
 
+## Description
 Major components
 * **snUpload**  Uploads locally edited or managed scripts to target ServiceNow instance.
                 Displays difference from previous version on the instance.
@@ -15,8 +15,11 @@ Major components
 * **snLint**  Executes ESLint against one specified ServiceNow JavaScript scriptlet file.
               (This is actually provided by module @admc.com/eslint-plugin-sn.
               Details about that below).
+* **Update Set**  This contains the instance-side service to support script uploading, and settings
+              to accommodate ES6 client scripting and tinymce linting, as much as possible.
+              The component scriptlets are available in the "resources" subdirectory.
 
-# Installation
+## Installation
 To install globally (accessible to all npm projects):
 ```
     npm i -g @admc.com/sn-developer
@@ -28,7 +31,7 @@ To use just with your own project, install locally:
     npm i @admc.com/sn-developer
 ```
 
-##  REST Service
+###  REST Service
 snUpload requires installation of a Scripted REST API to serve the upload requests.
 The 'resources/' directory for this package contains an Update Set export
 "sn-developer_service-US.xml" which contains a working sample scripted REST API, 'sndev'.
@@ -41,7 +44,7 @@ consider editing the script to reject requests if the instance name isn't what y
 (There is a commented-out test for instance of name "x").
 "resources/upload-wsop.js" contains the JavaScript code for the service.
 
-# Setup and Usage
+## Setup and Usage
 
 Run snUpload and snVersions with '-h' switch to learn about environmental variables that you
 need to set.
@@ -83,3 +86,22 @@ To start managing a new source file with snUpload, it usually makes sense to
 1. Check the EOL style of the text file.  -r will give you whatever format the ServiceNow
    instance prefers.  Change the EOL style to what you want to work with (this will not change
    the EOL style on the SN instance).
+
+# ServiceNow ESLint Configuration
+Due to obvious (typical) coding mistakes made by ServiceNow, and in other cases ignorance (again
+typically), by default the platform prevents saving any client script form record when you have an
+ES6 construct (such as a 'let' statement or an arrow function).
+We have provided 4 override validation scripts that relax the ES5 constrains on client scripts.
+
+Contrary to ServiceNow's Open Source disclosure, the San Diego tinymce ESLint editor uses a version
+of ESLint between  5.15.0 inclusive and 6.2.0 exclusive (because it supports
+"prefer-named-capture-group" but not "function-call-argument-newline").
+That is ancient.  When configuring tinymce ESLint rules with sys property
+glide.ui.syntax_editor.linter.eslint_config, specifying rules before 5.6.0 will cause problems.
+See version attribute of rules at https://eslint.org/docs/latest/rules/ .
+
+The provided Update Set sets our suggested value for this system property.
+It's non-ideal because ServiceNow uses the old ESLint version, doesn't
+support critical features, allows only one configuration file for all script types, and provides no
+hooks to improve the situation.  The settings are ok for server-side scripts but just ignore them
+for client scripts which can't accommodate with the extreme platform limitations.

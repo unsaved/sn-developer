@@ -1,3 +1,8 @@
-#datafile                  table              datafield         keyfield  kevalue  scope  altscope
-resources/upload-wsop.js   sys_ws_operation   operation_script  name      update   global global
-resources/HttpCodeError.js sys_script_include script            name      <        global global
+#datafile                  table                datafield         keyfield  kevalue  scope  altscope
+resources/update-wsop.js   sys_ws_operation     operation_script  name      update   global global
+resources/HttpCodeError.js sys_script_include   script            name      <        global global
+resources/glide.ui.syntax_editor.linter.eslint_config.txt sys_properties value name      <        global
+resources/script-validator-desktop.js sys_script_validator  validator  sys_id  279c99440a0a0a6f00872ceab0e759ed global -
+resources/scriptp-validator-desktop.js sys_script_validator  validator  sys_id 2780cf700a0a0a6f0060332eba6ab860 global -
+resources/script-validator-mobilesp.js sys_script_validator  validator  sys_id 21abcad1e7721300b2888f49c2f6a916 global -
+resources/scriptp-validator-mobilesp.js sys_script_validator  validator sys_id 97e24a5de7321300b2888f49c2f6a950 global -

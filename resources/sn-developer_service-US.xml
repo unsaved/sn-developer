@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?><unload unload_date="2022-07-01 01:00:38">
+<?xml version="1.0" encoding="UTF-8"?><unload unload_date="2022-07-18 14:31:07">
 <sys_remote_update_set action="INSERT_OR_UPDATE">
 <application display_value="Global">global</application>
 <application_name>Global</application_name>
@@ -20,11 +20,11 @@
 <summary/>
 <sys_class_name>sys_remote_update_set</sys_class_name>
 <sys_created_by>blaine</sys_created_by>
-<sys_created_on>2022-07-01 01:00:38</sys_created_on>
-<sys_id>1ca914632fd45110cd01debcf699b69d</sys_id>
+<sys_created_on>2022-07-18 14:31:07</sys_created_on>
+<sys_id>da2676c52f741910cd01debcf699b6c6</sys_id>
 <sys_mod_count>0</sys_mod_count>
 <sys_updated_by>blaine</sys_updated_by>
-<sys_updated_on>2022-07-01 01:00:38</sys_updated_on>
+<sys_updated_on>2022-07-18 14:31:07</sys_updated_on>
 <update_set display_value=""/>
 <update_source display_value=""/>
 <updated/>
@@ -34,69 +34,45 @@
 <application display_value="Global">global</application>
 <category>customer</category>
 <comments/>
-<name>sys_script_include_847e68822f334910cd01debcf699b627</name>
-<payload>&lt;?xml version="1.0" encoding="UTF-8"?&gt;&lt;record_update table="sys_script_include"&gt;&lt;sys_script_include action="INSERT_OR_UPDATE"&gt;&lt;access&gt;public&lt;/access&gt;&lt;active&gt;true&lt;/active&gt;&lt;api_name&gt;global.HttpCodeError&lt;/api_name&gt;&lt;caller_access/&gt;&lt;client_callable&gt;false&lt;/client_callable&gt;&lt;description/&gt;&lt;name&gt;HttpCodeError&lt;/name&gt;&lt;script&gt;&lt;![CDATA[function HttpCodeError(code, messageString, srcLocation) {
-    this.name = "HttpCodeError";
-    this.code = code;
-    this.messageString = messageString;
-    this.srcLocation = srcLocation;
-    //if (!AdmcUtil.isInteger(this.code))
-    if (typeof this.code !== "number" || parseInt(this.code) !== this.code)
-        throw new Error("Bad HttpCodeError instantiation.  Code " + code + " not an integer");
-    if (typeof messageString !== "string") throw new Error(
-      "Bad HttpCodeError instantiation.  Message " + messageString + " not a string");
-    if (srcLocation !== undefined &amp;&amp; typeof srcLocation !== "string") throw new Error(
-      "Bad HttpCodeError instantiation.  Optional srcLocation " + srcLocation + " not a string");
-    this.message = "HTTP " + code + ".  " + this.messageString;
-    this.toString = function() { return this.message; };
-    this.log = function(srcLocation) {
-        if (srcLocation === undefined) srcLocation = this.srcLocation;
-        gs.logError(this.message, srcLocation === undefined ? "HttpCodeError" : srcLocation);
-    };
-}
-HttpCodeError.prototype = new Error;]]&gt;&lt;/script&gt;&lt;sys_class_name&gt;sys_script_include&lt;/sys_class_name&gt;&lt;sys_created_by&gt;blaine&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2022-06-01 14:15:00&lt;/sys_created_on&gt;&lt;sys_id&gt;847e68822f334910cd01debcf699b627&lt;/sys_id&gt;&lt;sys_mod_count&gt;7&lt;/sys_mod_count&gt;&lt;sys_name&gt;HttpCodeError&lt;/sys_name&gt;&lt;sys_package display_value="Global" source="global"&gt;global&lt;/sys_package&gt;&lt;sys_policy/&gt;&lt;sys_scope display_value="Global"&gt;global&lt;/sys_scope&gt;&lt;sys_update_name&gt;sys_script_include_847e68822f334910cd01debcf699b627&lt;/sys_update_name&gt;&lt;sys_updated_by&gt;blaine&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2022-06-30 22:04:04&lt;/sys_updated_on&gt;&lt;/sys_script_include&gt;&lt;/record_update&gt;</payload>
-<payload_hash>-1841476051</payload_hash>
-<remote_update_set display_value="sn-developer_service">1ca914632fd45110cd01debcf699b69d</remote_update_set>
+<name>sys_script_validator_279c99440a0a0a6f00872ceab0e759ed</name>
+<payload>&lt;?xml version="1.0" encoding="UTF-8"?&gt;&lt;record_update table="sys_script_validator"&gt;&lt;sys_script_validator action="INSERT_OR_UPDATE"&gt;&lt;active&gt;true&lt;/active&gt;&lt;description&gt;Tests that a piece of javascript contains no compile errors&lt;/description&gt;&lt;internal_type&gt;script&lt;/internal_type&gt;&lt;sys_class_name&gt;sys_script_validator&lt;/sys_class_name&gt;&lt;sys_created_by&gt;glide.maint&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2007-06-14 00:23:00&lt;/sys_created_on&gt;&lt;sys_id&gt;279c99440a0a0a6f00872ceab0e759ed&lt;/sys_id&gt;&lt;sys_mod_count&gt;25&lt;/sys_mod_count&gt;&lt;sys_name&gt;script&lt;/sys_name&gt;&lt;sys_package display_value="System (glidesoft)" source="glidesoft"&gt;079c7c036d2220100acb70b3534330b0&lt;/sys_package&gt;&lt;sys_policy/&gt;&lt;sys_scope display_value="Global"&gt;global&lt;/sys_scope&gt;&lt;sys_update_name&gt;sys_script_validator_279c99440a0a0a6f00872ceab0e759ed&lt;/sys_update_name&gt;&lt;sys_updated_by&gt;blaine&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2022-07-18 14:28:55&lt;/sys_updated_on&gt;&lt;ui_type&gt;0&lt;/ui_type&gt;&lt;validator&gt;&lt;![CDATA[function validate(value) {
+    "use strict";
+    switch (g_form.getTableName()) {
+        case "sys_script_client":
+        case "catalog_script_client":
+        case "expert_script_client":
+        case "sys_ui_action":
+        case "sys_ui_policy":
+        case "sys_ui_script":
+        case "sys_script_validator":
+            return true;
+    }
+
+    const ajax = new GlideAjax('JSValidator');
+    ajax.addParam('sysparm_name', 'validate');
+    ajax.addParam('sysparm_js_expression', value);
+    ajax.getXMLWait();
+    const answer = ajax.getAnswer();
+    if (answer === null) return true;
+
+    return getMessage(`Could not save record because of a compile error: ${answer}`);
+}]]&gt;&lt;/validator&gt;&lt;/sys_script_validator&gt;&lt;/record_update&gt;</payload>
+<payload_hash>-1456731931</payload_hash>
+<remote_update_set display_value="sn-developer_service">da2676c52f741910cd01debcf699b6c6</remote_update_set>
 <replace_on_upgrade>false</replace_on_upgrade>
 <sys_created_by>blaine</sys_created_by>
-<sys_created_on>2022-07-01 01:00:38</sys_created_on>
-<sys_id>10a914632fd45110cd01debcf699b69e</sys_id>
+<sys_created_on>2022-07-18 14:31:07</sys_created_on>
+<sys_id>222676c52f741910cd01debcf699b6c8</sys_id>
 <sys_mod_count>0</sys_mod_count>
-<sys_recorded_at>181b6a487350000001</sys_recorded_at>
+<sys_recorded_at>18211b649000000001</sys_recorded_at>
 <sys_updated_by>blaine</sys_updated_by>
-<sys_updated_on>2022-07-01 01:00:38</sys_updated_on>
+<sys_updated_on>2022-07-18 14:31:07</sys_updated_on>
 <table/>
-<target_name>HttpCodeError</target_name>
-<type>Script Include</type>
+<target_name>script</target_name>
+<type>Validation Script</type>
 <update_domain>global</update_domain>
-<update_guid>0a31b7db6414511025bb5179e8901e83</update_guid>
-<update_guid_history>0a31b7db6414511025bb5179e8901e83:-1841476051,398587001f9cd110cc7731c060486f54:-771107762,4f658fccdf5cd1100b1b09d97a442479:-1493301574,44450300919cd11066c8948f225d67a8:-771107762,e7692648791cd110f7133fa4949d00e8:-1065973810,dd2cf046ee33491087b51f6a5a7e9be9:1944941094,c8cf60425f3349100d2af7c6f0321f1d:560363054</update_guid_history>
-<update_set display_value=""/>
-<view/>
-</sys_update_xml>
-<sys_update_xml action="INSERT_OR_UPDATE">
-<action>INSERT_OR_UPDATE</action>
-<application display_value="Global">global</application>
-<category>customer</category>
-<comments/>
-<name>sys_user_role_9736e2442f1cd110cd01debcf699b6b8</name>
-<payload><![CDATA[<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_user_role"><sys_user_role action="INSERT_OR_UPDATE"><assignable_by/><can_delegate>true</can_delegate><description>User of sn-developer utility package</description><elevated_privilege>false</elevated_privilege><grantable>true</grantable><includes_roles/><name>sndev</name><requires_subscription>-1</requires_subscription><scoped_admin>false</scoped_admin><suffix/><sys_class_name>sys_user_role</sys_class_name><sys_created_by>blaine</sys_created_by><sys_created_on>2022-06-20 14:17:23</sys_created_on><sys_id>9736e2442f1cd110cd01debcf699b6b8</sys_id><sys_mod_count>0</sys_mod_count><sys_name>sndev</sys_name><sys_package display_value="Global" source="global">global</sys_package><sys_policy/><sys_scope display_value="Global">global</sys_scope><sys_update_name>sys_user_role_9736e2442f1cd110cd01debcf699b6b8</sys_update_name><sys_updated_by>blaine</sys_updated_by><sys_updated_on>2022-06-20 14:17:23</sys_updated_on></sys_user_role></record_update>]]></payload>
-<payload_hash>2120096774</payload_hash>
-<remote_update_set display_value="sn-developer_service">1ca914632fd45110cd01debcf699b69d</remote_update_set>
-<replace_on_upgrade>false</replace_on_upgrade>
-<sys_created_by>blaine</sys_created_by>
-<sys_created_on>2022-07-01 01:00:38</sys_created_on>
-<sys_id>18a914632fd45110cd01debcf699b69e</sys_id>
-<sys_mod_count>0</sys_mod_count>
-<sys_recorded_at>1818179aa800000001</sys_recorded_at>
-<sys_updated_by>blaine</sys_updated_by>
-<sys_updated_on>2022-07-01 01:00:38</sys_updated_on>
-<table/>
-<target_name>sndev</target_name>
-<type>Role</type>
-<update_domain>global</update_domain>
-<update_guid>0486ea44171cd110141fa2e5435ba167</update_guid>
-<update_guid_history>0486ea44171cd110141fa2e5435ba167:2120096774</update_guid_history>
+<update_guid>8aa5ba45a874191086041f9365ccd8a3</update_guid>
+<update_guid_history>8aa5ba45a874191086041f9365ccd8a3:-1456731931,d165be85b1741910f0d44f9e6bf30c2e:1055441887,b673f64546741910522c0bc8a8c91147:-1456731931,3273f64597741910479d868cf8975645:-1759836223</update_guid_history>
 <update_set display_value=""/>
 <view/>
 </sys_update_xml>
@@ -188,7 +164,7 @@ try {
     return undefined;
 } catch (e) {
     gs.sleep(1000);
-    const snErr = new sn_ws_err.ServiceError();  // eslint-disable-line camelcase
+    const snErr = new sn_ws_err.ServiceError();
     if (e instanceof HttpCodeError) {
         e.log(fName);
         snErr.setStatus(e.code);
@@ -205,23 +181,23 @@ try {
     }
     return snErr;
 }
-})();]]&gt;&lt;/operation_script&gt;&lt;operation_uri&gt;/api/admc/sndev/{table}/{field}&lt;/operation_uri&gt;&lt;produces&gt;text/plain&lt;/produces&gt;&lt;produces_customized&gt;true&lt;/produces_customized&gt;&lt;relative_path&gt;/{table}/{field}&lt;/relative_path&gt;&lt;request_example/&gt;&lt;requires_acl_authorization&gt;false&lt;/requires_acl_authorization&gt;&lt;requires_authentication&gt;true&lt;/requires_authentication&gt;&lt;requires_snc_internal_role&gt;true&lt;/requires_snc_internal_role&gt;&lt;short_description/&gt;&lt;sys_class_name&gt;sys_ws_operation&lt;/sys_class_name&gt;&lt;sys_created_by&gt;blaine&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2022-06-01 13:59:30&lt;/sys_created_on&gt;&lt;sys_id&gt;1cdb28022f334910cd01debcf699b626&lt;/sys_id&gt;&lt;sys_mod_count&gt;49&lt;/sys_mod_count&gt;&lt;sys_name&gt;update&lt;/sys_name&gt;&lt;sys_package display_value="Global" source="global"&gt;global&lt;/sys_package&gt;&lt;sys_policy/&gt;&lt;sys_scope display_value="Global"&gt;global&lt;/sys_scope&gt;&lt;sys_update_name&gt;sys_ws_operation_1cdb28022f334910cd01debcf699b626&lt;/sys_update_name&gt;&lt;sys_updated_by&gt;blaine&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2022-07-01 00:57:53&lt;/sys_updated_on&gt;&lt;web_service_definition display_value="sndev"&gt;97c2ac4a2fff0910cd01debcf699b660&lt;/web_service_definition&gt;&lt;web_service_version/&gt;&lt;/sys_ws_operation&gt;&lt;/record_update&gt;</payload>
-<payload_hash>-1382856029</payload_hash>
-<remote_update_set display_value="sn-developer_service">1ca914632fd45110cd01debcf699b69d</remote_update_set>
+})(request, response);]]&gt;&lt;/operation_script&gt;&lt;operation_uri&gt;/api/admc/sndev/{table}/{field}&lt;/operation_uri&gt;&lt;produces&gt;text/plain&lt;/produces&gt;&lt;produces_customized&gt;true&lt;/produces_customized&gt;&lt;relative_path&gt;/{table}/{field}&lt;/relative_path&gt;&lt;request_example/&gt;&lt;requires_acl_authorization&gt;false&lt;/requires_acl_authorization&gt;&lt;requires_authentication&gt;true&lt;/requires_authentication&gt;&lt;requires_snc_internal_role&gt;true&lt;/requires_snc_internal_role&gt;&lt;short_description/&gt;&lt;sys_class_name&gt;sys_ws_operation&lt;/sys_class_name&gt;&lt;sys_created_by&gt;blaine&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2022-06-01 13:59:30&lt;/sys_created_on&gt;&lt;sys_id&gt;1cdb28022f334910cd01debcf699b626&lt;/sys_id&gt;&lt;sys_mod_count&gt;56&lt;/sys_mod_count&gt;&lt;sys_name&gt;update&lt;/sys_name&gt;&lt;sys_package display_value="Global" source="global"&gt;global&lt;/sys_package&gt;&lt;sys_policy/&gt;&lt;sys_scope display_value="Global"&gt;global&lt;/sys_scope&gt;&lt;sys_update_name&gt;sys_ws_operation_1cdb28022f334910cd01debcf699b626&lt;/sys_update_name&gt;&lt;sys_updated_by&gt;blaine&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2022-07-18 14:24:44&lt;/sys_updated_on&gt;&lt;web_service_definition display_value="sndev"&gt;97c2ac4a2fff0910cd01debcf699b660&lt;/web_service_definition&gt;&lt;web_service_version/&gt;&lt;/sys_ws_operation&gt;&lt;/record_update&gt;</payload>
+<payload_hash>639549772</payload_hash>
+<remote_update_set display_value="sn-developer_service">da2676c52f741910cd01debcf699b6c6</remote_update_set>
 <replace_on_upgrade>false</replace_on_upgrade>
 <sys_created_by>blaine</sys_created_by>
-<sys_created_on>2022-07-01 01:00:38</sys_created_on>
-<sys_id>9ca914632fd45110cd01debcf699b69e</sys_id>
+<sys_created_on>2022-07-18 14:31:07</sys_created_on>
+<sys_id>2e2676c52f741910cd01debcf699b6c8</sys_id>
 <sys_mod_count>0</sys_mod_count>
-<sys_recorded_at>181b743a9a40000001</sys_recorded_at>
+<sys_recorded_at>18211b2776b0000001</sys_recorded_at>
 <sys_updated_by>blaine</sys_updated_by>
-<sys_updated_on>2022-07-01 01:00:38</sys_updated_on>
+<sys_updated_on>2022-07-18 14:31:07</sys_updated_on>
 <table/>
 <target_name>update</target_name>
 <type>Scripted REST Resource</type>
 <update_domain>global</update_domain>
-<update_guid>9c09d063e4d4511018bc338ede857b4b</update_guid>
-<update_guid_history>9c09d063e4d4511018bc338ede857b4b:-1382856029,132cc2b4305095108dfdb3ad8fcc907f:-1523665630,446bc2b408509510b31f33f35fcafe77:1277269180,eb0d95fca09c5510da297ffeab419bd1:-1741566357,d0bc9dbcd09c5510ae280b4e0eaf0fb6:-1617048376,27dbd5bcc09c551086d9df966d2f61a6:-715738739,8d9619b85e9c551004bae69d732e0c71:1143574197,8286d1b8da9c55108267f2cc42407c59:-242075627,53f55d38559c5510b28cd91b341931b4:-1094399782,8fe551b8a79c551020bd033e2326f0ac:-1787700486,0df2d9f4069c55104f877a0fb6158d36:-323405800,97e299f4349c55100e8f2b74f86f42cf:1138370424,1a329db4729c55105cd73230ca45facc:1956957027,a0321db49f9c55106975db60a770c7bd:-200785725,2c029db41a9c55106c17113af2ba18c4:-1051010968,cff159b4e49c5510fad4021246a535ea:-345038712,5ab159b46c9c551041550dcb3446e8e6:100499584,50b19974629c5510b84f456a8aafccee:1199470880,3831dd74429c5510e47908ac7ddd77b8:-121387328,bb115d74359c5510f36fce1f223c7fec:1556616802,63bf0174b59c55104aef4ffb53815e1f:207906796,65bf8134e59c55104cffafd1b559143c:2140120076,184f0534729c5510ee293a5a9ad7c0f5:-973288254,483f4934b09c5510cb5e02f13a580311:1381333886,dfde0534bb9c5510dfdc8677ad9460ee:-1357547531,59de89f0a69c551087194e3a31903191:-1289511751,a84e89f0059c5510d900ae195436c509:-1628861910,552e89f0d79c55109ebd2896127b0505:-1810651747,1e0e49f0559c551012432a895f991aff:-177592204,b6dd8db0f89c5510a429b53433b4c88f:1647268600,3f8f3ac8ce5cd11004aec65bad41db8c:-983503609,781b32441a5cd110aa42899317d8aecb:-2006921439,5d083244975cd110fad037da046bdc0b:939148936,a6973244ec5cd110e7f0348b2af85108:2072189826,fb677ac0465cd1102a362f704cdd38b7:908122578,6417f204fa5cd11030aeebb3ce8a5748:-1937890092,3796fac0e65cd110ffbbab4de21ba59d:20662745,e7563204b35cd110ba24eedb29d02f00:-1713449191,4ff5bac0f95cd1109f6db2f6dfd5904f:-1229258679,a625fe80275cd110a9db14d80f0c2d7c:-194324506,94157e40575cd11046b5e49aec6aaf45:2006664270,2473be081a1cd110727fc9e61e7d454f:112216940,7470b2cc891cd11021bb44e91019c7e6:1870099730,9cfb6ac8761cd110cda91e79517ca052:863237962,ff4c514631b3491029bac997ad6cbc6d:-389306331,9adbddc6a6734910f3c2219d7725ed89:-1049856193,c1abd9c60c734910b59d0a447adbca66:-1492280584,cb7cb04e86334910b29e3cdd8525ac72:1726762831,724e204209334910f35c4c6836e76452:354409832,013c2c02ba3349107825662638d68186:-1821950439</update_guid_history>
+<update_guid>89b47e85087419104183d38ab8b63b9d</update_guid>
+<update_guid_history>89b47e85087419104183d38ab8b63b9d:639549772,c2a43e856774191073e781ff2252e5ec:-789004558,3e2ac87a25a0511034dd09753e1f269e:639549772,4c0faa61ffe8111074d3d529e179b0fa:197624200,68ee26214ce81110829ecd03dda235e8:-602442486,c09ce2218ae811107ccb8cfcea1c08bd:197624200,a0baaa6d23a81110987c1348fa97c119:1798380846,07132a2984a81110076c52113248b14a:197624200,9c09d063e4d4511018bc338ede857b4b:-1382856029,132cc2b4305095108dfdb3ad8fcc907f:-1523665630,446bc2b408509510b31f33f35fcafe77:1277269180,eb0d95fca09c5510da297ffeab419bd1:-1741566357,d0bc9dbcd09c5510ae280b4e0eaf0fb6:-1617048376,27dbd5bcc09c551086d9df966d2f61a6:-715738739,8d9619b85e9c551004bae69d732e0c71:1143574197,8286d1b8da9c55108267f2cc42407c59:-242075627,53f55d38559c5510b28cd91b341931b4:-1094399782,8fe551b8a79c551020bd033e2326f0ac:-1787700486,0df2d9f4069c55104f877a0fb6158d36:-323405800,97e299f4349c55100e8f2b74f86f42cf:1138370424,1a329db4729c55105cd73230ca45facc:1956957027,a0321db49f9c55106975db60a770c7bd:-200785725,2c029db41a9c55106c17113af2ba18c4:-1051010968,cff159b4e49c5510fad4021246a535ea:-345038712,5ab159b46c9c551041550dcb3446e8e6:100499584,50b19974629c5510b84f456a8aafccee:1199470880,3831dd74429c5510e47908ac7ddd77b8:-121387328,bb115d74359c5510f36fce1f223c7fec:1556616802,63bf0174b59c55104aef4ffb53815e1f:207906796,65bf8134e59c55104cffafd1b559143c:2140120076,184f0534729c5510ee293a5a9ad7c0f5:-973288254,483f4934b09c5510cb5e02f13a580311:1381333886,dfde0534bb9c5510dfdc8677ad9460ee:-1357547531,59de89f0a69c551087194e3a31903191:-1289511751,a84e89f0059c5510d900ae195436c509:-1628861910,552e89f0d79c55109ebd2896127b0505:-1810651747,1e0e49f0559c551012432a895f991aff:-177592204,b6dd8db0f89c5510a429b53433b4c88f:1647268600,3f8f3ac8ce5cd11004aec65bad41db8c:-983503609,781b32441a5cd110aa42899317d8aecb:-2006921439,5d083244975cd110fad037da046bdc0b:939148936,a6973244ec5cd110e7f0348b2af85108:2072189826,fb677ac0465cd1102a362f704cdd38b7:908122578,6417f204fa5cd11030aeebb3ce8a5748:-1937890092,3796fac0e65cd110ffbbab4de21ba59d:20662745,e7563204b35cd110ba24eedb29d02f00:-1713449191,4ff5bac0f95cd1109f6db2f6dfd5904f:-1229258679,a625fe80275cd110a9db14d80f0c2d7c:-194324506,94157e40575cd11046b5e49aec6aaf45:2006664270,2473be081a1cd110727fc9e61e7d454f:112216940,7470b2cc891cd11021bb44e91019c7e6:1870099730,9cfb6ac8761cd110cda91e79517ca052:863237962,ff4c514631b3491029bac997ad6cbc6d:-389306331,9adbddc6a6734910f3c2219d7725ed89:-1049856193,c1abd9c60c734910b59d0a447adbca66:-1492280584,cb7cb04e86334910b29e3cdd8525ac72:1726762831,724e204209334910f35c4c6836e76452:354409832,013c2c02ba3349107825662638d68186:-1821950439</update_guid_history>
 <update_set display_value=""/>
 <view/>
 </sys_update_xml>
@@ -233,21 +209,397 @@ try {
 <name>sys_ws_definition_97c2ac4a2fff0910cd01debcf699b660</name>
 <payload><![CDATA[<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ws_definition"><sys_ws_definition action="INSERT_OR_UPDATE"><active>true</active><base_uri>/api/admc/sndev</base_uri><consumes>application/json,application/xml,text/xml</consumes><consumes_customized>false</consumes_customized><default_version>No active default version</default_version><doc_link/><enforce_acl>cf9d01d3e73003009d6247e603f6a990</enforce_acl><is_versioned>false</is_versioned><name>sndev</name><namespace>admc</namespace><produces>application/json,application/xml,text/xml</produces><produces_customized>false</produces_customized><service_id>sndev</service_id><short_description/><sys_class_name>sys_ws_definition</sys_class_name><sys_created_by>blaine</sys_created_by><sys_created_on>2022-06-01 13:56:50</sys_created_on><sys_id>97c2ac4a2fff0910cd01debcf699b660</sys_id><sys_mod_count>2</sys_mod_count><sys_name>sndev</sys_name><sys_package display_value="Global" source="global">global</sys_package><sys_policy/><sys_scope display_value="Global">global</sys_scope><sys_update_name>sys_ws_definition_97c2ac4a2fff0910cd01debcf699b660</sys_update_name><sys_updated_by>blaine</sys_updated_by><sys_updated_on>2022-06-22 20:18:11</sys_updated_on></sys_ws_definition></record_update>]]></payload>
 <payload_hash>-1154695220</payload_hash>
-<remote_update_set display_value="sn-developer_service">1ca914632fd45110cd01debcf699b69d</remote_update_set>
+<remote_update_set display_value="sn-developer_service">da2676c52f741910cd01debcf699b6c6</remote_update_set>
 <replace_on_upgrade>false</replace_on_upgrade>
 <sys_created_by>blaine</sys_created_by>
-<sys_created_on>2022-07-01 01:00:38</sys_created_on>
-<sys_id>d8a914632fd45110cd01debcf699b69e</sys_id>
+<sys_created_on>2022-07-18 14:31:07</sys_created_on>
+<sys_id>6a2676c52f741910cd01debcf699b6c8</sys_id>
 <sys_mod_count>0</sys_mod_count>
 <sys_recorded_at>1818d10b4500000001</sys_recorded_at>
 <sys_updated_by>blaine</sys_updated_by>
-<sys_updated_on>2022-07-01 01:00:38</sys_updated_on>
+<sys_updated_on>2022-07-18 14:31:07</sys_updated_on>
 <table/>
 <target_name>sndev</target_name>
 <type>Scripted REST API</type>
 <update_domain>global</update_domain>
 <update_guid>f04cc2b44b50951018f15a6a7f8e899f</update_guid>
 <update_guid_history>f04cc2b44b50951018f15a6a7f8e899f:-1154695220,304cc2b41a509510ebb131720ac8a69e:-1154695220,fd744efc681095108798c6ba331dab81:620996165,72e6e284c81cd110ec577c95a5cb7611:-615053362,399b2c4a98ff091008174b7d811f39c0:1911835726</update_guid_history>
+<update_set display_value=""/>
+<view/>
+</sys_update_xml>
+<sys_update_xml action="INSERT_OR_UPDATE">
+<action>INSERT_OR_UPDATE</action>
+<application display_value="Global">global</application>
+<category>customer</category>
+<comments/>
+<name>sys_script_validator_2780cf700a0a0a6f0060332eba6ab860</name>
+<payload>&lt;?xml version="1.0" encoding="UTF-8"?&gt;&lt;record_update table="sys_script_validator"&gt;&lt;sys_script_validator action="INSERT_OR_UPDATE"&gt;&lt;active&gt;true&lt;/active&gt;&lt;description&gt;Tests that a piece of javascript contains no compile errors   &lt;/description&gt;&lt;internal_type&gt;script_plain&lt;/internal_type&gt;&lt;sys_class_name&gt;sys_script_validator&lt;/sys_class_name&gt;&lt;sys_created_by&gt;glide.maint&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2007-06-13 23:52:50&lt;/sys_created_on&gt;&lt;sys_id&gt;2780cf700a0a0a6f0060332eba6ab860&lt;/sys_id&gt;&lt;sys_mod_count&gt;78&lt;/sys_mod_count&gt;&lt;sys_name&gt;script_plain&lt;/sys_name&gt;&lt;sys_package display_value="System (glidesoft)" source="glidesoft"&gt;079c7c036d2220100acb70b3534330b0&lt;/sys_package&gt;&lt;sys_policy/&gt;&lt;sys_scope display_value="Global"&gt;global&lt;/sys_scope&gt;&lt;sys_update_name&gt;sys_script_validator_2780cf700a0a0a6f0060332eba6ab860&lt;/sys_update_name&gt;&lt;sys_updated_by&gt;blaine&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2022-07-18 14:29:02&lt;/sys_updated_on&gt;&lt;ui_type&gt;0&lt;/ui_type&gt;&lt;validator&gt;&lt;![CDATA[function validate(value) {
+    "use strict";
+    switch (g_form.getTableName()) {
+        case "sys_script_client":
+        case "catalog_script_client":
+        case "expert_script_client":
+        case "sys_ui_action":
+        case "sys_ui_policy":
+        case "sys_ui_script":
+        case "sys_script_validator":
+            return true;
+    }
+
+    const ajax = new GlideAjax('JSValidator');
+    ajax.addParam('sysparm_name', 'validate');
+    ajax.addParam('sysparm_js_expression', value);
+    ajax.getXMLWait();
+    const answer = ajax.getAnswer();
+    if (answer === null)
+        return true;
+
+    return getMessage(`Could not save record because of a compile error: ${answer}`);
+}]]&gt;&lt;/validator&gt;&lt;/sys_script_validator&gt;&lt;/record_update&gt;</payload>
+<payload_hash>-1440691051</payload_hash>
+<remote_update_set display_value="sn-developer_service">da2676c52f741910cd01debcf699b6c6</remote_update_set>
+<replace_on_upgrade>false</replace_on_upgrade>
+<sys_created_by>blaine</sys_created_by>
+<sys_created_on>2022-07-18 14:31:07</sys_created_on>
+<sys_id>6e2676c52f741910cd01debcf699b6c7</sys_id>
+<sys_mod_count>0</sys_mod_count>
+<sys_recorded_at>18211b666c50000001</sys_recorded_at>
+<sys_updated_by>blaine</sys_updated_by>
+<sys_updated_on>2022-07-18 14:31:07</sys_updated_on>
+<table/>
+<target_name>script_plain</target_name>
+<type>Validation Script</type>
+<update_domain>global</update_domain>
+<update_guid>4cb57685e1741910c05172448b0fd549</update_guid>
+<update_guid_history>4cb57685e1741910c05172448b0fd549:-1440691051,2555f2c53a741910caaef50485db32b3:-536894475,f583ba45c5741910f2aceb1458f6ed9c:-1440691051,ae671641ab341910eb12faf09051e59d:1135464554,77961a01ef3419107b9407b043024a5a:-13467546,31233e28437c9510b0200a85592368ac:1932345388,5c527228fe7c9510df37bcc4546b7643:-915011797,1b7e2264027c9510b49c386b4ea61e04:-1948586709,fc5e2a24c07c9510706125e1cb45fdd0:1680204580,745e2a24287c9510731168dd120d4ccf:-1948586709</update_guid_history>
+<update_set display_value=""/>
+<view/>
+</sys_update_xml>
+<sys_update_xml action="INSERT_OR_UPDATE">
+<action>INSERT_OR_UPDATE</action>
+<application display_value="Global">global</application>
+<category>customer</category>
+<comments/>
+<name>sys_user_role_9736e2442f1cd110cd01debcf699b6b8</name>
+<payload><![CDATA[<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_user_role"><sys_user_role action="INSERT_OR_UPDATE"><assignable_by/><can_delegate>true</can_delegate><description>User of sn-developer utility package</description><elevated_privilege>false</elevated_privilege><grantable>true</grantable><includes_roles/><name>sndev</name><requires_subscription>-1</requires_subscription><scoped_admin>false</scoped_admin><suffix/><sys_class_name>sys_user_role</sys_class_name><sys_created_by>blaine</sys_created_by><sys_created_on>2022-06-20 14:17:23</sys_created_on><sys_id>9736e2442f1cd110cd01debcf699b6b8</sys_id><sys_mod_count>0</sys_mod_count><sys_name>sndev</sys_name><sys_package display_value="Global" source="global">global</sys_package><sys_policy/><sys_scope display_value="Global">global</sys_scope><sys_update_name>sys_user_role_9736e2442f1cd110cd01debcf699b6b8</sys_update_name><sys_updated_by>blaine</sys_updated_by><sys_updated_on>2022-06-20 14:17:23</sys_updated_on></sys_user_role></record_update>]]></payload>
+<payload_hash>2120096774</payload_hash>
+<remote_update_set display_value="sn-developer_service">da2676c52f741910cd01debcf699b6c6</remote_update_set>
+<replace_on_upgrade>false</replace_on_upgrade>
+<sys_created_by>blaine</sys_created_by>
+<sys_created_on>2022-07-18 14:31:07</sys_created_on>
+<sys_id>a62676c52f741910cd01debcf699b6c8</sys_id>
+<sys_mod_count>0</sys_mod_count>
+<sys_recorded_at>1818179aa800000001</sys_recorded_at>
+<sys_updated_by>blaine</sys_updated_by>
+<sys_updated_on>2022-07-18 14:31:07</sys_updated_on>
+<table/>
+<target_name>sndev</target_name>
+<type>Role</type>
+<update_domain>global</update_domain>
+<update_guid>0486ea44171cd110141fa2e5435ba167</update_guid>
+<update_guid_history>0486ea44171cd110141fa2e5435ba167:2120096774</update_guid_history>
+<update_set display_value=""/>
+<view/>
+</sys_update_xml>
+<sys_update_xml action="INSERT_OR_UPDATE">
+<action>INSERT_OR_UPDATE</action>
+<application display_value="Global">global</application>
+<category>customer</category>
+<comments/>
+<name>sys_script_validator_21abcad1e7721300b2888f49c2f6a916</name>
+<payload>&lt;?xml version="1.0" encoding="UTF-8"?&gt;&lt;record_update table="sys_script_validator"&gt;&lt;sys_script_validator action="INSERT_OR_UPDATE"&gt;&lt;active&gt;true&lt;/active&gt;&lt;description&gt;Tests that a piece of javascript contains no compile errors in Service Portal&lt;/description&gt;&lt;internal_type&gt;script&lt;/internal_type&gt;&lt;sys_class_name&gt;sys_script_validator&lt;/sys_class_name&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2018-06-18 22:45:02&lt;/sys_created_on&gt;&lt;sys_id&gt;21abcad1e7721300b2888f49c2f6a916&lt;/sys_id&gt;&lt;sys_mod_count&gt;30&lt;/sys_mod_count&gt;&lt;sys_name&gt;script&lt;/sys_name&gt;&lt;sys_package display_value="Service Portal - Core" source="com.glide.service-portal"&gt;50f2458f6d6620100acb70b353433062&lt;/sys_package&gt;&lt;sys_policy/&gt;&lt;sys_scope display_value="Global"&gt;global&lt;/sys_scope&gt;&lt;sys_update_name&gt;sys_script_validator_21abcad1e7721300b2888f49c2f6a916&lt;/sys_update_name&gt;&lt;sys_updated_by&gt;blaine&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2022-07-18 14:29:10&lt;/sys_updated_on&gt;&lt;ui_type&gt;1&lt;/ui_type&gt;&lt;validator&gt;&lt;![CDATA[/* global g_validation_script_field_count */
+function validate(value, fieldName) {
+    "use strict";
+    if (!NOW.sp)
+        return true;
+
+    const validator = function(callback) {
+        if (!value) {
+            callback(fieldName, true);
+            return;
+        }
+
+        // disable validation for certain tables
+        switch (g_form.getTableName()) {
+            case "sys_script_client":
+            case "catalog_script_client":
+            case "expert_script_client":
+            case "sys_ui_action":
+            case "sys_ui_policy":
+            case "sys_ui_script":
+            case "sys_script_validator":
+                callback(fieldName, true);
+                return;
+        }
+
+        const ajax = new GlideAjax('JSValidator');
+        ajax.addParam('sysparm_name', 'validate');
+        ajax.addParam('sysparm_js_expression', value);
+        ajax.getXMLAnswer(answer =&gt; {
+            if (answer === null) {
+                callback(fieldName, true);
+            } else {
+                getMessage('Could not save record because of a compile error', trnsErrMsg =&gt;
+                    callback(fieldName, false, `${trnsErrMsg}: ${answer}`)
+                );
+            }
+        });
+    };
+
+    return g_ui_scripts['sp.validation.executor']().
+      execute(fieldName, validator, g_validation_script_field_count, g_form, NOW);
+}]]&gt;&lt;/validator&gt;&lt;/sys_script_validator&gt;&lt;/record_update&gt;</payload>
+<payload_hash>1187598776</payload_hash>
+<remote_update_set display_value="sn-developer_service">da2676c52f741910cd01debcf699b6c6</remote_update_set>
+<replace_on_upgrade>false</replace_on_upgrade>
+<sys_created_by>blaine</sys_created_by>
+<sys_created_on>2022-07-18 14:31:07</sys_created_on>
+<sys_id>aa2676c52f741910cd01debcf699b6c7</sys_id>
+<sys_mod_count>0</sys_mod_count>
+<sys_recorded_at>18211b686660000001</sys_recorded_at>
+<sys_updated_by>blaine</sys_updated_by>
+<sys_updated_on>2022-07-18 14:31:07</sys_updated_on>
+<table/>
+<target_name>script</target_name>
+<type>Validation Script</type>
+<update_domain>global</update_domain>
+<update_guid>8eb5fac59f741910f879e65adaae780f</update_guid>
+<update_guid_history>8eb5fac59f741910f879e65adaae780f:1187598776,6365fe852c741910403c7ee86fe44f57:-1763277362,4893f6c1927419109c2f5d7c4d548b2f:1187598776,4093f6c1be741910fe1522ed2dbd0e2e:-1001662652</update_guid_history>
+<update_set display_value=""/>
+<view/>
+</sys_update_xml>
+<sys_update_xml action="INSERT_OR_UPDATE">
+<action>INSERT_OR_UPDATE</action>
+<application display_value="Global">global</application>
+<category>customer</category>
+<comments/>
+<name>sys_properties_9bebca14731023001c233096fbf6a753</name>
+<payload><![CDATA[<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_properties"><sys_properties action="INSERT_OR_UPDATE"><choices/><description>ESlint configuration</description><ignore_cache>false</ignore_cache><is_private>false</is_private><name>glide.ui.syntax_editor.linter.eslint_config</name><read_roles/><suffix/><sys_class_name>sys_properties</sys_class_name><sys_created_by>admin</sys_created_by><sys_created_on>2018-08-29 09:43:08</sys_created_on><sys_id>9bebca14731023001c233096fbf6a753</sys_id><sys_mod_count>22</sys_mod_count><sys_name>glide.ui.syntax_editor.linter.eslint_config</sys_name><sys_package display_value="Syntax Editor" source="com.glide.syntax_editor">5b0d3cc36d2220100acb70b3534330fa</sys_package><sys_policy/><sys_scope display_value="Global">global</sys_scope><sys_update_name>sys_properties_9bebca14731023001c233096fbf6a753</sys_update_name><sys_updated_by>blaine</sys_updated_by><sys_updated_on>2022-07-18 14:22:22</sys_updated_on><type>string</type><value>{&#13;
+  "COMMENT": "@admc.com/sn-developer suggested tinymce esline rules for San Diego",&#13;
+  "COMMENT": "Does not support traditional code comments like real .eslintrc.json files do",&#13;
+  "COMMENT": "Somehow does not support extends directive",&#13;
+  "COMMENT": "Supports only ESLint rules &lt; 6.2.0 (when function-call-argument-newline was introduced)",&#13;
+&#13;
+  "rules": {&#13;
+    "no-mixed-spaces-and-tabs": "off",&#13;
+&#13;
+    "array-callback-return": ["error", { "checkForEach": true }],&#13;
+    "camelcase": ["warn", { "properties": "never", "ignoreGlobals": true }],&#13;
+    "no-use-before-define": ["error", { "functions": false, "classes": false }],&#13;
+&#13;
+    "dot-notation": "warn",&#13;
+    "eqeqeq": "warn",&#13;
+    "max-depth": "warn",&#13;
+    "no-array-constructor": "warn",&#13;
+    "no-eval": "warn",&#13;
+    "no-implied-eval": "warn",&#13;
+    "no-template-curly-in-string": "warn",&#13;
+    "semi": "warn",&#13;
+&#13;
+    "block-scoped-var": "error",&#13;
+    "class-methods-use-this": "error",&#13;
+    "consistent-return": "error",&#13;
+    "constructor-super": "error",&#13;
+    "for-direction": "error",&#13;
+    "getter-return": "error",&#13;
+    "new-cap": "error",&#13;
+    "no-async-promise-executor": "error",&#13;
+    "no-case-declarations": "error",&#13;
+    "no-class-assign": "error",&#13;
+    "no-compare-neg-zero": "error",&#13;
+    "no-cond-assign": "error",&#13;
+    "no-const-assign": "error",&#13;
+    "no-constant-condition": "error",&#13;
+    "no-control-regex": "error",&#13;
+    "no-debugger": "error",&#13;
+    "no-delete-var": "error",&#13;
+    "no-dupe-args": "error",&#13;
+    "no-dupe-class-members": "error",&#13;
+    "no-dupe-keys": "error",&#13;
+    "no-duplicate-case": "error",&#13;
+    "no-else-return": "error",&#13;
+    "no-empty-character-class": "error",&#13;
+    "no-empty-pattern": "error",&#13;
+    "no-empty": "error",&#13;
+    "no-ex-assign": "error",&#13;
+    "no-extra-bind": "error",&#13;
+    "no-extra-boolean-cast": "error",&#13;
+    "no-extra-label": "error",&#13;
+    "no-extra-semi": "error",&#13;
+    "no-fallthrough": "error",&#13;
+    "no-func-assign": "error",&#13;
+    "no-global-assign": "error",&#13;
+    "no-inner-declarations": "error",&#13;
+    "no-invalid-regexp": "error",&#13;
+    "no-irregular-whitespace": "error",&#13;
+    "no-lone-blocks": "error",&#13;
+    "no-lonely-if": "error",&#13;
+    "no-loop-func": "error",&#13;
+    "no-misleading-character-class": "error",&#13;
+    "no-negated-condition": "error",&#13;
+    "no-new-object": "error",&#13;
+    "no-new-symbol": "error",&#13;
+    "no-new-wrappers": "error",&#13;
+    "no-obj-calls": "error",&#13;
+    "no-octal": "error",&#13;
+    "no-proto": "error",&#13;
+    "no-prototype-builtins": "error",&#13;
+    "no-redeclare": "error",&#13;
+    "no-regex-spaces": "error",&#13;
+    "no-self-assign": "error",&#13;
+    "no-self-compare": "error",&#13;
+    "no-shadow-restricted-names": "error",&#13;
+    "no-sparse-arrays": "error",&#13;
+    "no-this-before-super": "error",&#13;
+    "no-undef-init": "error",&#13;
+    "no-undef": "error",&#13;
+    "no-unexpected-multiline": "error",&#13;
+    "no-unreachable": "error",&#13;
+    "no-unsafe-finally": "error",&#13;
+    "no-unsafe-negation": "error",&#13;
+    "no-unused-expressions": "error",&#13;
+    "no-unused-labels": "error",&#13;
+    "no-unused-vars": "error",&#13;
+    "no-useless-call": "error",&#13;
+    "no-useless-catch": "error",&#13;
+    "no-useless-computed-key": "error",&#13;
+    "no-useless-concat": "error",&#13;
+    "no-useless-escape": "error",&#13;
+    "no-useless-return": "error",&#13;
+    "no-with": "error",&#13;
+    "operator-assignment": "error",&#13;
+    "require-yield": "error",&#13;
+    "use-isnan": "error",&#13;
+    "valid-typeof": "error"&#13;
+  }&#13;
+}</value><write_roles/></sys_properties><sys_translated_text action="delete_multiple" query="documentkey=9bebca14731023001c233096fbf6a753"/></record_update>]]></payload>
+<payload_hash>-849804053</payload_hash>
+<remote_update_set display_value="sn-developer_service">da2676c52f741910cd01debcf699b6c6</remote_update_set>
+<replace_on_upgrade>false</replace_on_upgrade>
+<sys_created_by>blaine</sys_created_by>
+<sys_created_on>2022-07-18 14:31:07</sys_created_on>
+<sys_id>de2676c52f741910cd01debcf699b6c6</sys_id>
+<sys_mod_count>0</sys_mod_count>
+<sys_recorded_at>18211b053b80000001</sys_recorded_at>
+<sys_updated_by>blaine</sys_updated_by>
+<sys_updated_on>2022-07-18 14:31:07</sys_updated_on>
+<table/>
+<target_name>glide.ui.syntax_editor.linter.eslint_config</target_name>
+<type>System Property</type>
+<update_domain>global</update_domain>
+<update_guid>f624fa454e7419101d0232b6cd4c2f3a</update_guid>
+<update_guid_history>f624fa454e7419101d0232b6cd4c2f3a:-849804053,3f14fe45477419102fcca90cb747648b:1542565047,8116e8c9a9bcd510f9fb3a8c1c8874c0:-849804053,ba856cc978bcd510e01454bc71aacd77:-162633005,0f65e8c936bcd5109dae26bc2b5e28b6:-1177436955,7b45a8c95abcd5107f4440310f59161a:376326918,cb25a489d6bcd510c3d56663740bfd52:1930090791,b7a4a0c969bcd5106a2fb254001d9822:-90921985,83d328491fbcd5102cd76bad8a8435a0:-162633005,a38904c5ea7cd510c962edd6806fd47e:-4989316,62d84885aa7cd510c9cb26889337eed0:-710622049,f6054c81977cd5105053ec030be27bcc:-1023116607,8b048c81c67cd510005e5c89d0de0163:69382726,1df34841bd7cd510e07f18e8e599a125:1612880215,5c72c4419e7cd510350cc860a232ce7a:310724214,a042c041d67cd510a772ccf9a58fe903:1526983382,99d1484d843cd51023e0e2f3ab5eaa19:-2101444762,d96d777ca63cd51044faa91bce98aad3:884709939,8a87fb38ee3cd510c2b4545e960f8f47:500556399,c1f637386b3cd510ddf7c3aab6e5e5ce:-2018426676,37f577f0663cd51044558d5227e7894a:1149201956,6cfeeffc92f8d510dffd52c5f30ec9d9:-1626295338,762c63304c3cd510de80cb073ec7bd11:-1754977804,d07a6bbc33f8d510b88df61d6b9ecccc:1838904984,0007c32849bc9510f0f868a13a1b6dcd:723770434,0ba1432434bc9510358a8d6183dbf4cc:-296450708,d2408fa0acbc95100624aaefdcda199c:427190875,20ca2e60097c951082e683789eb69485:280212061,81baea60bf7c95104dcdb64090423bb5:1570459754,a0baea60887c95101b845d073900f5b0:-1754977804</update_guid_history>
+<update_set display_value=""/>
+<view/>
+</sys_update_xml>
+<sys_update_xml action="INSERT_OR_UPDATE">
+<action>INSERT_OR_UPDATE</action>
+<application display_value="Global">global</application>
+<category>customer</category>
+<comments/>
+<name>sys_script_validator_97e24a5de7321300b2888f49c2f6a950</name>
+<payload>&lt;?xml version="1.0" encoding="UTF-8"?&gt;&lt;record_update table="sys_script_validator"&gt;&lt;sys_script_validator action="INSERT_OR_UPDATE"&gt;&lt;active&gt;true&lt;/active&gt;&lt;description&gt;Tests that a piece of javascript contains no compile errors in Service Portal&lt;/description&gt;&lt;internal_type&gt;script_plain&lt;/internal_type&gt;&lt;sys_class_name&gt;sys_script_validator&lt;/sys_class_name&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2018-06-18 22:03:02&lt;/sys_created_on&gt;&lt;sys_id&gt;97e24a5de7321300b2888f49c2f6a950&lt;/sys_id&gt;&lt;sys_mod_count&gt;30&lt;/sys_mod_count&gt;&lt;sys_name&gt;script_plain&lt;/sys_name&gt;&lt;sys_package display_value="Service Portal - Core" source="com.glide.service-portal"&gt;50f2458f6d6620100acb70b353433062&lt;/sys_package&gt;&lt;sys_policy/&gt;&lt;sys_scope display_value="Global"&gt;global&lt;/sys_scope&gt;&lt;sys_update_name&gt;sys_script_validator_97e24a5de7321300b2888f49c2f6a950&lt;/sys_update_name&gt;&lt;sys_updated_by&gt;blaine&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2022-07-18 14:29:15&lt;/sys_updated_on&gt;&lt;ui_type&gt;1&lt;/ui_type&gt;&lt;validator&gt;&lt;![CDATA[/* global g_validation_script_field_count */
+function validate(value, fieldName) {
+    "use strict";
+    if (!NOW.sp)
+        return true;
+    const validator = function(callback) {
+        if (!value) {
+            callback(fieldName, true);
+            return;
+        }
+
+        // disable validation for certain tables
+        switch (g_form.getTableName()) {
+            case "sys_script_client":
+            case "catalog_script_client":
+            case "expert_script_client":
+            case "sys_ui_action":
+            case "sys_ui_policy":
+            case "sys_ui_script":
+            case "sys_script_validator":
+                callback(fieldName, true);
+                return;
+        }
+
+        const ajax = new GlideAjax('JSValidator');
+        ajax.addParam('sysparm_name', 'validate');
+        ajax.addParam('sysparm_js_expression', value);
+        ajax.getXMLAnswer(answer =&gt; {
+            if (answer === null) {
+                callback(fieldName, true);
+            } else {
+                getMessage('Could not save record because of a compile error', trnsErrMsg =&gt;
+                    callback(fieldName, false, `${trnsErrMsg}: ${answer}`)
+                );
+            }
+        });
+    };
+
+    return g_ui_scripts['sp.validation.executor']().
+      execute(fieldName, validator, g_validation_script_field_count, g_form, NOW);
+}]]&gt;&lt;/validator&gt;&lt;/sys_script_validator&gt;&lt;/record_update&gt;</payload>
+<payload_hash>594751160</payload_hash>
+<remote_update_set display_value="sn-developer_service">da2676c52f741910cd01debcf699b6c6</remote_update_set>
+<replace_on_upgrade>false</replace_on_upgrade>
+<sys_created_by>blaine</sys_created_by>
+<sys_created_on>2022-07-18 14:31:07</sys_created_on>
+<sys_id>e22676c52f741910cd01debcf699b6c8</sys_id>
+<sys_mod_count>0</sys_mod_count>
+<sys_recorded_at>18211b697b90000001</sys_recorded_at>
+<sys_updated_by>blaine</sys_updated_by>
+<sys_updated_on>2022-07-18 14:31:07</sys_updated_on>
+<table/>
+<target_name>script_plain</target_name>
+<type>Validation Script</type>
+<update_domain>global</update_domain>
+<update_guid>03b5fac53374191076c1ac3813bd9244</update_guid>
+<update_guid_history>03b5fac53374191076c1ac3813bd9244:594751160,89853ac566741910e70181ae29f1febb:42439750,05853ac5107419109725eee65ae407ba:-1606860174</update_guid_history>
+<update_set display_value=""/>
+<view/>
+</sys_update_xml>
+<sys_update_xml action="INSERT_OR_UPDATE">
+<action>INSERT_OR_UPDATE</action>
+<application display_value="Global">global</application>
+<category>customer</category>
+<comments/>
+<name>sys_script_include_847e68822f334910cd01debcf699b627</name>
+<payload>&lt;?xml version="1.0" encoding="UTF-8"?&gt;&lt;record_update table="sys_script_include"&gt;&lt;sys_script_include action="INSERT_OR_UPDATE"&gt;&lt;access&gt;public&lt;/access&gt;&lt;active&gt;true&lt;/active&gt;&lt;api_name&gt;global.HttpCodeError&lt;/api_name&gt;&lt;caller_access/&gt;&lt;client_callable&gt;false&lt;/client_callable&gt;&lt;description/&gt;&lt;name&gt;HttpCodeError&lt;/name&gt;&lt;script&gt;&lt;![CDATA[function HttpCodeError(code, messageString, srcLocation) {
+    this.name = "HttpCodeError";
+    this.code = code;
+    this.messageString = messageString;
+    this.srcLocation = srcLocation;
+    //if (!AdmcUtil.isInteger(this.code))
+    if (typeof this.code !== "number" || parseInt(this.code) !== this.code)
+        throw new Error("Bad HttpCodeError instantiation.  Code " + code + " not an integer");
+    if (typeof messageString !== "string") throw new Error(
+      "Bad HttpCodeError instantiation.  Message " + messageString + " not a string");
+    if (srcLocation !== undefined &amp;&amp; typeof srcLocation !== "string") throw new Error(
+      "Bad HttpCodeError instantiation.  Optional srcLocation " + srcLocation + " not a string");
+    this.message = "HTTP " + code + ".  " + this.messageString;
+    this.toString = function() { return this.message; };
+    this.log = function(srcLocation) {
+        if (srcLocation === undefined) srcLocation = this.srcLocation;
+        gs.logError(this.message, srcLocation === undefined ? "HttpCodeError" : srcLocation);
+    };
+}
+HttpCodeError.prototype = new Error;]]&gt;&lt;/script&gt;&lt;sys_class_name&gt;sys_script_include&lt;/sys_class_name&gt;&lt;sys_created_by&gt;blaine&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2022-06-01 14:15:00&lt;/sys_created_on&gt;&lt;sys_id&gt;847e68822f334910cd01debcf699b627&lt;/sys_id&gt;&lt;sys_mod_count&gt;9&lt;/sys_mod_count&gt;&lt;sys_name&gt;HttpCodeError&lt;/sys_name&gt;&lt;sys_package display_value="Global" source="global"&gt;global&lt;/sys_package&gt;&lt;sys_policy/&gt;&lt;sys_scope display_value="Global"&gt;global&lt;/sys_scope&gt;&lt;sys_update_name&gt;sys_script_include_847e68822f334910cd01debcf699b627&lt;/sys_update_name&gt;&lt;sys_updated_by&gt;blaine&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2022-07-18 14:25:29&lt;/sys_updated_on&gt;&lt;/sys_script_include&gt;&lt;/record_update&gt;</payload>
+<payload_hash>-1841476051</payload_hash>
+<remote_update_set display_value="sn-developer_service">da2676c52f741910cd01debcf699b6c6</remote_update_set>
+<replace_on_upgrade>false</replace_on_upgrade>
+<sys_created_by>blaine</sys_created_by>
+<sys_created_on>2022-07-18 14:31:07</sys_created_on>
+<sys_id>e62676c52f741910cd01debcf699b6c7</sys_id>
+<sys_mod_count>0</sys_mod_count>
+<sys_recorded_at>18211b3249c0000001</sys_recorded_at>
+<sys_updated_by>blaine</sys_updated_by>
+<sys_updated_on>2022-07-18 14:31:07</sys_updated_on>
+<table/>
+<target_name>HttpCodeError</target_name>
+<type>Script Include</type>
+<update_domain>global</update_domain>
+<update_guid>7bd432c5c674191086ffd2ad65991a54</update_guid>
+<update_guid_history>7bd432c5c674191086ffd2ad65991a54:-1841476051,a2d4fe85d774191015495ee745988ee6:199993055,0a31b7db6414511025bb5179e8901e83:-1841476051,398587001f9cd110cc7731c060486f54:-771107762,4f658fccdf5cd1100b1b09d97a442479:-1493301574,44450300919cd11066c8948f225d67a8:-771107762,e7692648791cd110f7133fa4949d00e8:-1065973810,dd2cf046ee33491087b51f6a5a7e9be9:1944941094,c8cf60425f3349100d2af7c6f0321f1d:560363054</update_guid_history>
 <update_set display_value=""/>
 <view/>
 </sys_update_xml>
