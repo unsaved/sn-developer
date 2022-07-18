@@ -3,6 +3,13 @@
   "COMMENT": "Does not support traditional code comments like real .eslintrc.json files do",
   "COMMENT": "Somehow does not support extends directive",
   "COMMENT": "Supports only ESLint rules < 6.2.0 (when function-call-argument-newline was introduced)",
+  
+  "globals": {
+      "Class": false,
+      "GlideRecord": false,
+      "GlideAggregate": false,
+      "gs": true
+  },
 
   "rules": {
     "no-mixed-spaces-and-tabs": "off",
@@ -76,7 +83,7 @@
     "no-sparse-arrays": "error",
     "no-this-before-super": "error",
     "no-undef-init": "error",
-    "no-undef": "error",
+    "no-undef": "warn",
     "no-unexpected-multiline": "error",
     "no-unreachable": "error",
     "no-unsafe-finally": "error",
