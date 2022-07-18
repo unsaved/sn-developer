@@ -1,5 +1,5 @@
 {
-  "COMMENT": "@admc.com/sn-developer suggested tinymce esline rules for San Diego",
+  "COMMENT": "@admc.com/sn-developer suggested tinymce eslint rules for San Diego",
   "COMMENT": "Does not support traditional code comments like real .eslintrc.json files do",
   "COMMENT": "Somehow does not support extends directive",
   "COMMENT": "Supports only ESLint rules < 6.2.0 (when function-call-argument-newline was introduced)",
