@@ -301,7 +301,15 @@ async function responseHandler(response) {
         process.stdout.write(prevRevData + (fileHasCRs && !yargsDict.R ? "\r\n" : "\n"));
         return;
     }
-    validate(arguments, [{data: "string"}]);
+    //Can't use validate because retrieval of JSON sys property SOMETIMES gets as an object:
+    //validate(arguments, [{data: "string"}]);
+    if (typeof response.data !== "string") {
+        // Server is sending a GlideRecord.getValue() with mime type text/plain.
+        // I don't know how JSON strings are sometimes making it to use as objects???
+        console.warn(`We received a ${typeof response.data} rather than a string.
+Due to this, we can't determine or display the delta.`);
+        return;
+    }
     prevRevData = response.data;
     console.debug("Received", prevRevData);
     const prevRevFile = format("%s-%i.%s",

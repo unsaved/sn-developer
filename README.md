@@ -17,7 +17,7 @@ Major components
               Details about that below).
 * **Update Set**  This contains the instance-side service to support script uploading, and settings
               to accommodate ES6 client scripting and tinymce linting, as much as possible.
-              The component scriptlets are available in the "resources" subdirectory.
+              The implementation component scriptlets are available in the "resources" subdirectory.
 
 ## Installation
 To install globally (accessible to all npm projects):
@@ -108,7 +108,13 @@ glide.ui.syntax_editor.linter.eslint_config, specifying rules before 5.6.0 will 
 See version attribute of rules at https://eslint.org/docs/latest/rules/ .
 
 The provided Update Set sets our suggested value for this system property.
-It's non-ideal because ServiceNow uses the old ESLint version, doesn't
-support critical features, allows only one configuration file for all script types, and provides no
-hooks to improve the situation.  The settings are ok for server-side scripts but just ignore them
-for client scripts which can't accommodate with the extreme platform limitations.
+It's non-ideal because ServiceNow uses the old ESLint version, doesn't support critical ESLint
+features, allows only one configuration file for all script types, and provides no
+hooks to improve the situation.
+The settings will give false positive hits when you define a function for say a Script Include
+or a client script event function; and it allows global, server-scoped, and client non-isolated
+construct anywhere, since is there no way to narrow the rules to specific scriptlet types or
+attributes.
+For that reason, it's better to use snLint on your desktop or through a service.
+I have a snLint service that runs on the MID server and ServiceNow instances use this service from
+UI Actions and Remote Update Set preview BR.
