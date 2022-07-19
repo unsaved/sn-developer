@@ -87,6 +87,13 @@ To start managing a new source file with snUpload, it usually makes sense to
    instance prefers.  Change the EOL style to what you want to work with (this will not change
    the EOL style on the SN instance).
 
+As a work-around for a mingw or git-for-windows glitch, if Node.js can't determine tty interactivity
+correctly, then you can export env node variable FORCE_COLOR to true.
+You can check your system with
+```
+    node -p process.stdout.isTTY
+```
+
 # ServiceNow ESLint Configuration
 Due to obvious (typical) coding mistakes made by ServiceNow, and in other cases ignorance (again
 typically), by default the platform prevents saving any client script form record when you have an
