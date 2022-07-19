@@ -1,7 +1,7 @@
 (function() {
 /* global HttpCodeError */
 const fName = "admc/sndev/upload:rest";
-var eMsg, dict, oldContent;
+var eMsg, pObj, oldContent;
 //const callerId = gs.getUserID();
 
 try {
@@ -56,21 +56,21 @@ try {
     if (typeof ds !== "string")
         throw new HttpCodeError(400, "PATCH body not a JSON string but a " + typeof ds);
     try {
-        dict = JSON.parse(ds);
+        pObj = JSON.parse(ds);
     } catch (e0) {
         throw new HttpCodeError(400, "Body contains invalid JSON: " + e0);
     }
-    //if (!AdmcUtil.isPlainObject(dict))  would be a much better test
-    if (typeof dict !== "object")
-        throw new HttpCodeError(400, "Decoded body is not a plain object but " + typeof dict);
-    if (typeof dict.content !== "string")  // to upload null, client needs to send "".
+    //if (!AdmcUtil.isPlainObject(pObj))  would be a much better test
+    if (typeof pObj !== "object")
+        throw new HttpCodeError(400, "Decoded body is not a plain object but " + typeof pObj);
+    if (typeof pObj.content !== "string")  // to upload null, client needs to send "".
         throw new HttpCodeError(
-          400, "Provided content not a string but a " + typeof dict.content);
+          400, "Provided content not a string but a " + typeof pObj.content);
     oldContent = r.getValue(field);
     if (oldContent === null) oldContent = "";
     gs.log(table + "." + field + " content length: " + oldContent.length
-      + " => " + dict.content.length, fName);
-    r.setValue(field, dict.content);
+      + " => " + pObj.content.length, fName);
+    r.setValue(field, pObj.content);
     if (!r.changes()) throw new HttpCodeError(409, "Provided content is not a change");
     if (!r.update()) throw new HttpCodeError(500, "Update failed");
 
