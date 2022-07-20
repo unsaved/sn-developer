@@ -1,6 +1,6 @@
 {
   "COMMENT1": "WARNING: JSON and some ESLint format errors in this file will completely disable code-checking with no notification!!",
-  "COMMENT2": "@admc.com/sn-developer suggested tinymce eslint rules for San Diego",
+  "COMMENT2": "@admc.com/sn-developer suggested TinyMCE eslint rules for San Diego",
   "COMMENT3": "Does not support traditional code comments like real .eslintrc.json files do",
   "COMMENT4": "extends and overrides directives are silently ignored",
   "COMMENT5": "Supports only ESLint rules < 6.2.0 (when function-call-argument-newline was introduced)",
