@@ -16,7 +16,7 @@ Major components
               (This is actually provided by module @admc.com/eslint-plugin-sn.
               Details about that below).
 * **Update Set**  This contains the instance-side service to support script uploading, and settings
-              to accommodate ES6 client scripting and tinymce linting, as much as possible.
+              to accommodate ES6 client scripting and TinyMCE linting, as much as possible.
               The implementation component scriptlets are available in the "resources" subdirectory.
 
 ## Installation
@@ -100,10 +100,10 @@ typically), by default the platform prevents saving any client script form recor
 ES6 construct (such as a 'let' statement or an arrow function).
 We have provided 4 override validation scripts that relax the ES5 constrains on client scripts.
 
-Contrary to ServiceNow's Open Source disclosure, the San Diego tinymce ESLint editor uses a version
+Contrary to ServiceNow's Open Source disclosure, the San Diego TinyMCE ESLint editor uses a version
 of ESLint between  5.15.0 inclusive and 6.2.0 exclusive (because it supports
 "prefer-named-capture-group" but not "function-call-argument-newline").
-That is ancient.  When configuring tinymce ESLint rules with sys property
+That is ancient.  When configuring TinyMCE ESLint rules with sys property
 glide.ui.syntax_editor.linter.eslint_config, specifying rules before 5.6.0 will cause problems.
 See version attribute of rules at https://eslint.org/docs/latest/rules/ .
 
