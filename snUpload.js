@@ -198,7 +198,7 @@ conciseCatcher(function(inFile) {
                 } catch (e9) {
                     throw new AppErr("Lint check failed");
                 }
-                console.info("ESLint success");
+                console.warn("ESLint success");  // Warn level so does not intermix with stdout
                 if (yargsDict.l) return;
             }
 
@@ -256,8 +256,8 @@ conciseCatcher(function(inFile) {
             opts.proxy = proxyClause;
         }
         if (yargsDict.v)
-            console.info(`Will send request to: ${url}\nwith opts (- data):`,
-              {...opts, ...authOpts});
+            console.warn(`Will send request to: ${url}\nwith opts (- data):`,
+              {...opts, ...authOpts});  // Warn level so does not intermix with stdout
         if (!yargsDict.r) opts.data = { "content": localFileText };
         axios({...opts, ...authOpts}).
           then(conciseCatcher(responseHandler, 1),
