@@ -89,4 +89,4 @@ conciseCatcher(() => {
         throw new AppErr(`Failed to merge HTML files.  Temp directory retained: ${workDir}.`);
     }
      fs.rmSync(workDir, { recursive: true, force: true });
-}, 11)().catch(e0=>conciseErrorHandler(e0, 9));
+}, 11)();

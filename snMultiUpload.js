@@ -2,6 +2,10 @@
 
 "use strict";
 
+// SYNTAX:  snMultiUpload.js [-switches... --] inputFiles...
+// The reason for '--' is because we don't want this script to have very tight dependencies
+// on  which snUpload switches take paired non-hyphen tokens.
+
 const { AppErr, conciseCatcher, conciseErrorHandler } = require("@admc.com/apputil");
 const fs = require("fs");
 const path = require("path");
@@ -63,4 +67,4 @@ conciseCatcher(() => {
         if (returnObj.status !== 0) console.error(
           `snUpload invocation for '${file}' failed with exit value ${returnObj.status}`);
     });
-}, 11)().catch(e0=>conciseErrorHandler(e0, 9));
+}, 11)();
