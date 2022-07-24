@@ -26,7 +26,7 @@
     "rest-spread-spacing": "error"
   },
   "overrides": [{  // ES6 additions
-    "files": [ "**/@(noniso|iso)/*.js", "**/@(sys_ui_script|sys_script_validator)/*.js"],
+    "files": [ "**/@(noniso|iso)/*.js", "**/@(sys_ui_script|sys_script_validator)/all/*.js"],
     "rules": {
       "no-var": "error",
       "strict": ["error", "safe"],

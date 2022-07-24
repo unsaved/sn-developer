@@ -40,6 +40,6 @@
     "readline-sync": "^1.4.10"
   },
   "peerDependencies": {
-    "@admc.com/eslint-plugin-sn": "^1.1.15"
+    "@admc.com/eslint-plugin-sn": "^2.0.1"
   }
 }
