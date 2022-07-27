@@ -16,7 +16,9 @@ const child_process = require("child_process"); // eslint-disable-line camelcase
 // We keep a copy of the yargs instance so we can invoke methods on it like .help().
 const yargs = require("yargs")(process.argv.slice(2)).
   strictOptions().
-  usage(`SYNTAX: $0 [-dnqrv] [-p username] [-m POLL_MS] file.ext    OR   $0 -e|h|u
+  usage(`SYNTAX: $0 [-dnqrv] [-p username] [-m POLL_MS] file.ext
+OR
+        $0 -e|h|u
 Honored environmental variables.  * variables are required:
     SN_CF_COMMAND:      Comparison command template  (-e to display examples)
    *SN_DEVELOPER_INST:  Short (unqualified) ServiceNow instancename
@@ -238,7 +240,7 @@ conciseCatcher(function(inFile) {
         if (uploadEntry.appScope) {
             if (yargsDict.r)
                 opts.params.sysparm_query =
-                  `${opts.params.sysparm_query}^sys_scope=${uploadEntry.appScope}`;
+                  `${opts.params.sysparm_query}^sys_scope.scope=${uploadEntry.appScope}`;
             else
                 opts.params.appscope = uploadEntry.appScope;
         }
