@@ -248,8 +248,6 @@ conciseCatcher(async function() {
             ? "\n" + e.response.data.error.message : "");  // eslint-disable-line prefer-template
         process.exit(1);
     }));
-    if (currentData.length < 2)
-        throw new AppErr("No comparison possible with only %i versions", currentData.length);
     console.debug("Received list of %i versions", currentData.length);
     if (verA === undefined) {
         /* eslint-disable prefer-template */
@@ -270,6 +268,8 @@ conciseCatcher(async function() {
         /* eslint-enable prefer-template */
         return;
     }
+    if (currentData.length < 2)
+        throw new AppErr("No comparison possible with only %i versions", currentData.length);
 
     let sysidA, sysidB, hit;
     if (typeof verA === "number") {
