@@ -96,8 +96,8 @@ not just this module
 If you installed globally and don't care to know, then ignore this section.
 Run commands for either method from the directory into which you installed the module.
 Two invocation methods are most convenient.:
-1. npm exec binScript [-- -script switches] scriptArgs
-1. node_modules/.bin/binScript [-script switches] scriptArgs
+1. npm exec binScript [-- -script switches] [scriptArgs]
+1. node_modules/.bin/binScript [-script switches] [scriptArgs]
 
 Conceptually, ``npm exec`` sets up a convenient node execution environment, with
 ``node_modules/.bin`` in the search path.
