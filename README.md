@@ -100,7 +100,7 @@ Two invocation methods are most convenient.:
 1. node_modules/.bin/binScript [-script switches] [scriptArgs]
 
 Conceptually, ``npm exec`` sets up a convenient node execution environment, with
-``node_modules/.bin`` in the search path.
+``node_modules/.bin`` in the search path, and it adds some indicators to stdout.
 If you installed to some other cascaded node_modules, it handles that too.
 (You shouldn't be using other non-global node_modules directories unless you understand things
 far better than I am covering here, because imperfect setups can lead to confusing resolution
