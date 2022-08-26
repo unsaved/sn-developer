@@ -2,7 +2,7 @@
 
 "use strict";
 
-const { AppErr, conciseCatcher, conciseErrorHandler } = require("@admc.com/apputil");
+const { AppErr, conciseCatcher } = require("@admc.com/apputil");
 const fs = require("fs");
 const path = require("path");
 const childProcess = require("child_process"); // eslint-disable-line camelcase
@@ -55,7 +55,7 @@ conciseCatcher(() => {
     }
 
     args.forEach(inputNode => {
-        if (!fs.existsSync(inputNode)) throw new AppErr(`'${inputNode}' does not exists`);
+        if (!fs.existsSync(inputNode)) throw new AppErr(`'${inputNode}' does not exist`);
         if (fs.statSync(inputNode).isDirectory(inputNode)) {
             Array.prototype.push.apply(files, jsFilesInBranch(fs.opendirSync(inputNode)));
         } else {

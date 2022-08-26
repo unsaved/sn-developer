@@ -23,6 +23,7 @@ Honored environmental variables.  * variables are required:
     SN_CF_COMMAND:      Comparison command template  (-e to display examples)
    *SN_DEVELOPER_INST:  Short (unqualified) ServiceNow instancename
     SN_HTTPS_PROXY:     HTTPS Proxy URL
+    SN_LINT_STRICT:     If set (to anything) then snLint will be invoked with -r switch
    *SN_RESTAPI_SCOPE:   Scope of the WS Op upload resource path after '/api/'
     SN_RESTAPI_NAME:    Name of the WS upload definition name.  Defaults to 'sndev'.`.
         replace(/ /g, "\u2009")).
@@ -122,6 +123,7 @@ if (yargsDict.m) { // yargsDict.m value validation
     }
 }
 const isUnixShell = process.env.SHELL !== undefined;
+const lintStrict = process.env.SN_LINT_STRICT !== undefined;
 
 conciseCatcher(function(inFile) {
     validate(arguments, ["string"]);
@@ -187,6 +189,7 @@ conciseCatcher(function(inFile) {
                     "-t",
                     uploadEntry.table
                 ];
+                if (lintStrict) lintSnArgs.push("-r");
                 if (yargsDict.L) lintSnArgs.push("-H");
                 if (yargsDict.d) lintSnArgs.push("-d");
                 if (uploadEntry.lintAlt) {
