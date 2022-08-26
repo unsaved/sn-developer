@@ -1,6 +1,6 @@
 {
   "name": "@admc.com/sn-developer",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "ServiceNow desktop developer utilities",
   "main": "snUpload.js",
   "bin": {
