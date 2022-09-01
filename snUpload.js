@@ -187,7 +187,8 @@ conciseCatcher(function(inFile) {
                 const lintSnArgs = [
                     eslintPath,
                     "-t",
-                    uploadEntry.table
+                    uploadEntry.table + (["catalog_ui_policy", "sp_widget", "sys_ui_policy"].
+                      includes(uploadEntry.table) ? `.${uploadEntry.dataField}` : "")
                 ];
                 if (lintStrict) lintSnArgs.push("-r");
                 if (yargsDict.L) lintSnArgs.push("-H");
