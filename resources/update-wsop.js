@@ -1,4 +1,4 @@
-(function() {
+(function(request, response) {
 /* global HttpCodeError */
 const fName = "admc/sndev/upload:rest";
 var eMsg, pObj, oldContent;
