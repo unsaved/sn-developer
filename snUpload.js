@@ -12,6 +12,7 @@ const { format } = require("util");
 const checksum = require("checksum");
 const path = require("path");
 const child_process = require("child_process"); // eslint-disable-line camelcase
+const MULTI_SCRIPT_TABLES = ["catalog_ui_policy", "sp_widget", "sys_ui_policy", "sys_ui_page"];
 
 // We keep a copy of the yargs instance so we can invoke methods on it like .help().
 const yargs = require("yargs")(process.argv.slice(2)).
@@ -187,8 +188,8 @@ conciseCatcher(function(inFile) {
                 const lintSnArgs = [
                     eslintPath,
                     "-t",
-                    uploadEntry.table + (["catalog_ui_policy", "sp_widget", "sys_ui_policy"].
-                      includes(uploadEntry.table) ? `.${uploadEntry.dataField}` : "")
+                    uploadEntry.table + (MULTI_SCRIPT_TABLES.includes(uploadEntry.table) ?
+                      `.${uploadEntry.dataField}` : "")
                 ];
                 if (lintStrict) lintSnArgs.push("-r");
                 if (yargsDict.L) lintSnArgs.push("-H");
