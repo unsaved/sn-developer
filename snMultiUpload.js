@@ -31,11 +31,14 @@ function jsFilesInBranch(fsDir) {
               jsFilesInBranch(fs.opendirSync(entPath)));
         else if (dirent.name.endsWith(".js") && dirent.isFile())
             outputList.push(entPath);
+        else if (txtFilesToo && dirent.name.endsWith(".txt") && dirent.isFile())
+            outputList.push(entPath);
     }
     fsDir.closeSync();
     return outputList;
 }
 
+const txtFilesToo = process.env.MULTI_UPLOAD_TXT_FILES
 const args = process.argv.slice(2);
 const passThruEnd = args.indexOf("--");
 let passThruParams;
