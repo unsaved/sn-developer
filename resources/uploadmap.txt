@@ -1,12 +1,13 @@
 # Config file for 'snUpload' that maps files to target SN records and field.
 # Comment lines must begin with #
 # Empty lines ignored
-# Limitations:  # only honored as very first char on line.
+# Limitations:  # for comment purpose only honored as very first char on line.
 # localFileSpec values are for matching against the user-specified upload file path.
 #    Since upload calls use (local) relative paths, the localFileSpecs are either
 #    local relative file paths; or a regular expression matching the same.
 #    Regular expression localFileSpecs are coded like '/expr/' or '/expr/i'.
-#    No literal space or tab characters allowed inside /regexp/s.
+#    No literal space or tab characters allowed inside localFileSpecs (incl. /regexp/s).
+#    Use # to represent files in localFileSpec literals or regexps.
 #    Since you are not writing JavaScript, you don't need to double-up backslashes,
 #    but as always with regexs, you do need to escape all forward slashes and dots;
 #    and don't forget to sandwich with ^...$ if you want to start or end as specified.
