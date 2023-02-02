@@ -38,7 +38,7 @@
 # sys_scope value unspecified (without lint-checking) or - (with lint-checking)
 # mean to not constrain scope.
 # lint_alt value (even if -) must be specified if lint checking will be done.
-# A value of - means no snLint alternate.
+# A value of - means the default snLint-alt for that script type.
 
 #localFileSpec   table        datafield  keyfield  keyvalue         sys_scope  lint_alt
 play.js          u_text_file  u_content  u_path    *                -          -
