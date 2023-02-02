@@ -62,7 +62,7 @@ Honored environmental variables.  * variables are required:
   }).
   option("R", {
       describe:
-        "Same as -r switch except instead of perserving instance-side EOLs we output with UNIX "
+        "Same as -r switch except instead of preserving instance-side EOLs we output with UNIX "
         + "newlines.  That's the same as removing all carraige Returns (if any)",
       type: "boolean",
   }).
@@ -217,7 +217,7 @@ conciseCatcher(function(inFile) {
                 lastChecksum = newChecksum;
             }
             fileHasCRs = localFileText.includes("\r");
-            if (!localFileText.includes("\r")) localFileText = localFileText.replace(/\n/g, "\r\n");
+            if (!fileHasCRs) localFileText = localFileText.replace(/\n/g, "\r\n");
             if (localFileText.endsWith("\r\n")) localFileText = localFileText.slice(0, -2);
         }
 
