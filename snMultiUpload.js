@@ -10,6 +10,7 @@ const { AppErr, conciseCatcher } = require("@admc.com/apputil");
 const fs = require("fs");
 const path = require("path");
 const childProcess = require("child_process");
+const txtFilesToo = process.env.MULTI_UPLOAD_TXT_FILES;
 
 /**
  * Skips directories matching .* and 'node_modules'
@@ -38,7 +39,6 @@ function jsFilesInBranch(fsDir) {
     return outputList;
 }
 
-const txtFilesToo = process.env.MULTI_UPLOAD_TXT_FILES
 const args = process.argv.slice(2);
 const passThruEnd = args.indexOf("--");
 let passThruParams;
