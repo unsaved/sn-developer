@@ -32,7 +32,7 @@ try {
     new GlideImpersonate().impersonate(targetUserGR.getValue("sys_id"));
     if (gs.getUserName() === "guest") throw new HttpCodeError(403, "Impersonation failed");
     gs.log("I became " + gs.getUserName(), fName); */
-    TODO:  Convert to GlideQuery
+    // TODO:  Convert to GlideQuery
     const r = new GlideRecord(table);
     if (!r.isValid()) throw new HttpCodeError(404, "Not a table: " + table);
     if (!r.isValidField(field))
