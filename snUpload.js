@@ -36,6 +36,7 @@ Honored environmental variables.  * variables are required:
       describe: "Verbose.  N.b. may display passwords!",
       type: "boolean",
   }).
+  option("c", { describe: "Compare local to remote.  Don't upload or lint.", type: "boolean", }).
   option("d", { describe: "Debug logging", type: "boolean", }).
   option("m", {
       describe: "Monitor poll period in milliseconds, positive integer",
@@ -176,7 +177,7 @@ conciseCatcher(function(inFile) {
     function transfer() {
         let localFileText;
         if (!yargsDict.r) {
-            if (!yargsDict.n && uploadEntry.doLint) {
+            if (!yargsDict.n && !yargsDict.c && uploadEntry.doLint) {
                 let eslintPath = path.join(__dirname,
                       "node_modules/@admc.com/eslint-plugin-sn/snLint.js");
                 if (!fs.existsSync(eslintPath)) {
@@ -222,7 +223,7 @@ conciseCatcher(function(inFile) {
         }
 
         /* eslint-disable prefer-template */
-        const url = `https://${instName}.service-now.com` + (yargsDict.r ?
+        const url = `https://${instName}.service-now.com` + (yargsDict.r || yargsDict.c ?
             `/api/now/v2/table/${uploadEntry.table}` :
             `/api/${apiScope}/${apiName}/${uploadEntry.table}/${uploadEntry.dataField}`);
         /* eslint-enable prefer-template */
@@ -232,9 +233,9 @@ conciseCatcher(function(inFile) {
           : rcFile.getAuthSettings(url)
         };
         const opts = {
-            method: yargsDict.r ? 'get' : 'patch',
+            method: yargsDict.r || yargsDict.c ? 'get' : 'patch',
             url,
-            params: yargsDict.r ? {
+            params: yargsDict.r || yargsDict.c ? {
               sysparm_query: `${uploadEntry.keyField}=${uploadEntry.keyValue}`,
               sysparm_fields: uploadEntry.dataField,
               sysparm_limit: 2,
@@ -243,7 +244,7 @@ conciseCatcher(function(inFile) {
             },
         };
         if (uploadEntry.appScope) {
-            if (yargsDict.r)
+            if (yargsDict.r || yargsDict.c)
                 opts.params.sysparm_query =
                   `${opts.params.sysparm_query}^sys_scope.scope=${uploadEntry.appScope}`;
             else
@@ -265,7 +266,7 @@ conciseCatcher(function(inFile) {
         if (yargsDict.v)
             console.warn(`Will send request to: ${url}\nwith opts (- data):`,
               {...opts, ...authOpts});  // Warn level so does not intermix with stdout
-        if (!yargsDict.r) opts.data = { "content": localFileText };
+        if (!yargsDict.r || yargsDict.c) opts.data = { "content": localFileText };
         axios({...opts, ...authOpts}).
           then(conciseCatcher(responseHandler, 1),
           e=>console.error("Caught failure.  Consider running with -d switch (debug) "
@@ -288,8 +289,8 @@ if (yargsDict.m) {
 }
 
 async function responseHandler(response) {
-    let prevRevData;
-    if (yargsDict.r) {
+    let prevRevData, prevDataHasCRs;
+    if (yargsDict.r || yargsDict.c) {
         validate(arguments, [{data: {result: "array"}}]);
         if (response.data.result.length < 1) throw new AppErr("Got no records from server");
         if (response.data.result.length > 1) throw new AppErr("Got multiple records from server");
@@ -303,30 +304,38 @@ async function responseHandler(response) {
         prevRevData = Object.values(response.data.result[0])[0];
         if (typeof prevRevData !== "string") throw new AppErr(
           `Object from server has ${typeof prevRevData} instead of string content`);
-        fileHasCRs = prevRevData.includes("\r");
-        if (fileHasCRs && yargsDict.R) prevRevData = prevRevData.replace(/\r/g, "");
-        process.stdout.write(prevRevData + (fileHasCRs && !yargsDict.R ? "\r\n" : "\n"));
-        return;
-    }
-    //Can't use validate because retrieval of JSON sys property SOMETIMES gets as an object:
-    //validate(arguments, [{data: "string"}]);
-    if (typeof response.data !== "string") {
-        // Server is sending a GlideRecord.getValue() with mime type text/plain.
-        // I don't know how JSON strings are sometimes making it to use as objects???
-        console.warn(`We received a ${typeof response.data} rather than a string.
+        prevDataHasCRs = prevRevData.includes("\r");
+        if (yargsDict.r) {
+            if (prevDataHasCRs && yargsDict.R) prevRevData = prevRevData.replace(/\r/g, "");
+            process.stdout.write(prevRevData + (prevDataHasCRs && !yargsDict.R ? "\r\n" : "\n"));
+            return;
+        }
+    } else {
+        //Can't use validate because retrieval of JSON sys property SOMETIMES gets as an object:
+        //validate(arguments, [{data: "string"}]);
+        if (typeof response.data !== "string") {
+            // Server is sending a GlideRecord.getValue() with mime type text/plain.
+            // I don't know how JSON strings are sometimes making it to use as objects???
+            console.warn(`We received a ${typeof response.data} rather than a string.
 Due to this, we can't determine or display the delta.`);
-        return;
+            return;
+        }
+        prevRevData = response.data;
+        prevDataHasCRs = prevRevData.includes("\r");
     }
-    prevRevData = response.data;
+    if (typeof prevDataHasCRs !== "boolean")
+        throw new Error("Assertion failed.  Variable 'prevDataHasCRs' is undefined");
+    if (typeof fileHasCRs !== "boolean")
+        throw new Error("Assertion failed.  Variable 'fileHasCRs' is undefined");
     console.debug("Received", prevRevData);
     const prevRevFile = format("%s-%i.%s",
       path.join(require("os").tmpdir(), progName.replace(/[.][^.]*$/, "")),
       process.pid, fileExt === null ? "txt" : fileExt);
     console.debug("Writing prevRevFile file:", prevRevFile);
     if (fileHasCRs) {
-        if (!prevRevData.includes("\r")) prevRevData = prevRevData.replace(/\n/g, "\r\n");
+        if (!prevDataHasCRs) prevRevData = prevRevData.replace(/\n/g, "\r\n");
     } else
-        if (prevRevData.includes("\r")) prevRevData = prevRevData.replace(/\r/g, "");
+        if (prevDataHasCRs) prevRevData = prevRevData.replace(/\r/g, "");
     fs.writeFileSync(prevRevFile, prevRevData + (fileHasCRs ? "\r\n" : "\n"));
     console.info(`Executing: ${comparatorCmd}`, prevRevFile, path.normalize(file));
     const pObj = child_process.spawnSync(  // eslint-disable-line camelcase
