@@ -37,7 +37,8 @@
     "checksum": "^1.0.0",
     "entities": "^4.1.1",
     "eslint": "^8.18.0",
-    "readline-sync": "^1.4.10"
+    "readline-sync": "^1.4.10",
+    "syncprompt": "^2.0.0"
   },
   "peerDependencies": {
     "@admc.com/eslint-plugin-sn": "^3.0.4"

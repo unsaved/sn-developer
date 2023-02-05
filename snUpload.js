@@ -11,7 +11,9 @@ const UploadMap = require("./lib/UploadMap");
 const { format } = require("util");
 const checksum = require("checksum");
 const path = require("path");
+const os = require("os");
 const child_process = require("child_process"); // eslint-disable-line camelcase
+const prompt = require("syncprompt");
 const MULTI_SCRIPT_TABLES = ["catalog_ui_policy", "sp_widget", "sys_ui_policy", "sys_ui_page"];
 
 // We keep a copy of the yargs instance so we can invoke methods on it like .help().
@@ -38,6 +40,16 @@ Honored environmental variables.  * variables are required:
   }).
   option("c", { describe: "Compare local to remote.  Don't upload or lint.", type: "boolean", }).
   option("d", { describe: "Debug logging", type: "boolean", }).
+  option("f", {
+      describe: "Fetch remote file like -r, but save file locally.  " +
+        "If local already exists, compare and ask before overwriting.",
+      type: "boolean", }).
+  option("F", {
+      describe:
+        "Same as -f switch except if local file does not already exist then write file with UNIX "
+        + "newlines.",
+      type: "boolean",
+  }).
   option("m", {
       describe: "Monitor poll period in milliseconds, positive integer",
       requiresArg: true,
@@ -63,8 +75,7 @@ Honored environmental variables.  * variables are required:
   }).
   option("R", {
       describe:
-        "Same as -r switch except instead of preserving instance-side EOLs we output with UNIX "
-        + "newlines.  That's the same as removing all carraige Returns (if any)",
+      "Same as -r switch except output with UNIX newlines instead of preserving instance-side EOLs",
       type: "boolean",
   }).
   option("u", {
@@ -87,20 +98,21 @@ if (yargsDict.e) {
       "resources/SN_CF_COMMANDS-examples.txt"), "utf8"));
     process.exit(0);
 }
-let lmrCount = 0;
-if (yargsDict.l) lmrCount++;
-if (yargsDict.L) lmrCount++;
-if (yargsDict.m) lmrCount++;
-if (yargsDict.r) lmrCount++;
-if (yargsDict.R) lmrCount++;
-if (lmrCount > 1) {
-    console.error("Switches -l, -L, -m , -r, -R are all mutually exclusive");
+let flmrCount = 0;
+if (yargsDict.l) flmrCount++;
+if (yargsDict.L) flmrCount++;
+if (yargsDict.m) flmrCount++;
+if (yargsDict.r) flmrCount++;
+if (yargsDict.R) flmrCount++;
+if (flmrCount > 1) {
+    console.error("Switches f, -F, -l, -L, -m , -r, -R are all mutually exclusive");
     yargs.showHelp();
     process.exit(9);
 }
 // Derived switch vals:
 if (yargsDict.L) yargsDict.l = true;
-if (yargsDict.R) yargsDict.r = true;
+if (yargsDict.F) yargsDict.f = yargsDict.R = true;
+if (yargsDict.R || yargsDict.f) yargsDict.r = true;
 if (yargsDict.u) {
     if (fs.existsSync("uploadmap.txt")) {
         console.error("Refusing to write 'uploadmap.txt' because one already exists here.");
@@ -142,23 +154,26 @@ conciseCatcher(function(inFile) {
     let apiName = process.env.SN_RESTAPI_NAME;
     if (apiName === undefined) apiName = "sndev";
     if (!yargsDict.p) rcFile = new NetRC();
-    if (!yargsDict.r) {
+    if (yargsDict.f || !yargsDict.r) {
         console.debug(`Checking local file '${file}'`);
-        if (!fs.existsSync(file)) throw new AppErr("File is missing:", file);
-        if (!fs.statSync(file).isFile()) throw new AppErr("Not a regular file:", file);
-        try {
-            fs.accessSync(file, fs.constants.R_OK);
-        } catch (nestedE) {
-            throw new AppErr(`Can't read file: [${file}]`);
+        if (fs.existsSync(file)) {
+            if (!fs.statSync(file).isFile()) throw new AppErr("Not a regular file:", file);
+            try {
+                fs.accessSync(file, fs.constants.R_OK);
+            } catch (nestedE) {
+                throw new AppErr(`Can't read file: [${file}]`);
+            }
+            fileExt = file.replace(/.*[.]/, "");
+            if (fileExt === "") fileExt = null;
+            if (process.env.SN_CF_COMMAND === undefined) {
+                comparatorCmd = isUnixShell ? DEFAULT_CF_CMD_UNIX : DEFAULT_CF_CMD_WIN;
+            } else {
+                comparatorCmd = process.env.SN_CF_COMMAND;
+            }
+            console.debug("comparatorCmd", comparatorCmd);
+        } else if (!yargsDict.f) {
+            throw new AppErr("File is missing:", file);
         }
-        fileExt = file.replace(/.*[.]/, "");
-        if (fileExt === "") fileExt = null;
-        if (process.env.SN_CF_COMMAND === undefined) {
-            comparatorCmd = isUnixShell ? DEFAULT_CF_CMD_UNIX : DEFAULT_CF_CMD_WIN;
-        } else {
-            comparatorCmd = process.env.SN_CF_COMMAND;
-        }
-        console.debug("comparatorCmd", comparatorCmd);
     }
 
     const uploadEntry = new UploadMap().validate().getEntry(file);
@@ -176,40 +191,41 @@ conciseCatcher(function(inFile) {
 
     function transfer() {
         let localFileText;
-        if (!yargsDict.r) {
-            if (!yargsDict.n && !yargsDict.c && uploadEntry.doLint) {
-                let eslintPath = path.join(__dirname,
-                      "node_modules/@admc.com/eslint-plugin-sn/snLint.js");
-                if (!fs.existsSync(eslintPath)) {
-                    eslintPath = path.join(__dirname, "../eslint-plugin-sn/snLint.js");
-                    if (!fs.existsSync(eslintPath))
-                        throw new Error("Installation consistency failure.  "
-                          + "'snLint.js' from eslint-plugin-sn module not found.");
-                }
-                const lintSnArgs = [
-                    eslintPath,
-                    "-t",
-                    uploadEntry.table + (MULTI_SCRIPT_TABLES.includes(uploadEntry.table) ?
-                      `.${uploadEntry.dataField}` : "")
-                ];
-                if (lintStrict) lintSnArgs.push("-r");
-                if (yargsDict.L) lintSnArgs.push("-H");
-                if (yargsDict.d) lintSnArgs.push("-d");
-                if (uploadEntry.lintAlt) {
-                    lintSnArgs.push("-a");
-                    lintSnArgs.push(uploadEntry.lintAlt);
-                }
-                lintSnArgs.push(file);
-                try {
-                    // eslint-disable-next-line camelcase
-                    child_process.execFileSync(process.execPath, lintSnArgs, { stdio: "inherit" });
-                } catch (e9) {
-                    throw new AppErr("Lint check failed");
-                }
-                console.warn("ESLint success");  // Warn level so does not intermix with stdout
-                if (yargsDict.l) return;
+        if (!yargsDict.r && !yargsDict.n && !yargsDict.c && uploadEntry.doLint) {
+            let eslintPath = path.join(__dirname,
+                  "node_modules/@admc.com/eslint-plugin-sn/snLint.js");
+            if (!fs.existsSync(eslintPath)) {
+                eslintPath = path.join(__dirname, "../eslint-plugin-sn/snLint.js");
+                if (!fs.existsSync(eslintPath))
+                    throw new Error("Installation consistency failure.  "
+                      + "'snLint.js' from eslint-plugin-sn module not found.");
             }
+            const lintSnArgs = [
+                eslintPath,
+                "-t",
+                uploadEntry.table + (MULTI_SCRIPT_TABLES.includes(uploadEntry.table) ?
+                  `.${uploadEntry.dataField}` : "")
+            ];
+            if (lintStrict) lintSnArgs.push("-r");
+            if (yargsDict.L) lintSnArgs.push("-H");
+            if (yargsDict.d) lintSnArgs.push("-d");
+            if (uploadEntry.lintAlt) {
+                lintSnArgs.push("-a");
+                lintSnArgs.push(uploadEntry.lintAlt);
+            }
+            lintSnArgs.push(file);
+            try {
+                // eslint-disable-next-line camelcase
+                child_process.execFileSync(process.execPath, lintSnArgs, { stdio: "inherit" });
+            } catch (e9) {
+                throw new AppErr("Lint check failed");
+            }
+            console.warn("ESLint success");  // Warn level so does not intermix with stdout
+            if (yargsDict.l) return;
+        }
 
+        if (fs.existsSync(file)) {
+            // localFileText will always have \r\n and no final line delimiter
             localFileText = fs.readFileSync(file, "utf8");
             if (lastChecksum) {
                 // Only and always runs when in monitor mode
@@ -220,6 +236,8 @@ conciseCatcher(function(inFile) {
             fileHasCRs = localFileText.includes("\r");
             if (!fileHasCRs) localFileText = localFileText.replace(/\n/g, "\r\n");
             if (localFileText.endsWith("\r\n")) localFileText = localFileText.slice(0, -2);
+        } else {
+            fileHasCRs = yargsDict.R ? false : os.EOL === "\r\n";
         }
 
         /* eslint-disable prefer-template */
@@ -266,7 +284,7 @@ conciseCatcher(function(inFile) {
         if (yargsDict.v)
             console.warn(`Will send request to: ${url}\nwith opts (- data):`,
               {...opts, ...authOpts});  // Warn level so does not intermix with stdout
-        if (!yargsDict.r || yargsDict.c) opts.data = { "content": localFileText };
+        if (!yargsDict.r && !yargsDict.c) opts.data = { "content": localFileText };
         axios({...opts, ...authOpts}).
           then(conciseCatcher(responseHandler, 1),
           e=>console.error("Caught failure.  Consider running with -d switch (debug) "
@@ -306,9 +324,11 @@ async function responseHandler(response) {
           `Object from server has ${typeof prevRevData} instead of string content`);
         prevDataHasCRs = prevRevData.includes("\r");
         if (yargsDict.r) {
-            if (prevDataHasCRs && yargsDict.R) prevRevData = prevRevData.replace(/\r/g, "");
-            process.stdout.write(prevRevData + (prevDataHasCRs && !yargsDict.R ? "\r\n" : "\n"));
-            return;
+            if (prevDataHasCRs && !fileHasCRs) prevRevData = prevRevData.replace(/\r/g, "");
+            if (!yargsDict.f) {
+                process.stdout.write(prevRevData + (fileHasCRs ? "\r\n" : "\n"));
+                return;
+            }
         }
     } else {
         //Can't use validate because retrieval of JSON sys property SOMETIMES gets as an object:
@@ -325,18 +345,29 @@ Due to this, we can't determine or display the delta.`);
     }
     if (typeof prevDataHasCRs !== "boolean")
         throw new Error("Assertion failed.  Variable 'prevDataHasCRs' is undefined");
+    // fileHasCRs has obvious meaning if 'file' exists.  If not then it means we INTEND to have CRs.
     if (typeof fileHasCRs !== "boolean")
         throw new Error("Assertion failed.  Variable 'fileHasCRs' is undefined");
     console.debug("Received", prevRevData);
-    const prevRevFile = format("%s-%i.%s",
-      path.join(require("os").tmpdir(), progName.replace(/[.][^.]*$/, "")),
+    const prevRevFile = yargsDict.f && !fs.existsSync(file) ? file : format("%s-%i.%s",
+      path.join(os.tmpdir(), progName.replace(/[.][^.]*$/, "")),
       process.pid, fileExt === null ? "txt" : fileExt);
-    console.debug("Writing prevRevFile file:", prevRevFile);
     if (fileHasCRs) {
         if (!prevDataHasCRs) prevRevData = prevRevData.replace(/\n/g, "\r\n");
     } else
         if (prevDataHasCRs) prevRevData = prevRevData.replace(/\r/g, "");
+    console.debug("Writing prevRevFile file:", prevRevFile);
     fs.writeFileSync(prevRevFile, prevRevData + (fileHasCRs ? "\r\n" : "\n"));
+    if (!comparatorCmd) return;  // get this if yargsDict.f and 'file' does not exist
+    // If -f mode then check for no-change
+    // It's just easier to compare the same files we would comparatorCmd rather than transform
+    // yet again to compare in memory.
+    if (yargsDict.f && fs.readFileSync(file, "utf8") === fs.readFileSync(prevRevFile, "utf8")) {
+        fs.unlinkSync(prevRevFile);
+        console.info("No change");
+        return;
+    }
+
     console.info(`Executing: ${comparatorCmd}`, prevRevFile, path.normalize(file));
     const pObj = child_process.spawnSync(  // eslint-disable-line camelcase
       format(comparatorCmd, prevRevFile, path.normalize(file)), {
@@ -349,6 +380,14 @@ Due to this, we can't determine or display the delta.`);
     // success.
     if (pObj.stderr.length > 0)
         console.error(`Did the command fail?\n${pObj.stderr.toString("utf8")}`);
-    fs.unlinkSync(prevRevFile);
     console.info(pObj.stdout.toString("utf8"));
+    if (yargsDict.f) {
+        const response = prompt(`Overwrite local file '${file}' [yes]?  `);
+        // silently overwrites:
+        if (response === "" || ["Y", "y"].includes(response[0])) {
+            //fs.renameSync(prevRevFile, file);  This only works if both files on same FS partition.
+            fs.copyFileSync(prevRevFile, file);
+        }
+    }
+    fs.unlinkSync(prevRevFile);
 }
