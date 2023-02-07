@@ -241,7 +241,7 @@ conciseCatcher(function(inFile) {
 
         /* eslint-disable prefer-template */
         const url = `https://${instName}.service-now.com` + (yargsDict.r || yargsDict.c ?
-            `/api/now/v2/table/${uploadEntry.table}` :
+            `/api/now/v2/table/${uploadEntry.table.replace(/[.].+/, "")}` :
             `/api/${apiScope}/${apiName}/${uploadEntry.table}/${uploadEntry.dataField}`);
         /* eslint-enable prefer-template */
         const authOpts = { auth: rcFile === undefined
