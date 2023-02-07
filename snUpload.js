@@ -13,7 +13,6 @@ const checksum = require("checksum");
 const path = require("path");
 const os = require("os");
 const child_process = require("child_process"); // eslint-disable-line camelcase
-const prompt = require("syncprompt");
 const MULTI_SCRIPT_TABLES = ["catalog_ui_policy", "sp_widget", "sys_ui_policy", "sys_ui_page"];
 
 // We keep a copy of the yargs instance so we can invoke methods on it like .help().
@@ -42,7 +41,7 @@ Honored environmental variables.  * variables are required:
   option("d", { describe: "Debug logging", type: "boolean", }).
   option("f", {
       describe: "Fetch remote file like -r, but save file locally.  " +
-        "If local already exists, compare and ask before overwriting.",
+        "If local already exists then we will just compare.  Remove local file to replace it.",
       type: "boolean", }).
   option("F", {
       describe:
@@ -381,13 +380,15 @@ Due to this, we can't determine or display the delta.`);
     if (pObj.stderr.length > 0)
         console.error(`Did the command fail?\n${pObj.stderr.toString("utf8")}`);
     console.info(pObj.stdout.toString("utf8"));
-    if (yargsDict.f) {
+    if (yargsDict.f) console.error(
+      `If you wish to overwrite local file '${file}' then remove it yourself and re-run.`);
+        /* Don't want the dependency upon platform-specific syncprompt module.
         const response = prompt(`Overwrite local file '${file}' [yes]?  `);
         // silently overwrites:
         if (response === "" || ["Y", "y"].includes(response[0])) {
             //fs.renameSync(prevRevFile, file);  This only works if both files on same FS partition.
             fs.copyFileSync(prevRevFile, file);
         }
-    }
+        */
     fs.unlinkSync(prevRevFile);
 }
