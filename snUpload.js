@@ -190,6 +190,8 @@ conciseCatcher(function(inFile) {
 
     function transfer() {
         let localFileText;
+        const pseudoTable = MULTI_SCRIPT_TABLES.includes(uploadEntry.table)
+          ? `${uploadEntry.table}.${uploadEntry.dataField}` : uploadEntry.table;
         if (!yargsDict.r && !yargsDict.n && !yargsDict.c && uploadEntry.doLint) {
             let eslintPath = path.join(__dirname,
                   "node_modules/@admc.com/eslint-plugin-sn/snLint.js");
@@ -202,8 +204,7 @@ conciseCatcher(function(inFile) {
             const lintSnArgs = [
                 eslintPath,
                 "-t",
-                uploadEntry.table + (MULTI_SCRIPT_TABLES.includes(uploadEntry.table) ?
-                  `.${uploadEntry.dataField}` : "")
+                pseudoTable,
             ];
             if (lintStrict) lintSnArgs.push("-r");
             if (yargsDict.L) lintSnArgs.push("-H");
@@ -241,7 +242,7 @@ conciseCatcher(function(inFile) {
 
         /* eslint-disable prefer-template */
         const url = `https://${instName}.service-now.com` + (yargsDict.r || yargsDict.c ?
-            `/api/now/v2/table/${uploadEntry.table.replace(/[.].+/, "")}` :
+            `/api/now/v2/table/${uploadEntry.table}` :
             `/api/${apiScope}/${apiName}/${uploadEntry.table}/${uploadEntry.dataField}`);
         /* eslint-enable prefer-template */
         const authOpts = { auth: rcFile === undefined
