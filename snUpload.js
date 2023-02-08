@@ -13,7 +13,8 @@ const checksum = require("checksum");
 const path = require("path");
 const os = require("os");
 const child_process = require("child_process"); // eslint-disable-line camelcase
-const MULTI_SCRIPT_TABLES = ["catalog_ui_policy", "sp_widget", "sys_ui_policy", "sys_ui_page"];
+const MULTI_SCRIPT_TABLES =
+  ["catalog_ui_policy", "sp_widget", "sys_ui_policy", "sys_ui_page", "sys_ui_action"];
 
 // We keep a copy of the yargs instance so we can invoke methods on it like .help().
 const yargs = require("yargs")(process.argv.slice(2)).
