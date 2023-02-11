@@ -310,7 +310,7 @@ if (yargsDict.m) {
 async function responseHandler(response) {
     let prevRevData, prevDataHasCRs;
     if (yargsDict.r || yargsDict.c) {
-        validate(arguments, [{data: {result: "array"}}]);
+        validate(arguments, [{data: {result: "object[]"}}]);
         if (response.data.result.length < 1) throw new AppErr("Got no records from server");
         if (response.data.result.length > 1) throw new AppErr("Got multiple records from server");
         if (!isPlainObject(response.data.result[0]))
@@ -375,12 +375,11 @@ Due to this, we can't determine or display the delta.`);
         shell: true,
         stdio: ["ignore", "pipe", "pipe"],
       });
-    if ("error" in pObj) throw new Error(pObj.message);
+    if ("error" in pObj) throw new AppErr(`Comparator invocation failure: ${pObj.message}`);
     // Many of the comparators will return non-0 if the files differ, as
-    // we intend.  So use stderr Buffer rather than .exitCode to determine
-    // success.
+    // we intend.  So use stderr Buffer rather than .status to determine success.
     if (pObj.stderr.length > 0)
-        console.error(`Did the command fail?\n${pObj.stderr.toString("utf8")}`);
+        console.error(`Did the comparator fail?\n${pObj.stderr.toString("utf8")}`);
     console.info(pObj.stdout.toString("utf8"));
     if (yargsDict.f) console.error(
       `If you wish to overwrite local file '${file}' then remove it yourself and re-run.`);
