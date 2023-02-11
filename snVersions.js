@@ -11,7 +11,7 @@
 const fs = require("fs");
 const { validate } = require("@admc.com/bycontract-plus");
 const axios = require("axios");
-const { AppErr, conciseCatcher, conciseErrorHandler, getAppVersion, NetRC } =
+const { AppErr, conciseCatcher, conciseErrorHandler, getAppVersion, NetRC, isPlainObject } =
     require("@admc.com/apputil");
 const { format } = require("util");
 const { patterns } = require("./lib/snJs");
@@ -21,7 +21,8 @@ const path = require("path");
 // We keep a copy of the yargs instance so we can invoke methods on it like .help().
 const yargs = require("yargs")(process.argv.slice(2)).
   strictOptions().
-  usage(`SYNTAX: $0 [-dqv] [-p username] [-t filetype] table.field REC_ID EARLIER_VER [LATER_VER]
+  usage(`SYNTAX: $0 [-dqv] [-p username] [-t filetype] table.field  \\
+            [-s appscope] REC_ID EARLIER_VER [LATER_VER]
     OR: $0 [-dqv] [-p username] [-t filetype] table REC_ID
     OR: $0 -h|e
 REC_ID      identifies which table.field record, by either display-value
@@ -29,22 +30,25 @@ REC_ID      identifies which table.field record, by either display-value
             of version-record creation.  For tables with no display-value
             field designated, you must specify sys_id.
 EARLIER_VER is a version 'Created' time or a version index specifier.
-            Created times quoted in AM/PM format exacly as 'Created' is
+            Created times quoted in AM/PM format exactly as 'Created' is
             displayed in the Versions related lists.
             Version index specifiers are 0 or a negative integer meaning
             how many revisions back from the latest version.
             If no EARLIER_VERSION specified then we display a version list;
-            If EARLIER_VERSION is specified then .field is required.
+            If EARLIER_VERSION is specified then .table.field is required;
+            If EARLIER_VERSION is not specified then .table is required.
 LATER_VER   is just like EARLIER_ID, except that it defaults to 0 if you
-            specify EARLER_VER but no LATER_VER
-            (meaning compare the specified EARLER to the current version).
+            specify EARLIER_VER but no LATER_VER
+            (meaning compare the specified EARLIER to the current version).
 To see Created times in Versions related lists, you will have to add to
 the list layout.
 Honored environmental variables:
     SN_CF_COMMAND:      Comparison command template  (-e to display examples)
     SN_HTTPS_PROXY:     HTTPS Proxy URL
-    SN_DEVELOPER_INST:  Short (unqualified) ServiceNow instancename
-    VERSION_LIST_LIMIT: Version lists displays only last X versions (dflt 50)`.
+    SN_DEVELOPER_INST:  Short (unqualified) target ServiceNow instance name
+    SN_CLI_PROFILE:     ServiceNow CLI profile name for  target instance
+    VERSION_LIST_LIMIT: Version lists displays only last X versions (dflt 50)
+You must set either SN_DEVELOPER_INST or SN_CLI_PROFILE`.
   replace(/ /g, "\u2009")).
   option("v", {
       describe: "Verbose.  N.b. may display passwords!",
@@ -63,6 +67,10 @@ Honored environmental variables:
   option("q", {
       describe: "Quiet logging by logging only at level WARN and ERROR",
       type: "boolean",
+  }).
+  option("s", {
+      describe: "application Scope to narrow REC_ID matching, in sys_scope.scope format",
+      type: "string",
   }).
   option("t", {
       describe: `Text type, for smarter comparisons.  Supported are:
@@ -183,10 +191,20 @@ if (verA === undefined) {
 conciseCatcher(async function() {
     validate(arguments, []);
     let rcFile, opts, proxyClause;
-    const instName = process.env.SN_DEVELOPER_INST;
-    if (instName === undefined)
-        throw new AppErr("Set required env var 'SN_DEVELOPER_INST' to "
-          + "unqualified SN host name (like 'acmedev')");
+    let instName = process.env.SN_DEVELOPER_INST;
+    let profile = process.env.SN_CLI_PROFILE;
+    let url, authOpts;  // These only used for SN_DEVELOPER_INST mode
+    if (instName === "") instName = undefined;
+    if (profile === "") profile = undefined;
+    if (instName === undefined && profile === undefined)
+        throw new AppErr(
+          "You must set an environmental variable to specify the target ServiceNow instance.\n"
+          + "Either 'SN_DEVELOPER_INST' to host name (like 'acmedev'), "
+          + "or 'SN_CLI_PROFILE' to a ServiceNow CLI profile name");
+    if (instName !== undefined && profile !== undefined)
+        throw new AppErr(
+          "You must just one of env. vars 'SN_DEVELOPER_INST' and 'SN_CLI_PROFILE'.\n"
+          + "Unset one of them.");
     if (!yargsDict.p) rcFile = new NetRC();
     if (process.env.CF_COMMAND === undefined) {
         comparatorCmd = isUnixShell ? DEFAULT_CF_CMD_UNIX : DEFAULT_CF_CMD_WIN;
@@ -203,6 +221,10 @@ conciseCatcher(async function() {
         listLimit = Number(process.env.VERSION_LIST_LIMIT);
     }
     if ("SN_HTTPS_PROXY" in process.env) {
+        if (profile !== undefined)
+            throw new AppErr("Env. var 'SN_HTTPS_PROXY' not supported with 'SN_CLI_PROFILE'.\n"
+              + "You must use a hack to use a proxy with ServiceNow CLI.\n"
+              + "See https://www.johnskender.com/articles/now-cli-proxy");
         const ex = /^([^:]+):[/]+([^:]+)(?::(\d+))?$/.exec(process.env.SN_HTTPS_PROXY);
         if (!ex)
             // eslint-disable-next-line prefer-template
@@ -215,39 +237,83 @@ conciseCatcher(async function() {
         if (ex[3] !== undefined) proxyClause.port = parseInt(ex[3]);
     }
 
-    const url = `https://${instName}.service-now.com/api/now/table/sys_update_version`;
-    const authOpts = { auth: rcFile === undefined
-      ? { username: yargsDict.p, password: require("readline-sync").
-          question(`Password for '${yargsDict.p}': `, {hideEchoBack: true}) }
-      : rcFile.getAuthSettings(url)
-    };
     const queryClauses = [
       `nameSTARTSWITH${table}_`,
       (keyBySysId ? "nameENDSWITH" : "record_name=") + recId,
       "ORDERBYDESCsys_created_on",
     ];
-    opts = { params: {
-        sysparm_query: queryClauses.join("^"),
-        sysparm_fields: "sys_id,sys_created_on,action,source,application,sys_created_by",
-        sysparm_display_value: true,
-        sysparm_exclude_reference_link: true,
-        sysparm_limit: listLimit,
-    } };
-    if (proxyClause !== undefined) opts.proxy = proxyClause;
+    if (yargsDict.s) queryClauses.push(`application.scope=${yargsDict.s}`);
 
     // First get version list
-    if (yargsDict.v)
-        console.info(`Will send request to: ${url}\nwith opts:`, {...opts, ...authOpts});
-    conciseCatcher(versionListHandler, 1)(await axios.get(url, {...opts, ...authOpts}).catch(e => {
-        console.error("Caught failure.  Consider checking %s's syslog "
-          + "for messages written by %s.\n%s%s",
-          instName, authOpts.auth.username, e.message,
-          e.response !== undefined && e.response.data !== undefined
-          && e.response.data.error !== undefined
-          && e.response.data.error.message !== undefined
-            ? "\n" + e.response.data.error.message : "");  // eslint-disable-line prefer-template
-        process.exit(1);
-    }));
+    if (profile) {
+        if (yargsDict.v) console.info(`Will send version list request with profile ${profile}`);
+        const pObj = require("child_process").spawnSync("snc", [
+          "-p",
+          profile,
+          "--no-verbose",
+          "--no-interactive",
+          "--output", "json",  // This is global default but may be overridden in profiles
+          "record",
+          "query",
+          "--displayvalue",
+          "--limit", listLimit,
+          "-t", "sys_update_version",
+          "-q", queryClauses.join("^"),
+          "--fields=sys_id,sys_created_on,action,source,application,sys_created_by",
+        ], { stdio: ["ignore", "pipe", "pipe"], });
+        if ("error" in pObj) throw new AppErr(`snc list invocation failure.\n${pObj.message}`);
+        // Crappy 'snc' returns 0 even if it fails catastrophically, and (incredibly) writes fatal
+        // error messages to stdout rather than stderr.  So we can't depend on .status or .stderr.
+        if (pObj.status !== 0)  // Will probably never work with 'snc'
+            throw new AppErr(`'snc' list invocation failed with value ${pObj.status}.  Stderr:\n`
+              + `${pObj.stderr.toString("utf8")}\n\nStdout:\n${pObj.stdout.toString("utf8")}`);
+        let response;
+        //console.debug(pObj.stdout.toString("utf8"));
+        try {
+            response = JSON.parse(pObj.stdout.toString("utf8"));
+        } catch (eCli) {
+            throw new AppErr(
+              `Got non-JSON list response from 'snc'.  ${eCli}:\n${pObj.stdout.toString("Utf8")}`);
+        }
+        console.debug(response);
+        if (typeof response === "object" && "error" in response) throw new AppErr(
+          `snc failure for list request\n${JSON.stringify(response.error, undefined, 2)}`);
+        validate(response, { result: "object[]" });
+        response.result = deRefLinks(response.result);
+        console.debug(response.result);
+        currentData = response.result;
+    } else {
+        url = `https://${instName}.service-now.com/api/now/table/sys_update_version`;
+        authOpts = { auth: rcFile === undefined
+          ? { username: yargsDict.p, password: require("readline-sync").
+              question(`Password for '${yargsDict.p}': `, {hideEchoBack: true}) }
+          : rcFile.getAuthSettings(url)
+        };
+        opts = { params: {
+            sysparm_query: queryClauses.join("^"),
+            sysparm_fields: "sys_id,sys_created_on,action,source,application,sys_created_by",
+            sysparm_display_value: true,
+            sysparm_exclude_reference_link: true,
+            sysparm_limit: listLimit,
+        } };
+        if (proxyClause !== undefined) opts.proxy = proxyClause;
+
+        if (yargsDict.v)
+            console.info(`Will send version list request to: ${url}\n`
+              + `with opts:`, {...opts, ...authOpts});
+        conciseCatcher(versionListHandler, 1)(await axios.get(url, {...opts, ...authOpts}).
+          catch(e => {
+            console.error("Caught failure.  Consider checking %s's syslog "
+              + "for messages written by %s.\n%s%s",
+              instName, authOpts.auth.username, e.message,
+              e.response !== undefined && e.response.data !== undefined
+              && e.response.data.error !== undefined
+              && e.response.data.error.message !== undefined
+                // eslint-disable-next-line prefer-template
+                ? "\n" + e.response.data.error.message : "");
+            process.exit(1);
+        }));
+    }
     console.debug("Received list of %i versions", currentData.length);
     if (verA === undefined) {
         /* eslint-disable prefer-template */
@@ -295,30 +361,71 @@ conciseCatcher(async function() {
         throw new AppErr(
           "Makes no sense to compare one record to itself: '%s' vs. '%s'", verA, verB);
     console.info("Fetching %s and %s", sysidA, sysidB);
-    opts = { params: {
-        sysparm_query: `sys_idIN${sysidA},${sysidB}`,
-        sysparm_fields: "sys_created_on,payload",
-        sysparm_display_value: true,
-        sysparm_exclude_reference_link: true,
-        sysparm_limit: 3,
-    } };
-    if (proxyClause !== undefined) opts.proxy = proxyClause;
 
-    // First payloads to compare
-    if (yargsDict.v)
-        console.info(`Will send request to: ${url}\nwith opts:`, {...opts, ...authOpts});
-    conciseCatcher(versionListHandler, 1)(await axios.get(url, {...opts, ...authOpts}).catch(
-      e=>console.error(
-        "Caught failure.  Consider checking %s's syslog "
-        + "for messages written by %s.\n%s%s",
-        instName, authOpts.auth.username, e.message,
-        e.response !== undefined && e.response.data !== undefined
-        && e.response.data.error !== undefined
-        && e.response.data.error.message !== undefined
-          ? `\n${e.response.data.error.message}` : "")
-    ));
+    // Fetch payloads to compare
+    if (profile) {
+        if (yargsDict.v) console.info(`Will send payload request with profile ${profile}`);
+        const pObj = require("child_process").spawnSync("snc", [
+          "-p",
+          profile,
+          "--no-verbose",
+          "--no-interactive",
+          "--output", "json",  // This is global default but may be overridden in profiles
+          "record",
+          "query",
+          "--displayvalue",
+          "--limit", 3,
+          "-t", "sys_update_version",
+          "-q", `sys_idIN${sysidA},${sysidB}`,
+          "--fields=sys_created_on,payload",
+        ], { stdio: ["ignore", "pipe", "pipe"], });
+        if ("error" in pObj) throw new AppErr(`snc payload invocation failure.\n${pObj.message}`);
+        // Crappy 'snc' returns 0 even if it fails catastrophically, and (incredibly) writes fatal
+        // error messages to stdout rather than stderr.  So we can't depend on .status or .stderr.
+        if (pObj.status !== 0)  // Will probably never work with 'snc'
+            throw new AppErr(`'snc' payload invocation failed with value ${pObj.status}.  Stderr:\n`
+              + `${pObj.stderr.toString("utf8")}\n\nStdout:\n${pObj.stdout.toString("utf8")}`);
+        let response;
+        //console.debug(pObj.stdout.toString("utf8"));
+        try {
+            response = JSON.parse(pObj.stdout.toString("utf8"));
+        } catch (eCli) {
+            throw new AppErr( `Got non-JSON payload response from 'snc'.  `
+              + `${eCli}:\n${pObj.stdout.toString("Utf8")}`);
+        }
+        console.debug(response);
+        if (typeof response === "object" && "error" in response) throw new AppErr(
+          `snc failure for payload request\n${JSON.stringify(response.error, undefined, 2)}`);
+        validate(response, { result: "object[]" });
+        response.result = deRefLinks(response.result);
+        console.debug(response.result);
+        currentData = response.result;
+    } else {
+        opts = { params: {
+            sysparm_query: `sys_idIN${sysidA},${sysidB}`,
+            sysparm_fields: "sys_created_on,payload",
+            sysparm_display_value: true,
+            sysparm_exclude_reference_link: true,
+            sysparm_limit: 3,
+        } };
+        if (proxyClause !== undefined) opts.proxy = proxyClause;
+
+        if (yargsDict.v)
+            console.info(`Will send payload request to: ${url}\n`
+              + `with opts:`, {...opts, ...authOpts});
+        conciseCatcher(versionListHandler, 1)(await axios.get(url, {...opts, ...authOpts}).catch(
+          e=>console.error(
+            "Caught failure.  Consider checking %s's syslog "
+            + "for messages written by %s.\n%s%s",
+            instName, authOpts.auth.username, e.message,
+            e.response !== undefined && e.response.data !== undefined
+            && e.response.data.error !== undefined
+            && e.response.data.error.message !== undefined
+              ? `\n${e.response.data.error.message}` : "")
+        ));
+    }
     if (currentData.length !== 2)
-        throw new AppErr("Somehow got %i records when querying for % s and %s",
+        throw new AppErr("Somehow got %i records when querying for %s and %s",
           currentData.length, sysidA, sysidB);
     // eslint-disable-next-line prefer-template
     const payloadRe = new RegExp("<" + field + ">([\\s\\S]*)</" + field + ">");
@@ -331,12 +438,11 @@ conciseCatcher(async function() {
         shell: true,
         stdio: ["ignore", "pipe", "pipe"],
       });
-    if ("error" in pObj) throw new Error(pObj.message);
+    if ("error" in pObj) throw new AppErr(`Comparator invocation failure: ${pObj.message}`);
     // Many of the comparators will return non-0 if the files differ, as
-    // we intend.  So use stderr Buffer rather than .exitCode to determine
-    // success.
+    // we intend.  So use stderr Buffer rather than .status to determine success.
     if (pObj.stderr.length > 0)  // eslint-disable-next-line prefer-template
-        console.error("Did the command fail?\n" + pObj.stderr.toString("utf8"));
+        console.error("Did the comparator fail?\n" + pObj.stderr.toString("utf8"));
     fs.unlinkSync(path.join(tmpDir, fileA));
     fs.unlinkSync(path.join(tmpDir, fileB));
     console.info(pObj.stdout.toString("utf8"));
@@ -359,6 +465,25 @@ function genCfFile(timestamp, payload, re) {
     console.debug(`Payload for '${fileName}'\n[${content}]`);
     const fileHasCRs = content.includes("\r");
     fs.writeFileSync(path.join(tmpDir, fileName),
-      content + content.endsWith(fileHasCRs ? "\r\n" : "\n") ? "" : fileHasCRs ? "\r\n" : "\n");
+      content + (content.endsWith(fileHasCRs ? "\r\n" : "\n") ? "" : fileHasCRs ? "\r\n" : "\n"));
     return fileName;
+}
+
+/**
+ * SNC CLI has no sysparm_exclude_reference_link option like table API does, so we do it here.
+ */
+function deRefLinks(reponsePart) {
+    validate(arguments, ["object[]"]);
+    return reponsePart.map(r => {
+        let keys;
+        const overrideMap = {};
+        for (const k in r) {
+            if (!isPlainObject(r[k])) continue;
+            keys = Object.keys(r[k]);
+            if (keys.length === 2 && keys[0] === "display_value" && keys[1] === "link")
+                overrideMap[k] = r[k].display_value;
+        }
+        if (Object.keys(overrideMap).length < 1) return r;
+        return {...r, ...overrideMap};
+    });
 }
