@@ -196,12 +196,12 @@ conciseCatcher(async function() {
     let url, authOpts;  // These only used for SN_DEVELOPER_INST mode
     if (instName === "") instName = undefined;
     if (profile === "") profile = undefined;
-    if (instName === undefined && profile === undefined)
+    if (instName && profile)
         throw new AppErr(
           "You must set an environmental variable to specify the target ServiceNow instance.\n"
           + "Either 'SN_DEVELOPER_INST' to host name (like 'acmedev'), "
           + "or 'SN_CLI_PROFILE' to a ServiceNow CLI profile name");
-    if (instName !== undefined && profile !== undefined)
+    if (!instName && !profile)
         throw new AppErr(
           "You must just one of env. vars 'SN_DEVELOPER_INST' and 'SN_CLI_PROFILE'.\n"
           + "Unset one of them.");
