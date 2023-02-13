@@ -34,8 +34,23 @@ To use just with your own project, install locally:
 (Without a ``./package.json`` or ``./node_modules/`` present, npm may install the package to
 another cascade directory).
 
-###  REST Service
-snUpload requires installation of a Scripted REST API to serve the upload requests.
+### Transport Setup
+snUpload* and snVersions require for transport either ServiceNow CLI installed on client side
+and available in search path,
+or server-side installation of the provided Scripted REST API to serve the upload requests.
+
+#### ServiceNow CLI Transport
+To use ServiceNow CLI as transport, ensure that the 'record' Command Group is working with your
+desired profile.  A good test command would be:
+
+```
+    snc -p default record query -t sys_propreties -q name=instance_name --fields=value
+```
+
+You must set environmental variable 'SN_CLI_PROFILE' to enable SN CLI transport mode for
+snUpdate and snVersions.
+
+#### Custom Scripted REST API Transport
 The 'resources/' directory for this package contains an Update Set export
 ``sn-developer_service-US.xml`` which contains a working sample scripted REST API, 'sndev'.
 This provided service requires membership in role 'sndev' if you don't have admin,
@@ -46,6 +61,9 @@ In most cases you should not be facilitating script uploads to a Production envi
 consider editing the script to reject requests if the instance name isn't what you want.
 (There is a commented-out test for instance of name ``x``
 ``resources/upload-wsop.js`` contains the JavaScript code for the service.
+
+You must set environmental variable 'SN_DEVELOPER_INST' to enable Scripte REST API transport mode
+for snUpdate and snVersions.
 
 ## Setup and Usage
 
@@ -89,6 +107,12 @@ To start managing a new source file with snUpload, it usually makes sense to
 1. Check the EOL style of the text file.  -r will give you whatever format the ServiceNow
    instance prefers.  Change the EOL style to what you want to work with (this will not change
    the EOL style on the SN instance).
+
+I find it extremely convenient to put scriptlet files for the same scriptlet type or scope
+into dedicated subdirectories, then use one uploadmap RegExp entry per directory, like
+```
+    /^myapp[/]client[.]d[/][\w-]+[.]js$/ sys_ui_page client_script name < x_admc_jetlib all
+```
 
 ## Invocation methods for Local Module Installations
 This section is true of bin scripts from any npm module non-global installation,
