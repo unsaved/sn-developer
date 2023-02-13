@@ -367,7 +367,6 @@ conciseCatcher(function(inFile) {
         if (profile && typeof response === "object" && Array.isArray(response.result)
           && response.result.length === 1 && typeof response.result[0].sys_id === "string") {
             sysId = response.result[0].sys_id;
-            console.info(`Got (${sysId})`);
             delete response.result[0].sys_id;
         }
         if (profile || yargsDict.r || yargsDict.c) {
