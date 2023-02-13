@@ -62,7 +62,7 @@ consider editing the script to reject requests if the instance name isn't what y
 (There is a commented-out test for instance of name ``x``
 ``resources/upload-wsop.js`` contains the JavaScript code for the service.
 
-You must set environmental variable 'SN_DEVELOPER_INST' to enable Scripte REST API transport mode
+You must set environmental variable 'SN_DEVELOPER_INST' to enable Scripted REST API transport mode
 for snUpdate and snVersions.
 
 ## Setup and Usage
