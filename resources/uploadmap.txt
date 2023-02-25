@@ -11,19 +11,32 @@
 #    Since you are not writing JavaScript, you don't need to double-up backslashes,
 #    but as always with regexs, you do need to escape all forward slashes and dots;
 #    and don't forget to sandwich with ^...$ if you want to start or end as specified.
-# keyvalue values may be special constant * or <, with meanings:
+# keyvalue values may be special constant * or <, with the following meanings.
+# In case of regexp + one of these special keyvalue constants, the final submitted
+# key value will consist of some of the submitted value, not part of the regexp string.
 #  *  same as datafile value (with directory path removed, if any),
 #  <  basename of datafile (i.e. without directory path and suffix).
 #  /  datafile with directory path but without suffix).
 #  =  datafile value exactly
-# After the optional constant transformation, # chars in key values are replaced
-# with space characters, so that "x#y#z" would result in key "x y z".
+# ESCAPING
+#   After the optional constant and regexp transformations, these special character
+#   sequences in key values are replaced the with specified characters:
+#     FROM # TO ' ' (space character")
+#     FROM ~{ TO (
+#     FROM ~} TO )
+#     FROM ~ TO /
 # As an example of special keyvalue constants, if we had keyvalue of <
-# for the subdir/g#ply.txt line below, that would attempt to upload to
-# a record with key value of "g ply".
+# for the subdir/g#pl~}y.txt line below, that would attempt to upload to
+# a record with key value of "g pl/y".
+# Similarly, if you had a local relative file "alpha/g#pl~}y.js", the
+# system would attempt to upload a record with key value of "g pl/y"
+# due to the last line below.
 
 # If more than one map entry matches the specified path, then the first
 # qualifying record will be used.
+# keyfield may actually be multiple comma-delimited fields.
+# In that case, the final key value string must be +-delimited key values
+# of the same number of elements as number of fields.
 
 # In nearly all cases, you can easily narrow to your single target record by
 # using 'keyfield' of the table's display field or "name", with sys_scope

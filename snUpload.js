@@ -254,9 +254,11 @@ conciseCatcher(function(inFile) {
             fileHasCRs = yargsDict.R ? false : os.EOL === "\r\n";
         }
 
+        const queryStrings = [];
+        for (let i = 0; i < uploadEntry.keyFields.length; i++)
+            queryStrings.push(`${uploadEntry.keyFields[i]}=${uploadEntry.keyValues[i]}`);
         if (profile) {
-            let query = `${uploadEntry.keyField}=${uploadEntry.keyValue}`;
-            if (uploadEntry.appScope) query += `^sys_scope.scope=${uploadEntry.appScope}`;
+            if (uploadEntry.appScope) queryStrings.push(`sys_scope.scope=${uploadEntry.appScope}`);
             if (yargsDict.v) console.info(`Will fetch previous value with profile ${profile}`);
             const pObj = require("child_process").spawnSync("snc", [
               "-p",
@@ -269,7 +271,7 @@ conciseCatcher(function(inFile) {
               "--displayvalue",
               "--limit", 2,
               "-t", uploadEntry.table,
-              "-q", query,
+              "-q", queryStrings.join("^"),
               `--fields=sys_id,${uploadEntry.dataField}`,
             ], { stdio: ["ignore", "pipe", "pipe"], });
             if ("error" in pObj)
@@ -304,23 +306,21 @@ conciseCatcher(function(inFile) {
                   question(`Password for '${yargsDict.p}': `, {hideEchoBack: true}) }
               : rcFile.getAuthSettings(url)
             };
+            if (uploadEntry.appScope && yargsDict.r || yargsDict.c)
+                queryStrings.push(`sys_scope.scope=${uploadEntry.appScope}`);
             const opts = {
                 method: yargsDict.r || yargsDict.c ? 'get' : 'patch',
                 url,
                 params: yargsDict.r || yargsDict.c ? {
-                  sysparm_query: `${uploadEntry.keyField}=${uploadEntry.keyValue}`,
+                  sysparm_query: queryStrings.join("^"),
                   sysparm_fields: uploadEntry.dataField,
                   sysparm_limit: 2,
                 } : {
-                    query: `${uploadEntry.keyField}=${uploadEntry.keyValue}`
+                  query: queryStrings.join("^"),
                 },
             };
-            if (uploadEntry.appScope) {
-                if (yargsDict.r || yargsDict.c)
-                    opts.params.sysparm_query += `^sys_scope.scope=${uploadEntry.appScope}`;
-                else
-                    opts.params.appscope = uploadEntry.appScope;
-            }
+            if (uploadEntry.appScope && !yargsDict.r && !yargsDict.c)
+                opts.params.appscope = uploadEntry.appScope;
             if ("SN_HTTPS_PROXY" in process.env) {
                 const ex = /^([^:]+):[/]+([^:]+)(?::(\d+))?$/.exec(process.env.SN_HTTPS_PROXY);
                 if (!ex)
