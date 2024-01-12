@@ -35,7 +35,7 @@
     "no-eval": "warn",
     "no-extra-label": "error",
     "no-extra-bind": "error",
-    "no-else-return": "error",
+    "no-else-return": ["error", {"allowElseIf": false}],
     "no-array-constructor": "warn",
     "new-cap": "error",
     "max-depth": "warn",
@@ -48,6 +48,13 @@
     "no-constructor-return": "error",
     "no-constant-binary-expression": "error",
     "array-callback-return": ["error", { "checkForEach": true }],
+    "no-unused-vars": ["error", {
+        "args": "all",
+        "argsIgnorePattern": "^_?dummy",
+        "caughtErrors": "all", 
+        "caughtErrorsIgnorePattern": "^_?dummy"
+    }],
+    "no-eq-null": "error",
 
     // Post-ES6
     "no-var": "error",
@@ -63,6 +70,8 @@
     "require-atomic-updates": "error",
     "no-unused-private-class-members": "error",
     "no-promise-executor-return": "error",
+    "prefer-rest-params": "error",
+    "prefer-spread": "error",
 
     // formatting
     "comma-spacing": "warn",
