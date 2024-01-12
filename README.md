@@ -34,6 +34,9 @@ To use just with your own project, install locally:
 (Without a ``./package.json`` or ``./node_modules/`` present, npm may install the package to
 another cascade directory).
 
+To defeat incompetent OOTB validation, update sys_script_validator records on your instance.
+We provide samples that you can just copy in.  See file "doc/scriptValidators.txt".
+
 ### Transport Setup
 snUpload* and snVersions require for transport either ServiceNow CLI installed on client side
 and available in search path,

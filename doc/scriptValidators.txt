@@ -1,0 +1,5 @@
+You need to override some system sys_script_validators, and disable one, to
+work around the lame out-of-box code validation.
+
+See file resources/sys_script_validator/README.txt in the eslint-plugin-sn module about that.
+There are sample scripts that you can simply paste into the record forms.
