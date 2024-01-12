@@ -26,8 +26,8 @@ if (argsArray.length > 0 && argsArray[0] === "-u") {
 const badFileSpecs = argsArray.filter(usPath => !fs.existsSync(usPath));
 const progName = process.argv[1].replace(/.*[/\\]/, "");
 
-conciseCatcher(async function() {
-    validate(arguments, []);
+conciseCatcher(async (...args) => {
+    validate(args, []);
     if (badFileSpecs.length > 0)
         // eslint-disable-next-line prefer-template
         throw new AppErr(badFileSpecs.length + " missing input files: " + badFileSpecs.join(", "));

@@ -188,8 +188,8 @@ if (verA === undefined) {
     }
 }
 
-conciseCatcher(async function() {
-    validate(arguments, []);
+conciseCatcher(async (...args) => {
+    validate(args, []);
     let rcFile, opts, proxyClause;
     let instName = process.env.SN_DEVELOPER_INST;
     let profile = process.env.SN_CLI_PROFILE;
@@ -448,6 +448,7 @@ conciseCatcher(async function() {
     console.info(pObj.stdout.toString("utf8"));
 }, 10)().catch(e0=>conciseErrorHandler(e0, 1));
 
+/* eslint-disable prefer-rest-params */
 function versionListHandler(response) {
     if (response === undefined) return;  // handled by await's catch
     console.debug(response.data.result);

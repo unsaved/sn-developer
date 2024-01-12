@@ -141,7 +141,7 @@ const isUnixShell = process.env.SHELL !== undefined;
 const lintStrict = process.env.SN_LINT_STRICT !== undefined;
 let profile, instName, uploadEntry, localFileText;
 
-conciseCatcher(function(inFile) {
+conciseCatcher(function(inFile) {  // eslint-disable-next-line prefer-rest-params
     validate(arguments, ["string"]);
     let rcFile;
     file = inFile;
@@ -174,7 +174,7 @@ conciseCatcher(function(inFile) {
             if (!fs.statSync(file).isFile()) throw new AppErr("Not a regular file:", file);
             try {
                 fs.accessSync(file, fs.constants.R_OK);
-            } catch (nestedE) {
+            } catch (_dummyNestE) {
                 throw new AppErr(`Can't read file: [${file}]`);
             }
             fileExt = file.replace(/.*[.]/, "");
@@ -231,7 +231,7 @@ conciseCatcher(function(inFile) {
             try {
                 // eslint-disable-next-line camelcase
                 child_process.execFileSync(process.execPath, lintSnArgs, { stdio: "inherit" });
-            } catch (e9) {
+            } catch (_dummyNext) {
                 throw new AppErr("Lint check failed");
             }
             console.warn("ESLint success");  // Warn level so does not intermix with stdout
