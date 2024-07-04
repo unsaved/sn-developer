@@ -312,7 +312,7 @@ conciseCatcher(function(inFile) {  // eslint-disable-next-line prefer-rest-param
                   question(`Password for '${yargsDict.p}': `, {hideEchoBack: true}) }
               : rcFile.getAuthSettings(url)
             };
-            if (uploadEntry.appScope && yargsDict.r || yargsDict.c)
+            if (uploadEntry.appScope && (yargsDict.r || yargsDict.c))
                 queryStrings.push(`sys_scope.scope=${uploadEntry.appScope}`);
             const opts = {
                 method: yargsDict.r || yargsDict.c ? 'get' : 'patch',
