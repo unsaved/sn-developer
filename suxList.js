@@ -3,7 +3,7 @@
 "use strict";
 
 const { AppErr, mkAppThrowableHandler, trimAndJoin } = require("@admc.com/apputil");
-const { validate } = require("@admc.com/bycontract-plus");
+const { z } = require("zod");
 const { snInternalToSNLocalString } = require("./lib/snJs");
 
 /*
@@ -27,7 +27,7 @@ const badFileSpecs = argsArray.filter(usPath => !fs.existsSync(usPath));
 const progName = process.argv[1].replace(/.*[/\\]/, "");
 
 (async (...args) => {
-    validate(args, []);
+    z.tuple([]).parse(args);
     if (badFileSpecs.length > 0)
         // eslint-disable-next-line prefer-template
         throw new AppErr(badFileSpecs.length + " missing input files: " + badFileSpecs.join(", "));

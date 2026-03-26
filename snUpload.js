@@ -3,7 +3,7 @@
 "use strict";
 
 const fs = require("fs");
-const { validate } = require("@admc.com/bycontract-plus");
+const { z } = require("zod");
 const axios = require("axios");
 const { NetRC, AppErr, mkAppThrowableHandler, getAppVersion, isPlainObject } =
   require("@admc.com/apputil");
@@ -149,7 +149,7 @@ let profile, instName, uploadEntry, localFileText;
 
 const inFile = yargsDict._.shift();
 try {
-    validate([inFile], ["string"]);
+    z.tuple([z.string()]).parse([inFile]);
     let rcFile;
     file = inFile;
     instName = process.env.SN_DEVELOPER_INST;
@@ -382,7 +382,8 @@ async function responseHandler(response) {
     if (profile || yargsDict.r || yargsDict.c) {
         // into new object shoe-horns 'snc' response into axios response format:
         if (profile) response = {data: response};
-        validate(response, {data: {result: "object[]"}});
+        z.object({data: z.object({result: z.array(z.object({}).passthrough())})}).
+            parse(response);
         if (response.data.result.length < 1) throw new AppErr("Got no records from server");
         if (response.data.result.length > 1)
             throw new AppErr("Got multiple records from server");
@@ -441,7 +442,7 @@ async function responseHandler(response) {
                 // eslint-disable-next-line prefer-template
                 throw new AppErr("snc failure for fetch request\n"
                   + JSON.stringify(uResponse.error, undefined, 2));
-            validate(uResponse, { result: "object" });
+            z.object({result: z.object({}).passthrough()}).parse(uResponse);
         }
     } else {
         //Can't use validate because retrieval of JSON sys property SOMETIMES gets as an object:

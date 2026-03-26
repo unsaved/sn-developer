@@ -9,7 +9,7 @@
  * match recorded, so that's what we'll use. */
 
 const fs = require("fs");
-const { validate } = require("@admc.com/bycontract-plus");
+const { z } = require("zod");
 const axios = require("axios");
 const { AppErr, mkAppThrowableHandler, getAppVersion, NetRC, isPlainObject } =
     require("@admc.com/apputil");
@@ -189,7 +189,7 @@ if (verA === undefined) {
 }
 
 (async (...args) => {
-    validate(args, []);
+    z.tuple([]).parse(args);
     let rcFile, opts, proxyClause;
     let instName = process.env.SN_DEVELOPER_INST;
     let profile = process.env.SN_CLI_PROFILE;
@@ -278,7 +278,7 @@ if (verA === undefined) {
         console.debug(response);
         if (typeof response === "object" && "error" in response) throw new AppErr(
           `snc failure for list request\n${JSON.stringify(response.error, undefined, 2)}`);
-        validate(response, { result: "object[]" });
+        z.object({result: z.array(z.object({}).passthrough())}).parse(response);
         response.result = deRefLinks(response.result);
         console.debug(response.result);
         currentData = response.result;
@@ -385,7 +385,7 @@ if (verA === undefined) {
         console.debug(response);
         if (typeof response === "object" && "error" in response) throw new AppErr(
           `snc failure for payload request\n${JSON.stringify(response.error, undefined, 2)}`);
-        validate(response, { result: "object[]" });
+        z.object({result: z.array(z.object({}).passthrough())}).parse(response);
         response.result = deRefLinks(response.result);
         console.debug(response.result);
         currentData = response.result;
@@ -436,12 +436,14 @@ if (verA === undefined) {
 function versionListHandler(response) {
     if (response === undefined) return;  // handled by await's catch
     console.debug(response.data.result);
-    validate(arguments, [{data: { result: "array" } }]);
+    z.tuple([z.object({data: z.object({result: z.array(z.unknown())})})]).
+        parse([...arguments]);
     currentData = response.data.result;
 }
 
 function genCfFile(timestamp, payload, re) {
-    validate(arguments, ["string", "string", "regexp"]);
+    z.tuple([z.string(), z.string(), z.instanceof(RegExp)]).
+        parse([...arguments]);
     const ex = re.exec(payload);
     if (!ex) throw new AppErr(`Didn't find field '${field}' in version record ${timestamp}`);
     const fileName = format("%s.%s",
@@ -458,7 +460,7 @@ function genCfFile(timestamp, payload, re) {
  * SNC CLI has no sysparm_exclude_reference_link option like table API does, so we do it here.
  */
 function deRefLinks(reponsePart) {
-    validate(arguments, ["object[]"]);
+    z.tuple([z.array(z.object({}).passthrough())]).parse([...arguments]);
     return reponsePart.map(r => {
         let keys;
         const overrideMap = {};
