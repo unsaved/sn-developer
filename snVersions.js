@@ -11,7 +11,7 @@
 const fs = require("fs");
 const { validate } = require("@admc.com/bycontract-plus");
 const axios = require("axios");
-const { AppErr, conciseCatcher, conciseErrorHandler, getAppVersion, NetRC, isPlainObject } =
+const { AppErr, mkAppThrowableHandler, getAppVersion, NetRC, isPlainObject } =
     require("@admc.com/apputil");
 const { format } = require("util");
 const { patterns } = require("./lib/snJs");
@@ -188,7 +188,7 @@ if (verA === undefined) {
     }
 }
 
-conciseCatcher(async (...args) => {
+(async (...args) => {
     validate(args, []);
     let rcFile, opts, proxyClause;
     let instName = process.env.SN_DEVELOPER_INST;
@@ -301,18 +301,7 @@ conciseCatcher(async (...args) => {
         if (yargsDict.v)
             console.info(`Will send version list request to: ${url}\n`
               + `with opts:`, {...opts, ...authOpts});
-        conciseCatcher(versionListHandler, 1)(await axios.get(url, {...opts, ...authOpts}).
-          catch(e => {
-            console.error("Caught failure.  Consider checking %s's syslog "
-              + "for messages written by %s.\n%s%s",
-              instName, authOpts.auth.username, e.message,
-              e.response !== undefined && e.response.data !== undefined
-              && e.response.data.error !== undefined
-              && e.response.data.error.message !== undefined
-                // eslint-disable-next-line prefer-template
-                ? "\n" + e.response.data.error.message : "");
-            process.exit(1);
-        }));
+        versionListHandler(await axios.get(url, {...opts, ...authOpts}));
     }
     console.debug("Received list of %i versions", currentData.length);
     if (verA === undefined) {
@@ -413,16 +402,7 @@ conciseCatcher(async (...args) => {
         if (yargsDict.v)
             console.info(`Will send payload request to: ${url}\n`
               + `with opts:`, {...opts, ...authOpts});
-        conciseCatcher(versionListHandler, 1)(await axios.get(url, {...opts, ...authOpts}).catch(
-          e=>console.error(
-            "Caught failure.  Consider checking %s's syslog "
-            + "for messages written by %s.\n%s%s",
-            instName, authOpts.auth.username, e.message,
-            e.response !== undefined && e.response.data !== undefined
-            && e.response.data.error !== undefined
-            && e.response.data.error.message !== undefined
-              ? `\n${e.response.data.error.message}` : "")
-        ));
+        versionListHandler(await axios.get(url, {...opts, ...authOpts}));
     }
     if (currentData.length !== 2)
         throw new AppErr("Somehow got %i records when querying for %s and %s",
@@ -446,7 +426,11 @@ conciseCatcher(async (...args) => {
     fs.unlinkSync(path.join(tmpDir, fileA));
     fs.unlinkSync(path.join(tmpDir, fileB));
     console.info(pObj.stdout.toString("utf8"));
-}, 10)().catch(e0=>conciseErrorHandler(e0, 1));
+})().catch(mkAppThrowableHandler(1).handle(axios.AxiosError, err => {
+    console.error(`ServiceNow API error: ${err.code}`);
+    if (err.response)
+        console.error(`HTTP ${err.response.status}: ${err.response.statusText}`, err.response.data);
+}));
 
 /* eslint-disable prefer-rest-params */
 function versionListHandler(response) {

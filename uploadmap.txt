@@ -1,4 +1,4 @@
-#datafile                  table                datafield         keyfield  kevalue  scope  altscope
+#datafile                  table                datafield         keyfield  keyvalue scope  altscope
 resources/update-wsop.js   sys_ws_operation     operation_script  name      update   global global
 resources/HttpCodeError.js sys_script_include   script            name      <        global global
 resources/glide.ui.syntax_editor.linter.eslint_config.txt sys_properties value name      <        global

@@ -5,7 +5,7 @@
 const fs = require("fs");
 const { validate } = require("@admc.com/bycontract-plus");
 const axios = require("axios");
-const { NetRC, AppErr, conciseCatcher, getAppVersion, isPlainObject } =
+const { NetRC, AppErr, mkAppThrowableHandler, getAppVersion, isPlainObject } =
   require("@admc.com/apputil");
 const UploadMap = require("./lib/UploadMap");
 const { format } = require("util");
@@ -147,8 +147,9 @@ const isUnixShell = process.env.SHELL !== undefined;
 const lintStrict = process.env.SN_LINT_STRICT !== undefined;
 let profile, instName, uploadEntry, localFileText;
 
-conciseCatcher(function(inFile) {  // eslint-disable-next-line prefer-rest-params
-    validate(arguments, ["string"]);
+const inFile = yargsDict._.shift();
+try {
+    validate([inFile], ["string"]);
     let rcFile;
     file = inFile;
     instName = process.env.SN_DEVELOPER_INST;
@@ -345,8 +346,9 @@ conciseCatcher(function(inFile) {  // eslint-disable-next-line prefer-rest-param
                   {...opts, ...authOpts});  // Warn level so does not intermix with stdout
             if (!yargsDict.r && !yargsDict.c) opts.data = { "content": localFileText };
             axios({...opts, ...authOpts}).
-              then(conciseCatcher(responseHandler, 1),
-              e=>console.error("Caught failure.  Consider running with -d switch (debug) "
+              then(responseHandler).
+              catch(mkAppThrowableHandler(1).handle(axios.AxiosError, e=>
+                console.error("Caught failure.  Consider running with -d switch (debug) "
                 + "and checking %s's syslog for messages written by %s.\n%s%s",
                 instName, authOpts.auth.username, e.message,
                 e.response !== undefined && e.response.data !== undefined
@@ -354,149 +356,151 @@ conciseCatcher(function(inFile) {  // eslint-disable-next-line prefer-rest-param
                 && e.response.data.error.message !== undefined
                   // eslint-disable-next-line prefer-template
                   ? "\n" + e.response.data.error.message : "")
-              );
-            }
+              ));
         }
-    }, 10)(yargsDict._.shift());
-    if (yargsDict.m) {
-        const rl = require("readline").createInterface({
-            input: process.stdin,
-            output: process.stdout
-        });
-        rl.question(`Monitoring '${file}'.  Hit ENTER to exit.\n`,
-          () => { rl.close(); process.exit(1); });
     }
+} catch(err) {
+   mkAppThrowableHandler(10)(err);
+}
+if (yargsDict.m) {
+    const rl = require("readline").createInterface({
+        input: process.stdin,
+        output: process.stdout
+    });
+    rl.question(`Monitoring '${file}'.  Hit ENTER to exit.\n`,
+      () => { rl.close(); process.exit(1); });
+}
 
-    async function responseHandler(response) {
-        let prevRevData, prevDataHasCRs;
-        let sysId;  // Variables only used in SN_CLI_PROFILE mode
-        if (profile && typeof response === "object" && Array.isArray(response.result)
-          && response.result.length === 1 && typeof response.result[0].sys_id === "string") {
-            sysId = response.result[0].sys_id;
-            delete response.result[0].sys_id;
-        }
-        if (profile || yargsDict.r || yargsDict.c) {
-            // into new object shoe-horns 'snc' response into axios response format:
-            if (profile) response = {data: response};
-            validate(response, {data: {result: "object[]"}});
-            if (response.data.result.length < 1) throw new AppErr("Got no records from server");
-            if (response.data.result.length > 1)
-                throw new AppErr("Got multiple records from server");
-            if (!isPlainObject(response.data.result[0]))
-                throw new AppErr("Got something other than a plain object from server: %O",
-                  response.data.result[0]);
-            if (Object.keys(response.data.result[0]).length !== 1)
-                // eslint-disable-next-line prefer-template
-                throw new AppErr("Object from server has "
-                  + Object.keys(response.data.result[0]).length + " fields instead of just 1");
-            prevRevData = Object.values(response.data.result[0])[0];
-            if (typeof prevRevData !== "string") throw new AppErr(
-              `Object from server has ${typeof prevRevData} instead of string content`);
-            prevDataHasCRs = prevRevData.includes("\r");
-            if (yargsDict.r) {
-                if (prevDataHasCRs && !fileHasCRs) prevRevData = prevRevData.replace(/\r/g, "");
-                if (!yargsDict.f) {
-                    process.stdout.write(prevRevData + (fileHasCRs ? "\r\n" : "\n"));
-                    return;
-                }
-            }
-            if (profile && !yargsDict.r && !yargsDict.c) {  // Execute update
-                const changes = {};
-                changes[uploadEntry.dataField] = localFileText;
-                const pObj = require("child_process").spawnSync("snc", [
-                  "-p",
-                  profile,
-                  "--no-verbose",
-                  "--no-interactive",
-                  "--output", "json",  // This is global default but may be overridden in profiles
-                  "record",
-                  "update",
-                  "--sysid", sysId,
-                  "-t", uploadEntry.table,
-                  "--data", JSON.stringify(changes),
-                ], { stdio: ["ignore", "pipe", "pipe"], });
-                if ("error" in pObj)
-                    throw new AppErr(`snc fetch invocation failure.\n${pObj.message}`);
-                // Crappy 'snc' returns 0 even if it fails catastrophically, and (incredibly) writes
-                // fatal error messages to stdout rather than stderr.  So we can't depend on .status
-                // or .stderr.
-                if (pObj.status !== 0)  // Will probably never work with 'snc'
-                    throw new AppErr(
-                      `'snc' update invocation failed with value ${pObj.status}.  Stderr:\n`
-                      + `${pObj.stderr.toString("utf8")}\n\n`
-                      + `Stdout:\n${pObj.stdout.toString("utf8")}`);
-                let uResponse;
-                try {
-                    uResponse = JSON.parse(pObj.stdout.toString("utf8"));
-                } catch (eCli) {
-                    throw new AppErr( `Got non-JSON fetch response from 'snc'.  `
-                      + `${eCli}:\n${pObj.stdout.toString("Utf8")}`);
-                }
-                //console.debug(uResponse);
-                if (typeof uResponse === "object" && "error" in uResponse)
-                    // eslint-disable-next-line prefer-template
-                    throw new AppErr("snc failure for fetch request\n"
-                      + JSON.stringify(uResponse.error, undefined, 2));
-                validate(uResponse, { result: "object" });
-            }
-        } else {
-            //Can't use validate because retrieval of JSON sys property SOMETIMES gets as an object:
-            if (typeof response.data !== "string") {
-                // Server is sending a GlideRecord.getValue() with mime type text/plain.
-                // I don't know how JSON strings are sometimes making it to use as objects???
-                console.warn(`We received a ${typeof response.data} rather than a string.
-    Due to this, we can't determine or display the delta.`);
+async function responseHandler(response) {
+    let prevRevData, prevDataHasCRs;
+    let sysId;  // Variables only used in SN_CLI_PROFILE mode
+    if (profile && typeof response === "object" && Array.isArray(response.result)
+      && response.result.length === 1 && typeof response.result[0].sys_id === "string") {
+        sysId = response.result[0].sys_id;
+        delete response.result[0].sys_id;
+    }
+    if (profile || yargsDict.r || yargsDict.c) {
+        // into new object shoe-horns 'snc' response into axios response format:
+        if (profile) response = {data: response};
+        validate(response, {data: {result: "object[]"}});
+        if (response.data.result.length < 1) throw new AppErr("Got no records from server");
+        if (response.data.result.length > 1)
+            throw new AppErr("Got multiple records from server");
+        if (!isPlainObject(response.data.result[0]))
+            throw new AppErr("Got something other than a plain object from server: %O",
+              response.data.result[0]);
+        if (Object.keys(response.data.result[0]).length !== 1)
+            // eslint-disable-next-line prefer-template
+            throw new AppErr("Object from server has "
+              + Object.keys(response.data.result[0]).length + " fields instead of just 1");
+        prevRevData = Object.values(response.data.result[0])[0];
+        if (typeof prevRevData !== "string") throw new AppErr(
+          `Object from server has ${typeof prevRevData} instead of string content`);
+        prevDataHasCRs = prevRevData.includes("\r");
+        if (yargsDict.r) {
+            if (prevDataHasCRs && !fileHasCRs) prevRevData = prevRevData.replace(/\r/g, "");
+            if (!yargsDict.f) {
+                process.stdout.write(prevRevData + (fileHasCRs ? "\r\n" : "\n"));
                 return;
             }
-            prevRevData = response.data;
-            prevDataHasCRs = prevRevData.includes("\r");
         }
-        if (typeof prevDataHasCRs !== "boolean")
-            throw new Error("Assertion failed.  Variable 'prevDataHasCRs' is undefined");
-        // fileHasCRs has obvious meaning if 'file' exists.  If not then we INTEND to have CRs.
-        if (typeof fileHasCRs !== "boolean")
-            throw new Error("Assertion failed.  Variable 'fileHasCRs' is undefined");
-        console.debug("Received", prevRevData);
-        const prevRevFile = yargsDict.f && !fs.existsSync(file) ? file : format("%s-%i.%s",
-          path.join(os.tmpdir(), progName.replace(/[.][^.]*$/, "")),
-          process.pid, fileExt === null ? "txt" : fileExt);
-        if (fileHasCRs) {
-            if (!prevDataHasCRs) prevRevData = prevRevData.replace(/\n/g, "\r\n");
-        } else
-            if (prevDataHasCRs) prevRevData = prevRevData.replace(/\r/g, "");
-        console.debug("Writing prevRevFile file:", prevRevFile);
-        fs.writeFileSync(prevRevFile, prevRevData + (fileHasCRs ? "\r\n" : "\n"));
-        if (!comparatorCmd) return;  // get this if yargsDict.f and 'file' does not exist
-        // If -f mode then check for no-change
-        // It's just easier to compare the same files we would comparatorCmd rather than transform
-        // yet again to compare in memory.
-        if (yargsDict.f && fs.readFileSync(file, "utf8") === fs.readFileSync(prevRevFile, "utf8")) {
-            fs.unlinkSync(prevRevFile);
-            console.info("No change");
+        if (profile && !yargsDict.r && !yargsDict.c) {  // Execute update
+            const changes = {};
+            changes[uploadEntry.dataField] = localFileText;
+            const pObj = require("child_process").spawnSync("snc", [
+              "-p",
+              profile,
+              "--no-verbose",
+              "--no-interactive",
+              "--output", "json",  // This is global default but may be overridden in profiles
+              "record",
+              "update",
+              "--sysid", sysId,
+              "-t", uploadEntry.table,
+              "--data", JSON.stringify(changes),
+            ], { stdio: ["ignore", "pipe", "pipe"], });
+            if ("error" in pObj)
+                throw new AppErr(`snc fetch invocation failure.\n${pObj.message}`);
+            // Crappy 'snc' returns 0 even if it fails catastrophically, and (incredibly) writes
+            // fatal error messages to stdout rather than stderr.  So we can't depend on .status
+            // or .stderr.
+            if (pObj.status !== 0)  // Will probably never work with 'snc'
+                throw new AppErr(
+                  `'snc' update invocation failed with value ${pObj.status}.  Stderr:\n`
+                  + `${pObj.stderr.toString("utf8")}\n\n`
+                  + `Stdout:\n${pObj.stdout.toString("utf8")}`);
+            let uResponse;
+            try {
+                uResponse = JSON.parse(pObj.stdout.toString("utf8"));
+            } catch (eCli) {
+                throw new AppErr( `Got non-JSON fetch response from 'snc'.  `
+                  + `${eCli}:\n${pObj.stdout.toString("Utf8")}`);
+            }
+            //console.debug(uResponse);
+            if (typeof uResponse === "object" && "error" in uResponse)
+                // eslint-disable-next-line prefer-template
+                throw new AppErr("snc failure for fetch request\n"
+                  + JSON.stringify(uResponse.error, undefined, 2));
+            validate(uResponse, { result: "object" });
+        }
+    } else {
+        //Can't use validate because retrieval of JSON sys property SOMETIMES gets as an object:
+        if (typeof response.data !== "string") {
+            // Server is sending a GlideRecord.getValue() with mime type text/plain.
+            // I don't know how JSON strings are sometimes making it to use as objects???
+            console.warn(`We received a ${typeof response.data} rather than a string.
+Due to this, we can't determine or display the delta.`);
             return;
         }
-
-        console.info(`Executing: ${comparatorCmd}`, prevRevFile, path.normalize(file));
-        const pObj = child_process.spawnSync(  // eslint-disable-line camelcase
-          format(comparatorCmd, prevRevFile, path.normalize(file)), {
-            shell: true,
-            stdio: ["ignore", "pipe", "pipe"],
-          });
-        if ("error" in pObj) throw new AppErr(`Comparator invocation failure: ${pObj.message}`);
-        // Many of the comparators will return non-0 if the files differ, as
-        // we intend.  So use stderr Buffer rather than .status to determine success.
-        if (pObj.stderr.length > 0)
-            console.error(`Did the comparator fail?\n${pObj.stderr.toString("utf8")}`);
-        console.info(pObj.stdout.toString("utf8"));
-        if (yargsDict.f) console.error(
-          `If you wish to overwrite local file '${file}' then remove it yourself and re-run.`);
-            /* Don't want the dependency upon platform-specific syncprompt module.
-            const response = prompt(`Overwrite local file '${file}' [yes]?  `);
-            // silently overwrites:
-            if (response === "" || ["Y", "y"].includes(response[0])) {
-                //fs.renameSync(prevRevFile, file);  This only works if files on same FS partition.
-                fs.copyFileSync(prevRevFile, file);
-            }
-            */
-        fs.unlinkSync(prevRevFile);
+        prevRevData = response.data;
+        prevDataHasCRs = prevRevData.includes("\r");
     }
+    if (typeof prevDataHasCRs !== "boolean")
+        throw new Error("Assertion failed.  Variable 'prevDataHasCRs' is undefined");
+    // fileHasCRs has obvious meaning if 'file' exists.  If not then we INTEND to have CRs.
+    if (typeof fileHasCRs !== "boolean")
+        throw new Error("Assertion failed.  Variable 'fileHasCRs' is undefined");
+    console.debug("Received", prevRevData);
+    const prevRevFile = yargsDict.f && !fs.existsSync(file) ? file : format("%s-%i.%s",
+      path.join(os.tmpdir(), progName.replace(/[.][^.]*$/, "")),
+      process.pid, fileExt === null ? "txt" : fileExt);
+    if (fileHasCRs) {
+        if (!prevDataHasCRs) prevRevData = prevRevData.replace(/\n/g, "\r\n");
+    } else
+        if (prevDataHasCRs) prevRevData = prevRevData.replace(/\r/g, "");
+    console.debug("Writing prevRevFile file:", prevRevFile);
+    fs.writeFileSync(prevRevFile, prevRevData + (fileHasCRs ? "\r\n" : "\n"));
+    if (!comparatorCmd) return;  // get this if yargsDict.f and 'file' does not exist
+    // If -f mode then check for no-change
+    // It's just easier to compare the same files we would comparatorCmd rather than transform
+    // yet again to compare in memory.
+    if (yargsDict.f && fs.readFileSync(file, "utf8") === fs.readFileSync(prevRevFile, "utf8")) {
+        fs.unlinkSync(prevRevFile);
+        console.info("No change");
+        return;
+    }
+
+    console.info(`Executing: ${comparatorCmd}`, prevRevFile, path.normalize(file));
+    const pObj = child_process.spawnSync(  // eslint-disable-line camelcase
+      format(comparatorCmd, prevRevFile, path.normalize(file)), {
+        shell: true,
+        stdio: ["ignore", "pipe", "pipe"],
+      });
+    if ("error" in pObj) throw new AppErr(`Comparator invocation failure: ${pObj.message}`);
+    // Many of the comparators will return non-0 if the files differ, as
+    // we intend.  So use stderr Buffer rather than .status to determine success.
+    if (pObj.stderr.length > 0)
+        console.error(`Did the comparator fail?\n${pObj.stderr.toString("utf8")}`);
+    console.info(pObj.stdout.toString("utf8"));
+    if (yargsDict.f) console.error(
+      `If you wish to overwrite local file '${file}' then remove it yourself and re-run.`);
+        /* Don't want the dependency upon platform-specific syncprompt module.
+        const response = prompt(`Overwrite local file '${file}' [yes]?  `);
+        // silently overwrites:
+        if (response === "" || ["Y", "y"].includes(response[0])) {
+            //fs.renameSync(prevRevFile, file);  This only works if files on same FS partition.
+            fs.copyFileSync(prevRevFile, file);
+        }
+        */
+    fs.unlinkSync(prevRevFile);
+}

@@ -2,7 +2,7 @@
 
 "use strict";
 
-const { AppErr, conciseCatcher } = require("@admc.com/apputil");
+const { AppErr, mkAppThrowableHandler } = require("@admc.com/apputil");
 const fs = require("fs");
 const path = require("path");
 const childProcess = require("child_process"); // eslint-disable-line camelcase
@@ -44,7 +44,7 @@ if (passThruEnd > -1) {
 }
 passThruParams.unshift("-L");
 const files = [];
-conciseCatcher(() => {
+try {
     let mergerPath = path.join(__dirname, "../eslint-plugin-sn/mergeEslintHtml.js");
     if (!fs.existsSync(mergerPath)) {
         mergerPath = path.join(__dirname,
@@ -88,5 +88,7 @@ conciseCatcher(() => {
     } catch (_dummyNext) {
         throw new AppErr(`Failed to merge HTML files.  Temp directory retained: ${workDir}.`);
     }
-     fs.rmSync(workDir, { recursive: true, force: true });
-}, 11)();
+     fs.rmSync(workDir, { recursive: true, force: true })
+} catch (e) {
+    mkAppThrowableHandler(11)(e);
+}

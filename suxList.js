@@ -2,7 +2,7 @@
 
 "use strict";
 
-const { AppErr, conciseCatcher, conciseErrorHandler } = require("@admc.com/apputil");
+const { AppErr, mkAppThrowableHandler, trimAndJoin } = require("@admc.com/apputil");
 const { validate } = require("@admc.com/bycontract-plus");
 const { snInternalToSNLocalString } = require("./lib/snJs");
 
@@ -26,7 +26,7 @@ if (argsArray.length > 0 && argsArray[0] === "-u") {
 const badFileSpecs = argsArray.filter(usPath => !fs.existsSync(usPath));
 const progName = process.argv[1].replace(/.*[/\\]/, "");
 
-conciseCatcher(async (...args) => {
+(async (...args) => {
     validate(args, []);
     if (badFileSpecs.length > 0)
         // eslint-disable-next-line prefer-template
@@ -39,14 +39,14 @@ conciseCatcher(async (...args) => {
         const xml = fs.readFileSync(usPath, "utf8");
         xml.replace(/^<sys_update_xml\b/gm, () => suxCount++);
 
-        xml.replace(/^<payload>.+?<[/]payload>$/mgs, matchedSub => payloads.push(matchedSub));
+        xml.replace(/^\s*<payload>.+?<[/]payload>$/mgs, matchedSub => payloads.push(matchedSub));
         if (suxCount !== payloads.length) throw new AppErr(
           // eslint-disable-next-line prefer-template
-          "Mismatch between $suxCount SUX records and " + payloads.length
-          + " payload elements for " + usPath);
+          trimAndJoin`Mismatch between ${suxCount} SUX records and ${payloads.length}
+          payload elements for ${usPath}`);
         payloads.forEach(pl => {
             let ex;
-            if (/^<payload>[&]lt/.test(pl)) {
+            if (/^\s*<payload>[&]lt/.test(pl)) {
                 // eslint-disable-next-line max-len
                 ex = /table="([^"]+).+[&]lt;sys_id[&]gt;(.+?)[&]lt;[/]sys_id[&]gt;.+[&]lt;sys_updated_on[&]gt;(.+?)[&]lt;[/]sys_updated_on[&]gt;/s.exec(pl);
                 if (ex) entries.push({
@@ -54,7 +54,7 @@ conciseCatcher(async (...args) => {
                     sysId: ex[2],
                     table: ex[1],
                 });
-            } else if (/^<payload><[!]\[CDATA\[/.test(pl)) {
+            } else if (/^\s*<payload><[!]\[CDATA\[/.test(pl)) {
                 // eslint-disable-next-line max-len
                 ex = /table="([^"]+).+<sys_id>(.+?)<[/]sys_id>.+<sys_updated_on>(.+?)<[/]sys_updated_on>/s.exec(pl);
                 if (ex) entries.push({
@@ -84,4 +84,4 @@ conciseCatcher(async (...args) => {
             // eslint-disable-next-line prefer-template
             entrySummaries.length < 0 ? "" : "\n" + entrySummaries.join("\n"));
     });
-}, 10)().catch(e0=>conciseErrorHandler(e0, 1));
+})().catch(mkAppThrowableHandler(10));

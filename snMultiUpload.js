@@ -4,9 +4,9 @@
 
 // SYNTAX:  snMultiUpload.js [-switches... --] inputFiles...
 // The reason for '--' is because we don't want this script to have very tight dependencies
-// on  which snUpload switches take paired non-hyphen tokens.
+// on which snUpload switches take paired non-hyphen tokens.
 
-const { AppErr, conciseCatcher } = require("@admc.com/apputil");
+const { AppErr, mkAppThrowableHandler } = require("@admc.com/apputil");
 const fs = require("fs");
 const path = require("path");
 const childProcess = require("child_process");
@@ -48,7 +48,7 @@ if (passThruEnd > -1) {
     //console.debug(passThruParams.length + " passThruParams:\n" + passThruParams.join("\n"));
 }
 const files = [];
-conciseCatcher(() => {
+try {
     args.forEach(inputNode => {
         if (!fs.existsSync(inputNode)) throw new AppErr(`'${inputNode}' does not exist`);
         if (fs.statSync(inputNode).isDirectory(inputNode)) {
@@ -70,4 +70,6 @@ conciseCatcher(() => {
         if (returnObj.status !== 0) console.error(
           `snUpload invocation for '${file}' failed with exit value ${returnObj.status}`);
     });
-}, 11)();
+} catch (err) {
+    mkAppThrowableHandler(11)(err);
+}

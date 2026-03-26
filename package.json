@@ -38,6 +38,6 @@
     "entities": "^4.1.1",
     "eslint": "^8.18.0",
     "readline-sync": "^1.4.10",
-    "@admc.com/eslint-plugin-sn": "^3.18.5"
+    "@admc.com/eslint-plugin-sn": "^3.19.0"
   }
 }
