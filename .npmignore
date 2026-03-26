@@ -1,0 +1,15 @@
+.gradle
+/gradle-app.setting
+.*.sw?
+*~
+*.bak
+~*
+.~*
+local/
+/build
+/node_modules
+/*?jre.?*
+/snglobals
+/.claude
+/CLAUDE.md
+/.claudeignore

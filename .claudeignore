@@ -1,0 +1,5 @@
+tmp
+local
+/.git/
+*.log
+/node_modules
