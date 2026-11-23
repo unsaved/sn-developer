@@ -5,10 +5,11 @@
 const fs = require("fs");
 const { z } = require("zod");
 const axios = require("axios");
-const { NetRC, AppErr, mkAppThrowableHandler, getAppVersion, isPlainObject } =
+const { Agent: HttpsAgent } = require("node:https");
+const { AppErr, mkAppThrowableHandler, getAppVersion, isPlainObject } =
   require("@admc.com/apputil");
 const UploadMap = require("./lib/UploadMap");
-const { format } = require("util");
+const { format, stripVTControlCharacters } = require("util");
 const checksum = require("checksum");
 const path = require("path");
 const os = require("os");
@@ -25,14 +26,15 @@ const MULTI_SCRIPT_TABLES = [
 // We keep a copy of the yargs instance so we can invoke methods on it like .help().
 const yargs = require("yargs")(process.argv.slice(2)).
   strictOptions().
-  usage(`SYNTAX: $0 [-dnqrv] [-p username] [-m POLL_MS] file.ext
+  usage(`SYNTAX: $0 [-dnqrv] [-m POLL_MS] file.ext
 OR
         $0 -e|h|u
 Honored environmental variables.  Either a or b variables are required:
     SN_CF_COMMAND:      Comparison command template  (-e to display examples)
-  a SN_DEVELOPER_INST:  Short (unqualified) target ServiceNow instance name
+  a SN_DEVELOPER_INST:  Short target instance name; also the saved SDK OAuth alias
   b SN_CLI_PROFILE:     ServiceNow CLI profile name for  target instance
-    SN_HTTPS_PROXY:     HTTPS Proxy URL
+    SN_HTTPS_PROXY:     Default proxy URL for SDK and API requests
+    SN_NODE_HTTPS_PROXY: Optional Node-only override; leaves shared proxy settings unchanged
     SN_LINT_STRICT:     If set (to anything) then snLint will be invoked with -r switch
   a SN_RESTAPI_SCOPE:   Scope of the WS Op upload resource path after '/api/'
     SN_RESTAPI_NAME:    Name of the WS upload definition name.  Defaults to 'sndev'.`.
@@ -42,7 +44,7 @@ Honored environmental variables.  Either a or b variables are required:
       type: "boolean",
   }).
   option("v", {
-      describe: "Verbose.  N.b. may display passwords!",
+      describe: "Verbose request logging (without credentials)",
       type: "boolean",
   }).
   option("c", { describe: "Compare local to remote.  Don't upload or lint.", type: "boolean", }).
@@ -65,11 +67,6 @@ Honored environmental variables.  Either a or b variables are required:
   option("l", { describe: "only run snLint on specified file, don't upload", type: "boolean", }).
   option("L", { describe: "only run snLint on specified file with HTML output", type: "boolean", }).
   option("n", { describe: "No syntax/lint check for *.js file", type: "boolean", }).
-  option("p", {
-      describe: "Prompt for basic auth password for the specified user.  "
-        + "(By default uses name and passsword from netrc file).",
-      type: "string",
-  }).
   option("q", {
       describe: "Quiet logging by logging only at level WARN and ERROR",
       type: "boolean",
@@ -146,11 +143,11 @@ if (yargsDict.m) { // yargsDict.m value validation
 const isUnixShell = process.env.SHELL !== undefined;
 const lintStrict = process.env.SN_LINT_STRICT !== undefined;
 let profile, instName, uploadEntry, localFileText;
+let apiScope, apiName;  // Variables only used in SN_DEVELOPER_INST mode
 
 const inFile = yargsDict._.shift();
 try {
     z.tuple([z.string()]).parse([inFile]);
-    let rcFile;
     file = inFile;
     instName = process.env.SN_DEVELOPER_INST;
     profile = process.env.SN_CLI_PROFILE;
@@ -165,7 +162,6 @@ try {
         throw new AppErr(
           "You must just one of env. vars 'SN_DEVELOPER_INST' and 'SN_CLI_PROFILE'.\n"
           + "Unset one of them.");
-    let apiScope, apiName;  // Variables only used in SN_DEVELOPER_INST mode
     if (instName) {
         apiScope = process.env.SN_RESTAPI_SCOPE;
         if (apiScope === undefined)
@@ -173,7 +169,6 @@ try {
               + "'SN_RESTAPI_SCOPE' to REST API scope in the resource path (like 'acme')");
         apiName = process.env.SN_RESTAPI_NAME;
         if (apiName === undefined) apiName = "sndev";
-        if (!yargsDict.p) rcFile = new NetRC();
     }
     if (yargsDict.f || !yargsDict.r) {
         console.debug(`Checking local file '${file}'`);
@@ -205,161 +200,17 @@ try {
     if (yargsDict.m) {
         lastChecksum = checksum(fs.readFileSync(file, "utf8"));
         if (!lastChecksum) throw new Error("Assertion failed.  First checksum empty.");
-        setInterval(transfer, yargsDict.m);
+        setInterval(() => {
+            try {
+                transfer();
+            } catch (err) {
+                mkAppThrowableHandler(10)(err);
+            }
+        }, yargsDict.m);
     } else {
         transfer();
     }
-
-    function transfer() {
-        const pseudoTable = MULTI_SCRIPT_TABLES.includes(uploadEntry.table)
-          ? `${uploadEntry.table}.${uploadEntry.dataField}` : uploadEntry.table;
-        if (!yargsDict.r && !yargsDict.n && !yargsDict.c && uploadEntry.doLint) {
-            let eslintPath = path.join(__dirname,
-                  "node_modules/@admc.com/eslint-plugin-sn/snLint.js");
-            if (!fs.existsSync(eslintPath)) {
-                eslintPath = path.join(__dirname, "../eslint-plugin-sn/snLint.js");
-                if (!fs.existsSync(eslintPath))
-                    throw new Error("Installation consistency failure.  "
-                      + "'snLint.js' from eslint-plugin-sn module not found.");
-            }
-            const lintSnArgs = [
-                eslintPath,
-                "-t",
-                pseudoTable,
-            ];
-            if (lintStrict) lintSnArgs.push("-r");
-            if (yargsDict.L) lintSnArgs.push("-H");
-            if (yargsDict.d) lintSnArgs.push("-d");
-            if (uploadEntry.lintAlt) {
-                lintSnArgs.push("-a");
-                lintSnArgs.push(uploadEntry.lintAlt);
-            }
-            lintSnArgs.push(file);
-            try {
-                // eslint-disable-next-line camelcase
-                child_process.execFileSync(process.execPath, lintSnArgs, { stdio: "inherit" });
-            } catch (_dummyNext) {
-                throw new AppErr("Lint check failed");
-            }
-            console.warn("ESLint success");  // Warn level so does not intermix with stdout
-            if (yargsDict.l) return;
-        }
-
-        if (fs.existsSync(file)) {
-            // localFileText will always have \r\n and no final line delimiter
-            localFileText = fs.readFileSync(file, "utf8");
-            if (lastChecksum) {
-                // Only and always runs when in monitor mode
-                const newChecksum = checksum(localFileText);
-                if (newChecksum === lastChecksum) return;
-                lastChecksum = newChecksum;
-            }
-            fileHasCRs = localFileText.includes("\r");
-            if (!fileHasCRs) localFileText = localFileText.replace(/\n/g, "\r\n");
-            if (localFileText.endsWith("\r\n")) localFileText = localFileText.slice(0, -2);
-        } else {
-            fileHasCRs = yargsDict.R ? false : os.EOL === "\r\n";
-        }
-
-        const queryStrings = [];
-        for (let i = 0; i < uploadEntry.keyFields.length; i++)
-            queryStrings.push(`${uploadEntry.keyFields[i]}=${uploadEntry.keyValues[i]}`);
-        if (profile) {
-            if (uploadEntry.appScope) queryStrings.push(`sys_scope.scope=${uploadEntry.appScope}`);
-            if (yargsDict.v) console.info(`Will fetch previous value with profile ${profile}`);
-            const pObj = require("child_process").spawnSync("snc", [
-              "-p",
-              profile,
-              "--no-verbose",
-              "--no-interactive",
-              "--output", "json",  // This is global default but may be overridden in profiles
-              "record",
-              "query",
-              "--displayvalue",
-              "--limit", 2,
-              "-t", uploadEntry.table,
-              "-q", queryStrings.join("^"),
-              `--fields=sys_id,${uploadEntry.dataField}`,
-            ], { stdio: ["ignore", "pipe", "pipe"], });
-            if ("error" in pObj)
-                throw new AppErr(`snc fetch invocation failure.\n${pObj.message}`);
-            // Crappy 'snc' returns 0 even if it fails catastrophically, and (incredibly) writes
-            // fatal error messages to stdout rather than stderr.  So we can't depend on .status
-            // or .stderr.
-            if (pObj.status !== 0)  // Will probably never work with 'snc'
-                throw new AppErr(
-                  `'snc' fetch invocation failed with value ${pObj.status}.  Stderr:\n`
-                  + `${pObj.stderr.toString("utf8")}\n\nStdout:\n${pObj.stdout.toString("utf8")}`);
-            let response;
-            try {
-                response = JSON.parse(pObj.stdout.toString("utf8"));
-            } catch (eCli) {
-                throw new AppErr( `Got non-JSON fetch response from 'snc'.  `
-                  + `${eCli}:\n${pObj.stdout.toString("Utf8")}`);
-            }
-            //console.debug(response); // responseHandler will echo it
-            if (typeof response === "object" && "error" in response) throw new AppErr(
-              `snc failure for fetch request\n${JSON.stringify(response.error, undefined, 2)}`);
-            //validate(response, { result: "object[]" });
-            responseHandler(response);
-        } else {
-            /* eslint-disable prefer-template */
-            const url = `https://${instName}.service-now.com` + (yargsDict.r || yargsDict.c ?
-                `/api/now/v2/table/${uploadEntry.table}` :
-                `/api/${apiScope}/${apiName}/${uploadEntry.table}/${uploadEntry.dataField}`);
-            /* eslint-enable prefer-template */
-            const authOpts = { auth: rcFile === undefined
-              ? { username: yargsDict.p, password: require("readline-sync").
-                  question(`Password for '${yargsDict.p}': `, {hideEchoBack: true}) }
-              : rcFile.getAuthSettings(url)
-            };
-            if (uploadEntry.appScope && (yargsDict.r || yargsDict.c))
-                queryStrings.push(`sys_scope.scope=${uploadEntry.appScope}`);
-            const opts = {
-                method: yargsDict.r || yargsDict.c ? 'get' : 'patch',
-                url,
-                params: yargsDict.r || yargsDict.c ? {
-                  sysparm_query: queryStrings.join("^"),
-                  sysparm_fields: uploadEntry.dataField,
-                  sysparm_limit: 2,
-                } : {
-                  query: queryStrings.join("^"),
-                },
-            };
-            if (uploadEntry.appScope && !yargsDict.r && !yargsDict.c)
-                opts.params.appscope = uploadEntry.appScope;
-            if ("SN_HTTPS_PROXY" in process.env) {
-                const ex = /^([^:]+):[/]+([^:]+)(?::(\d+))?$/.exec(process.env.SN_HTTPS_PROXY);
-                if (!ex)
-                    // eslint-disable-next-line prefer-template
-                    throw new AppErr("Env var val for 'SN_HTTPS_PROXY' not a "
-                      + "valid hostname/port URL: " + process.env.SN_HTTPS_PROXY);
-                const proxyClause = {
-                    protocol: ex[1],
-                    host: ex[2],
-                };
-                if (ex[3] !== undefined) proxyClause.port = parseInt(ex[3]);
-                opts.proxy = proxyClause;
-            }
-            if (yargsDict.v)
-                console.warn(`Will send request to: ${url}\nwith opts (- data):`,
-                  {...opts, ...authOpts});  // Warn level so does not intermix with stdout
-            if (!yargsDict.r && !yargsDict.c) opts.data = { "content": localFileText };
-            axios({...opts, ...authOpts}).
-              then(responseHandler).
-              catch(mkAppThrowableHandler(1).handle(axios.AxiosError, e=>
-                console.error("Caught failure.  Consider running with -d switch (debug) "
-                + "and checking %s's syslog for messages written by %s.\n%s%s",
-                instName, authOpts.auth.username, e.message,
-                e.response !== undefined && e.response.data !== undefined
-                && e.response.data.error !== undefined
-                && e.response.data.error.message !== undefined
-                  // eslint-disable-next-line prefer-template
-                  ? "\n" + e.response.data.error.message : "")
-              ));
-        }
-    }
-} catch(err) {
+} catch (err) {
    mkAppThrowableHandler(10)(err);
 }
 if (yargsDict.m) {
@@ -391,9 +242,8 @@ async function responseHandler(response) {
             throw new AppErr("Got something other than a plain object from server: %O",
               response.data.result[0]);
         if (Object.keys(response.data.result[0]).length !== 1)
-            // eslint-disable-next-line prefer-template
-            throw new AppErr("Object from server has "
-              + Object.keys(response.data.result[0]).length + " fields instead of just 1");
+            throw new AppErr(`Object from server has ${
+              Object.keys(response.data.result[0]).length} fields instead of just 1`);
         prevRevData = Object.values(response.data.result[0])[0];
         if (typeof prevRevData !== "string") throw new AppErr(
           `Object from server has ${typeof prevRevData} instead of string content`);
@@ -401,7 +251,7 @@ async function responseHandler(response) {
         if (yargsDict.r) {
             if (prevDataHasCRs && !fileHasCRs) prevRevData = prevRevData.replace(/\r/g, "");
             if (!yargsDict.f) {
-                process.stdout.write(prevRevData + (fileHasCRs ? "\r\n" : "\n"));
+                process.stdout.write(`${prevRevData}${fileHasCRs ? "\r\n" : "\n"}`);
                 return;
             }
         }
@@ -427,21 +277,23 @@ async function responseHandler(response) {
             // or .stderr.
             if (pObj.status !== 0)  // Will probably never work with 'snc'
                 throw new AppErr(
-                  `'snc' update invocation failed with value ${pObj.status}.  Stderr:\n`
-                  + `${pObj.stderr.toString("utf8")}\n\n`
-                  + `Stdout:\n${pObj.stdout.toString("utf8")}`);
+                  `'snc' update invocation failed with value ${pObj.status}.  Stderr:
+${pObj.stderr.toString("utf8")}
+
+Stdout:
+${pObj.stdout.toString("utf8")}`);
             let uResponse;
             try {
                 uResponse = JSON.parse(pObj.stdout.toString("utf8"));
             } catch (eCli) {
-                throw new AppErr( `Got non-JSON fetch response from 'snc'.  `
-                  + `${eCli}:\n${pObj.stdout.toString("Utf8")}`);
+                throw new AppErr(
+                  `Got non-JSON fetch response from 'snc'.  ${eCli}:
+${pObj.stdout.toString("utf8")}`);
             }
             //console.debug(uResponse);
             if (typeof uResponse === "object" && "error" in uResponse)
-                // eslint-disable-next-line prefer-template
-                throw new AppErr("snc failure for fetch request\n"
-                  + JSON.stringify(uResponse.error, undefined, 2));
+                throw new AppErr(
+                  `snc failure for fetch request\n${JSON.stringify(uResponse.error, null, 2)}`);
             z.object({result: z.object({}).passthrough()}).parse(uResponse);
         }
     } else {
@@ -467,10 +319,9 @@ Due to this, we can't determine or display the delta.`);
       process.pid, fileExt === null ? "txt" : fileExt);
     if (fileHasCRs) {
         if (!prevDataHasCRs) prevRevData = prevRevData.replace(/\n/g, "\r\n");
-    } else
-        if (prevDataHasCRs) prevRevData = prevRevData.replace(/\r/g, "");
+    } else if (prevDataHasCRs) prevRevData = prevRevData.replace(/\r/g, "");
     console.debug("Writing prevRevFile file:", prevRevFile);
-    fs.writeFileSync(prevRevFile, prevRevData + (fileHasCRs ? "\r\n" : "\n"));
+    fs.writeFileSync(prevRevFile, `${prevRevData}${fileHasCRs ? "\r\n" : "\n"}`);
     if (!comparatorCmd) return;  // get this if yargsDict.f and 'file' does not exist
     // If -f mode then check for no-change
     // It's just easier to compare the same files we would comparatorCmd rather than transform
@@ -495,13 +346,279 @@ Due to this, we can't determine or display the delta.`);
     console.info(pObj.stdout.toString("utf8"));
     if (yargsDict.f) console.error(
       `If you wish to overwrite local file '${file}' then remove it yourself and re-run.`);
-        /* Don't want the dependency upon platform-specific syncprompt module.
-        const response = prompt(`Overwrite local file '${file}' [yes]?  `);
-        // silently overwrites:
-        if (response === "" || ["Y", "y"].includes(response[0])) {
-            //fs.renameSync(prevRevFile, file);  This only works if files on same FS partition.
-            fs.copyFileSync(prevRevFile, file);
-        }
-        */
     fs.unlinkSync(prevRevFile);
+}
+
+function transfer() {
+    const pseudoTable = MULTI_SCRIPT_TABLES.includes(uploadEntry.table)
+      ? `${uploadEntry.table}.${uploadEntry.dataField}` : uploadEntry.table;
+    if (!yargsDict.r && !yargsDict.n && !yargsDict.c && uploadEntry.doLint) {
+        let eslintPath = path.join(__dirname,
+              "node_modules/@admc.com/eslint-plugin-sn/snLint.js");
+        if (!fs.existsSync(eslintPath)) {
+            eslintPath = path.join(__dirname, "../eslint-plugin-sn/snLint.js");
+            if (!fs.existsSync(eslintPath))
+                throw new Error("Installation consistency failure.  "
+                  + "'snLint.js' from eslint-plugin-sn module not found.");
+        }
+        const lintSnArgs = [
+            eslintPath,
+            "-t",
+            pseudoTable,
+        ];
+        if (lintStrict) lintSnArgs.push("-r");
+        if (yargsDict.L) lintSnArgs.push("-H");
+        if (yargsDict.d) lintSnArgs.push("-d");
+        if (uploadEntry.lintAlt) {
+            lintSnArgs.push("-a");
+            lintSnArgs.push(uploadEntry.lintAlt);
+        }
+        lintSnArgs.push(file);
+        try {
+            // eslint-disable-next-line camelcase
+            child_process.execFileSync(process.execPath, lintSnArgs, { stdio: "inherit" });
+        } catch (_dummyNext) {
+            throw new AppErr("Lint check failed");
+        }
+        console.warn("ESLint success");  // Warn level so does not intermix with stdout
+        if (yargsDict.l) return;
+    }
+
+    if (fs.existsSync(file)) {
+        // localFileText will always have \r\n and no final line delimiter
+        localFileText = fs.readFileSync(file, "utf8");
+        if (lastChecksum) {
+            // Only and always runs when in monitor mode
+            const newChecksum = checksum(localFileText);
+            if (newChecksum === lastChecksum) return;
+            lastChecksum = newChecksum;
+        }
+        fileHasCRs = localFileText.includes("\r");
+        if (!fileHasCRs) localFileText = localFileText.replace(/\n/g, "\r\n");
+        if (localFileText.endsWith("\r\n")) localFileText = localFileText.slice(0, -2);
+    } else {
+        fileHasCRs = yargsDict.R ? false : os.EOL === "\r\n";
+    }
+
+    const queryStrings = [];
+    for (let i = 0; i < uploadEntry.keyFields.length; i++)
+        queryStrings.push(`${uploadEntry.keyFields[i]}=${uploadEntry.keyValues[i]}`);
+    if (profile) {
+        if (uploadEntry.appScope) queryStrings.push(`sys_scope.scope=${uploadEntry.appScope}`);
+        if (yargsDict.v) console.info(`Will fetch previous value with profile ${profile}`);
+        const pObj = require("child_process").spawnSync("snc", [
+          "-p",
+          profile,
+          "--no-verbose",
+          "--no-interactive",
+          "--output", "json",  // This is global default but may be overridden in profiles
+          "record",
+          "query",
+          "--displayvalue",
+          "--limit", 2,
+          "-t", uploadEntry.table,
+          "-q", queryStrings.join("^"),
+          `--fields=sys_id,${uploadEntry.dataField}`,
+        ], { stdio: ["ignore", "pipe", "pipe"], });
+        if ("error" in pObj)
+            throw new AppErr(`snc fetch invocation failure.\n${pObj.message}`);
+        // Crappy 'snc' returns 0 even if it fails catastrophically, and (incredibly) writes
+        // fatal error messages to stdout rather than stderr.  So we can't depend on .status
+        // or .stderr.
+        if (pObj.status !== 0)  // Will probably never work with 'snc'
+            throw new AppErr(
+              `'snc' fetch invocation failed with value ${pObj.status}.  Stderr:
+${pObj.stderr.toString("utf8")}
+
+Stdout:
+${pObj.stdout.toString("utf8")}`);
+        let response;
+        try {
+            response = JSON.parse(pObj.stdout.toString("utf8"));
+        } catch (eCli) {
+            throw new AppErr(
+              `Got non-JSON fetch response from 'snc'.  ${eCli}:
+${pObj.stdout.toString("utf8")}`);
+        }
+        //console.debug(response); // responseHandler will echo it
+        if (typeof response === "object" && "error" in response) throw new AppErr(
+          `snc failure for fetch request\n${JSON.stringify(response.error, null, 2)}`);
+        //validate(response, { result: "object[]" });
+        responseHandler(response);
+    } else {
+        const instanceUrl = `https://${instName}.service-now.com`;
+        const apiPath = yargsDict.r || yargsDict.c ?
+          `/api/now/v2/table/${uploadEntry.table}` :
+          `/api/${apiScope}/${apiName}/${uploadEntry.table}/${uploadEntry.dataField}`;
+        const url = `${instanceUrl}${apiPath}`;
+        if (uploadEntry.appScope && (yargsDict.r || yargsDict.c))
+            queryStrings.push(`sys_scope.scope=${uploadEntry.appScope}`);
+        const opts = {
+            method: yargsDict.r || yargsDict.c ? 'get' : 'patch',
+            url,
+            params: yargsDict.r || yargsDict.c ? {
+              sysparm_query: queryStrings.join("^"),
+              sysparm_fields: uploadEntry.dataField,
+              sysparm_limit: 2,
+            } : {
+              query: queryStrings.join("^"),
+            },
+        };
+        if (uploadEntry.appScope && !yargsDict.r && !yargsDict.c)
+            opts.params.appscope = uploadEntry.appScope;
+        // Prefer this application's dependencies, then the working directory and its parents.
+        const sdkManifestPath = [
+            ...require.resolve.paths("@servicenow/sdk"),
+            ...require("node:module").createRequire(path.join(process.cwd(), "package.json")).
+              resolve.paths("@servicenow/sdk"),
+        ].
+          map(dir => path.join(dir, "@servicenow/sdk/package.json")).
+          find(manifestPath => fs.existsSync(manifestPath));
+        if (!sdkManifestPath)
+            throw new AppErr(
+              "Cannot find '@servicenow/sdk' from this script or the working directory.");
+        const sdkManifest = JSON.parse(fs.readFileSync(sdkManifestPath, "utf8"));
+        const sdkBin = typeof sdkManifest.bin === "string" ?
+          sdkManifest.bin : sdkManifest.bin?.["now-sdk"];
+        if (!sdkBin)
+            throw new AppErr("Installed '@servicenow/sdk' has no 'now-sdk' CLI entry.");
+        if (yargsDict.v) {
+            console.warn(`OAuth SDK ${sdkManifest.version}: ${sdkManifestPath}`);
+            console.warn(`Runtime: Node ${process.version}; Axios ${axios.VERSION}`);
+        }
+
+        // A Node-only override avoids changing proxy settings shared with other tools.
+        const proxyEnvName = process.env.SN_NODE_HTTPS_PROXY === undefined ?
+          "SN_HTTPS_PROXY" : "SN_NODE_HTTPS_PROXY";
+        const proxyUrl = process.env[proxyEnvName];
+        // Copy settings for SDK and request-local proxying; do not change process.env.
+        const sdkEnv = {...process.env};
+        const ignoredAuthEnv = [
+            "SN_SDK_INSTANCE_URL", "SN_SDK_SESSION_BEARER_TOKEN",
+            "SN_SDK_SESSION_TOKEN", "SN_SDK_SESSION_COOKIE",
+            "SN_OAUTH_TOKEN", "SN_OAUTH_INSTANCE",
+        ];
+        for (const name of Object.keys(sdkEnv)) {
+            if (ignoredAuthEnv.includes(name.toUpperCase()) ||
+              proxyUrl !== undefined && /^(HTTPS_PROXY|NODE_USE_ENV_PROXY)$/i.test(name))
+                delete sdkEnv[name];
+        }
+        if (proxyUrl !== undefined) {
+            sdkEnv.HTTPS_PROXY = proxyUrl;
+            sdkEnv.NODE_USE_ENV_PROXY = "1";
+            // Axios 1.21.1 detects proxyEnv; proxy:false would force a direct connection.
+            opts.httpsAgent = new HttpsAgent({ proxyEnv: sdkEnv });
+        }
+        // These assignments apply to the manual login command only, not the user's shell.
+        const loginCommand = [
+            ...proxyUrl === undefined ? [] : [
+                `HTTPS_PROXY="$${proxyEnvName}" https_proxy="$${proxyEnvName}"`,
+                "NODE_USE_ENV_PROXY=1",
+            ],
+            `npm exec --no -- now-sdk auth --add '${instanceUrl.replace(/'/g, "'\\''")}'`,
+            `--type oauth --alias '${instName.replace(/'/g, "'\\''")}'`,
+        ].join(" \\\n  ");
+        // eslint-disable-next-line camelcase
+        const authResult = child_process.spawnSync(process.execPath, [
+            path.resolve(path.dirname(sdkManifestPath), sdkBin),
+            "auth", "--print", instName, "--format", "env",
+        ], {
+            env: sdkEnv,
+            encoding: "utf8",
+            stdio: ["ignore", "pipe", "pipe"],
+            timeout: 60000,
+            windowsHide: true,
+        });
+        if (authResult.error || authResult.signal)
+            throw new AppErr(`SDK token retrieval for '${instName}' could not complete: ${
+              authResult.error?.code || authResult.signal}. No API request sent.`);
+        if (authResult.status !== 0) {
+            const sdkError = stripVTControlCharacters(authResult.stderr || "").
+              replace(/\b(Bearer|Basic)\s+\S+/gi, "$1 [redacted]").
+              replace(/(https?:\/\/)[^/\s@]+@/gi, "$1[redacted]@").
+              replace(/\b([\w-]*token|client_secret|password)(["']?\s*[:=]\s*)\S+/gi,
+                "$1$2[redacted]");
+            const networkError = sdkError.match(
+              /\b(?:EACCES|ECONN\w+|ETIMEDOUT|ENOTFOUND|EAI_AGAIN)\b/i) ||
+              sdkError.match(
+              /\b(?:EHOSTUNREACH|ENETUNREACH|EPROTO|CERT_\w+|ERR_TLS_\w+)\b/i) ||
+              sdkError.match(
+              /\b(?:DEPTH_ZERO_SELF_SIGNED_CERT|SELF_SIGNED_CERT_IN_CHAIN)\b/i) ||
+              sdkError.match(
+              /\bUNABLE_TO_(?:VERIFY_LEAF_SIGNATURE|GET_ISSUER_CERT_LOCALLY)\b/i) ||
+              sdkError.match(
+              /(?:proxy authentication|certificate|TLS connection|\b407\b)/i);
+            if (networkError)
+                throw new AppErr(`Token retrieval for '${instName}' failed: ${networkError[0]}.
+Check proxy/network access and CA trust; this is not evidence of a bad login.`);
+            const missingCredential = /(?:credential|alias|authentication)/i.test(sdkError) &&
+              !/(?:keychain|decrypt|encryption|credential manager)/i.test(sdkError) &&
+              (/(?:\bno\b|missing|not (?:found|exist|configured|authenticated|be found))/i.
+                test(sdkError) || /(?:cannot|could not|unable to) find/i.test(sdkError));
+            if (/\b(?:invalid_grant|access_denied|invalid_token)\b/i.test(sdkError) ||
+              missingCredential)
+                throw new AppErr(`OAuth sign-in is missing or invalid for '${instName}'.
+Run this command, then retry:
+${loginCommand}`);
+            const sdkCause = sdkError.match(/^\s*Caused by:\s*(.+)$/m)?.[1] || sdkError.trim();
+            // Never expose SDK stdout: it is a credential channel, even on failure.
+            throw new AppErr(`SDK token retrieval failed for '${instName}' (${
+              authResult.status}). No API request sent.\n${sdkCause || "No SDK diagnostic."}`);
+        }
+        // Parse the two documented exports as data. Never eval shell output.
+        const printedInstance = authResult.stdout.match(
+          /^export SN_SDK_INSTANCE_URL=(["']?)(https:\/\/[^\s"';]+)\1;?\r?$/m);
+        const printedToken = authResult.stdout.match(
+          /^export SN_SDK_SESSION_BEARER_TOKEN=(["']?)([A-Za-z0-9._~+/-]+=*)\1;?\r?$/m);
+        if (!printedInstance || !printedToken)
+            throw new AppErr(
+              `SDK did not return OAuth credentials for '${instName}'.
+Use an SDK with 'auth --print' support and sign in:
+${loginCommand}`);
+        if (printedInstance[2].replace(/\/$/, "") !== instanceUrl)
+            throw new AppErr(
+              `Saved SDK alias '${instName}' belongs to a different instance.
+No API request sent. Correct the saved login:
+${loginCommand}`);
+        const bearerToken = printedToken[2];
+        const authOpts = {
+            auth: null, // Do not let inherited Axios Basic-auth defaults override the header.
+            headers: { Authorization: `Bearer ${bearerToken}` },
+        };
+        if (yargsDict.v)
+            console.warn(`Will send request to: ${url}\nwith method and params:`, {
+                method: opts.method,
+                params: opts.params,
+            }); // Warn level so does not intermix with stdout; never log authOpts.
+        if (!yargsDict.r && !yargsDict.c) opts.data = { "content": localFileText };
+        axios({...opts, ...authOpts}).
+          then(responseHandler).
+          catch(e => {
+              if (!axios.isAxiosError(e)) {
+                  mkAppThrowableHandler(1)(e);
+                  return;
+              }
+              const responseData = e.response?.data;
+              const serverMessage = typeof responseData === "string" ? responseData :
+                [responseData?.error?.message, responseData?.error?.detail].
+                  filter(value => typeof value === "string").join("\n");
+              const responseInfo = e.response ?
+                `Response: HTTP ${e.response.status}; server=${
+                  e.response.headers?.server || "unspecified"}; content-type=${
+                  e.response.headers?.["content-type"] || "unspecified"}` : "";
+              const failureMessage = e.response?.status === 401 ?
+                `OAuth authorization was rejected by '${instName}'.
+Sign in, then rerun the operation:
+${loginCommand}` : `Request to '${instName}' failed: ${e.message}
+${responseInfo}
+${serverMessage}`;
+              // Redact before truncation; never pass Axios config/request objects to logging.
+              mkAppThrowableHandler(1)(new AppErr(stripVTControlCharacters(failureMessage).
+                replaceAll(bearerToken, "[redacted]").
+                replace(/\b(Bearer|Basic)\s+\S+/gi, "$1 [redacted]").
+                replace(/(https?:\/\/)[^/\s@]+@/gi, "$1[redacted]@").
+                replace(/\b([\w-]*token|client_secret|password)(["']?\s*[:=]\s*)\S+/gi,
+                  "$1$2[redacted]").slice(0, 2000)));
+          });
+    }
 }

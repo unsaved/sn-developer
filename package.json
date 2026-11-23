@@ -18,7 +18,8 @@
     "require+": "echo disabled node -p 'const { validate, is } = require(\"./index\"); validate(\"str\", \"string\");'",
     "require-": "echo disabled node -p 'const { validate, is } = require(\"./index\"); validate(\"str\", \"int\");'",
     "import+": "echo disabled node -r esm -p 'import { validate, is } from \"./index\"; validate(\"str\", \"string\");'",
-    "import-": "echo disabled node -r esm -p 'import { validate, is } from \"./index\"; validate(\"str\", \"int\");'"
+    "import-": "echo disabled node -r esm -p 'import { validate, is } from \"./index\"; validate(\"str\", \"int\");'",
+    "pack:release": "node scripts/pack-release.mjs"
   },
   "keywords": [
     "ServiceNow",
@@ -34,11 +35,20 @@
   },
   "dependencies": {
     "@admc.com/eslint-plugin-sn": "^3.19.0",
+    "@servicenow/sdk": "4.14.2",
     "axios": "^1.6.5",
     "checksum": "^1.0.0",
     "entities": "^4.1.1",
     "eslint": "^8.18.0",
     "readline-sync": "^1.4.10",
     "zod": "^4.3.6"
-  }
+  },
+  "overrides": {
+    "@servicenow/sdk": {
+      "@fastify/http-proxy": "11.6.10"
+    }
+  },
+  "bundleDependencies": [
+    "@servicenow/sdk"
+  ]
 }

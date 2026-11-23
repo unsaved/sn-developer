@@ -88,7 +88,7 @@ try {
     } catch (_dummyNext) {
         throw new AppErr(`Failed to merge HTML files.  Temp directory retained: ${workDir}.`);
     }
-     fs.rmSync(workDir, { recursive: true, force: true })
+     fs.rmSync(workDir, { recursive: true, force: true });
 } catch (e) {
     mkAppThrowableHandler(11)(e);
 }
