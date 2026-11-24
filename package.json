@@ -19,7 +19,7 @@
     "require-": "echo disabled node -p 'const { validate, is } = require(\"./index\"); validate(\"str\", \"int\");'",
     "import+": "echo disabled node -r esm -p 'import { validate, is } from \"./index\"; validate(\"str\", \"string\");'",
     "import-": "echo disabled node -r esm -p 'import { validate, is } from \"./index\"; validate(\"str\", \"int\");'",
-    "pack:release": "node scripts/pack-release.mjs"
+    "prepublishOnly": "node scripts/pack-release.mjs"
   },
   "keywords": [
     "ServiceNow",
@@ -45,7 +45,7 @@
   },
   "overrides": {
     "@servicenow/sdk": {
-      "@fastify/http-proxy": "11.6.10"
+      "@fastify/http-proxy@11.4.4": "11.6.10"
     }
   },
   "bundleDependencies": [

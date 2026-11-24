@@ -13,3 +13,7 @@ local/
 /.claude
 /CLAUDE.md
 /.claudeignore
+
+/release/
+/*.tgz
+/SDK-BUNDLE-PATCH.json
