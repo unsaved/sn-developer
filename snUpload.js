@@ -482,6 +482,7 @@ ${pObj.stdout.toString("utf8")}`);
           sdkManifest.bin : sdkManifest.bin?.["now-sdk"];
         if (!sdkBin)
             throw new AppErr("Installed '@servicenow/sdk' has no 'now-sdk' CLI entry.");
+        const sdkCliPath = path.resolve(path.dirname(sdkManifestPath), sdkBin);
         if (yargsDict.v) {
             console.warn(`OAuth SDK ${sdkManifest.version}: ${sdkManifestPath}`);
             console.warn(`Runtime: Node ${process.version}; Axios ${axios.VERSION}`);
@@ -509,18 +510,26 @@ ${pObj.stdout.toString("utf8")}`);
             // Axios 1.21.1 detects proxyEnv; proxy:false would force a direct connection.
             opts.httpsAgent = new HttpsAgent({ proxyEnv: sdkEnv });
         }
-        // These assignments apply to the manual login command only, not the user's shell.
+        // Use the selected SDK for sign-in, not npm exec's working-directory/package lookup.
+        // Quote paths for Bash, including Git for Windows; never resolve another SDK via npm.
         const loginCommand = [
             ...proxyUrl === undefined ? [] : [
                 `HTTPS_PROXY="$${proxyEnvName}" https_proxy="$${proxyEnvName}"`,
                 "NODE_USE_ENV_PROXY=1",
             ],
-            `npm exec --no -- now-sdk auth --add '${instanceUrl.replace(/'/g, "'\\''")}'`,
-            `--type oauth --alias '${instName.replace(/'/g, "'\\''")}'`,
+            ...[process.execPath, sdkCliPath].map(filename => {
+                const shellPath = process.platform === "win32" ?
+                  filename.replace(/\\/g, "/").
+                    replace(/^([A-Za-z]):/, (_match, drive) => `/${drive.toLowerCase()}`) :
+                  filename;
+                return `'${shellPath.replace(/'/g, "'\\''")}'`;
+            }),
+            `auth --add ${instanceUrl}`,
+            `--type oauth --alias ${instName}`,
         ].join(" \\\n  ");
         // eslint-disable-next-line camelcase
         const authResult = child_process.spawnSync(process.execPath, [
-            path.resolve(path.dirname(sdkManifestPath), sdkBin),
+            sdkCliPath,
             "auth", "--print", instName, "--format", "env",
         ], {
             env: sdkEnv,
