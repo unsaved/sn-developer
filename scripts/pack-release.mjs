@@ -3,7 +3,7 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import {
-    copyFileSync, cpSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync,
+    cpSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync,
     realpathSync, rmSync, writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
@@ -17,6 +17,10 @@ const projectRoot = realpathSync(fileURLToPath(new URL("../", import.meta.url)))
 const sdkPath = "node_modules/@servicenow/sdk";
 const rollupPath = "node_modules/@servicenow/isomorphic-rollup";
 const proxyPath = "node_modules/@fastify/http-proxy";
+const sdkCliPath = "node_modules/@servicenow/sdk-cli";
+const undiciPath = "node_modules/undici";
+const sdkUndiciPath = `${sdkCliPath}/node_modules/undici`;
+const patchedUndiciVersion = "7.30.2";
 const windowsKeyring = "@napi-rs/keyring-win32-x64-msvc";
 const windowsKeyringPath = `node_modules/${windowsKeyring}`;
 const windowsBinary = "keyring.win32-x64-msvc.node";
@@ -34,13 +38,43 @@ const readPackResult = (text, name) => {
     assert.equal(packed.name, name, "Unexpected package name from npm pack.");
     return packed;
 };
+// One-time tracked configuration; normal publishing never edits source manifests.
+if (process.argv[2] === "--configure") {
+    const packageFile = path.join(projectRoot, "package.json");
+    const manifest = readJson(packageFile);
+    assert.equal(manifest.name, "@admc.com/sn-developer", "Unexpected project.");
+    const hook = "node scripts/pack-release.mjs";
+    assert(!manifest.scripts?.prepublishOnly || manifest.scripts.prepublishOnly === hook,
+      "Existing prepublishOnly hook needs reconciliation; configuration was not changed.");
+    const overrides = manifest.overrides?.["@servicenow/sdk"];
+    assert(overrides, "Expected the SDK development override.");
+    assert.equal(overrides["@fastify/http-proxy"] ||
+      overrides["@fastify/http-proxy@11.4.4"], "11.6.10", "Unexpected proxy override.");
+    delete overrides["@fastify/http-proxy"];
+    overrides["@fastify/http-proxy@11.4.4"] = "11.6.10";
+    manifest.scripts = { ...manifest.scripts, prepublishOnly: hook };
+    if (manifest.scripts["pack:release"] === hook) delete manifest.scripts["pack:release"];
+    const ignoreFile = path.join(projectRoot, ".npmignore");
+    const inheritedIgnore = path.join(projectRoot, ".gitignore");
+    const ignored = existsSync(ignoreFile) ? readFileSync(ignoreFile, "utf8") :
+      existsSync(inheritedIgnore) ? readFileSync(inheritedIgnore, "utf8") : "";
+    const ignoreLines = ignored.split(/\r?\n/);
+    for (const pattern of ["/release/", "/*.tgz", "/SDK-BUNDLE-PATCH.json"])
+        if (!ignoreLines.includes(pattern)) ignoreLines.push(pattern);
+    writeFileSync(ignoreFile, `${ignoreLines.join("\n").replace(/\n*$/, "")}\n`);
+    writeJson(packageFile, manifest);
+    console.warn("Configured package.json and .npmignore. Commit these with the helper.");
+    console.warn("Use your normal version, Git, and npm publish workflow.");
+    process.exit(0);
+}
+assert.equal(process.argv.length, 2, "Only --configure is accepted as an argument.");
 let temporaryRoot;
 
 try {
     const manifest = readJson(path.join(projectRoot, "package.json"));
     const lock = readJson(path.join(projectRoot, "package-lock.json"));
     const npmCli = process.env.npm_execpath;
-    assert(npmCli && existsSync(npmCli), "Run this script using 'npm run pack:release'.");
+    assert(npmCli && existsSync(npmCli), "Run through npm publish or npm run prepublishOnly.");
     assert.equal(manifest.name, "@admc.com/sn-developer", "Unexpected project.");
     assert.equal(lock.lockfileVersion, 3, "Expected a version-3 package-lock.json.");
     assert.equal(lock.version, manifest.version, "Package and lockfile versions differ.");
@@ -49,8 +83,8 @@ try {
     assert.equal(manifest.dependencies["@servicenow/sdk"], "4.14.2",
       "Review the release patch before changing SDK versions.");
     assert(manifest.bundleDependencies?.includes("@servicenow/sdk"), "SDK must be bundled.");
-    assert.equal(manifest.overrides?.["@servicenow/sdk"]?.["@fastify/http-proxy"], "11.6.10",
-      "Expected the development override for http-proxy 11.6.10.");
+    assert.equal(manifest.overrides?.["@servicenow/sdk"]?.["@fastify/http-proxy@11.4.4"], "11.6.10",
+      "Run node scripts/pack-release.mjs --configure before publishing.");
     assert.equal(lock.packages[rollupPath]?.version, "1.3.14", "Unexpected rollup version.");
     assert.equal(lock.packages[rollupPath]?.dependencies?.["@fastify/http-proxy"], "11.4.4",
       "The upstream dependency changed; review this temporary patch.");
@@ -71,15 +105,16 @@ try {
         assert.equal(path.relative(directory, realpathSync(directory)), "",
           `Bundle dependency has a linked directory: ${location}`);
         assert(!lstatSync(packageFile).isSymbolicLink(), `Linked manifest: ${location}`);
-        assert.equal(readJson(packageFile).version, locked.version,
+        const installedVersion = readJson(packageFile).version;
+        assert(installedVersion === locked.version ||
+          location === sdkUndiciPath && installedVersion === patchedUndiciVersion,
           `Installed version differs from package-lock.json: ${location}`);
     }
 
     const archiveName = `${manifest.name.slice(1).replace("/", "-")}-${manifest.version}.tgz`;
     temporaryRoot = mkdtempSync(path.join(tmpdir(), "sn-developer-pack-"));
     const stageRoot = path.join(temporaryRoot, "package");
-    const outputRoot = path.join(projectRoot, "release");
-    console.warn("Copying the release tree; development files will not be modified.");
+    console.warn("Preparing SDK dependencies for npm publish; tracked files stay unchanged.");
     cpSync(projectRoot, stageRoot, {
         recursive: true,
         verbatimSymlinks: true,
@@ -97,15 +132,40 @@ try {
     // Correct the copied dependency declaration, not just the root override.
     const rollupFile = path.join(stageRoot, rollupPath, "package.json");
     const rollup = readJson(rollupFile);
-    assert.equal(rollup.dependencies?.["@fastify/http-proxy"], "11.4.4",
-      "Installed rollup manifest differs from the expected upstream declaration.");
+    assert(["11.4.4", "11.6.10"].includes(rollup.dependencies?.["@fastify/http-proxy"]),
+      "Installed rollup manifest differs from the expected dependency declaration.");
     rollup.dependencies["@fastify/http-proxy"] = "11.6.10";
     writeJson(rollupFile, rollup);
-    delete manifest.overrides["@servicenow/sdk"]["@fastify/http-proxy"];
+    delete manifest.overrides["@servicenow/sdk"]["@fastify/http-proxy@11.4.4"];
     if (Object.keys(manifest.overrides["@servicenow/sdk"]).length === 0)
         delete manifest.overrides["@servicenow/sdk"];
     if (Object.keys(manifest.overrides).length === 0) delete manifest.overrides;
     writeJson(path.join(stageRoot, "package.json"), manifest);
+    // CVE-2026-120415: replace the nested payload and its exact SDK dependency requirement.
+    assert.equal(lock.packages[undiciPath]?.version, patchedUndiciVersion,
+      "Expected the already-installed Undici 7.30.2 source; review the release patch.");
+    assert.equal(lock.packages[sdkUndiciPath]?.version, "7.29.1",
+      "The nested Undici version changed; review the release patch.");
+    const sdkCliFile = path.join(stageRoot, sdkCliPath, "package.json");
+    const sdkCliManifest = readJson(sdkCliFile);
+    assert.equal(sdkCliManifest.version, "4.14.2", "Unexpected SDK CLI version.");
+    assert(["7.29.1", patchedUndiciVersion].includes(sdkCliManifest.dependencies?.undici),
+      "The SDK CLI's Undici dependency changed; review the release patch.");
+    const undiciSource = path.join(stageRoot, undiciPath);
+    const undiciManifest = readJson(path.join(undiciSource, "package.json"));
+    assert.equal(undiciManifest.name, "undici", "Unexpected Undici source package.");
+    assert.equal(undiciManifest.version, patchedUndiciVersion, "Unexpected Undici source version.");
+    assert(existsSync(path.join(undiciSource, "index.js")), "Undici source payload is missing.");
+    const undiciDestination = path.join(stageRoot, sdkUndiciPath);
+    assert(["7.29.1", patchedUndiciVersion].includes(
+      readJson(path.join(undiciDestination, "package.json")).version),
+      "Installed nested Undici differs from the expected version.");
+    rmSync(undiciDestination, { recursive: true });
+    cpSync(undiciSource, undiciDestination, { recursive: true, verbatimSymlinks: true });
+    sdkCliManifest.dependencies.undici = patchedUndiciVersion;
+    writeJson(sdkCliFile, sdkCliManifest);
+    console.warn("SDK CLI's staged Undici payload and requirement are now 7.30.2.");
+
     // The supplied tree exposes AJV 6 to CycloneDX's optional AJV 8 peer. Give that peer
     // its own already-installed AJV 8 and private dependencies, without changing ESLint's AJV.
     const peerCopies = [];
@@ -116,32 +176,37 @@ try {
         const library = readJson(libraryFile);
         assert.equal(library.peerDependencies?.ajv, "^8.12.0", "Review the CycloneDX AJV peer.");
         const resolvedAjv = readJson(createRequire(libraryFile).resolve("ajv/package.json"));
-        if (resolvedAjv.version === "6.15.0") {
-            const sources = "node_modules/ajv-formats/node_modules";
-            assert(!existsSync(path.join(stageRoot, buildModules, "ajv")),
-              "Unexpected AJV at the release peer destination.");
-            for (const [name, version] of [
-                ["ajv", "8.20.0"], ["fast-uri", "3.1.9"], ["json-schema-traverse", "1.0.0"],
-            ]) {
-                const from = `${sources}/${name}`;
-                const to = name === "ajv" ? `${buildModules}/ajv` :
-                  `${buildModules}/ajv/node_modules/${name}`;
-                assert.equal(readJson(path.join(stageRoot, from, "package.json")).version,
-                  version, `Review the staged peer dependency: ${from}`);
-                cpSync(path.join(stageRoot, from), path.join(stageRoot, to), {
-                    recursive: true, verbatimSymlinks: true,
-                });
-                peerCopies.push({ from, to, version });
-            }
-            // npm does not bundle peer-only edges; declare the copied peer provider explicitly.
-            const pluginFile = path.join(stageRoot,
-              "node_modules/@servicenow/sdk-build-plugins/package.json");
-            const plugin = readJson(pluginFile);
-            assert(!plugin.dependencies?.ajv && !plugin.optionalDependencies?.ajv,
-              "The SDK build plugin already declares AJV; review the peer patch.");
-            plugin.optionalDependencies = { ...plugin.optionalDependencies, ajv: "8.20.0" };
-            writeJson(pluginFile, plugin);
+        assert(["6.15.0", "8.20.0"].includes(resolvedAjv.version),
+          "Review the installed CycloneDX AJV provider.");
+        const sources = "node_modules/ajv-formats/node_modules";
+        const peerDestination = path.join(stageRoot, buildModules, "ajv");
+        if (existsSync(peerDestination)) {
+            assert.equal(readJson(path.join(peerDestination, "package.json")).version,
+              "8.20.0", "Unexpected existing AJV provider.");
+            rmSync(peerDestination, { recursive: true });
         }
+        for (const [name, version] of [
+            ["ajv", "8.20.0"], ["fast-uri", "3.1.9"], ["json-schema-traverse", "1.0.0"],
+        ]) {
+            const from = `${sources}/${name}`;
+            const to = name === "ajv" ? `${buildModules}/ajv` :
+              `${buildModules}/ajv/node_modules/${name}`;
+            assert.equal(readJson(path.join(stageRoot, from, "package.json")).version,
+              version, `Review the staged peer dependency: ${from}`);
+            cpSync(path.join(stageRoot, from), path.join(stageRoot, to), {
+                recursive: true, verbatimSymlinks: true,
+            });
+            peerCopies.push({ from, to, version });
+        }
+        // npm does not bundle peer-only edges; declare the copied peer provider explicitly.
+        const pluginFile = path.join(stageRoot,
+          "node_modules/@servicenow/sdk-build-plugins/package.json");
+        const plugin = readJson(pluginFile);
+        assert(!plugin.dependencies?.ajv && (!plugin.optionalDependencies?.ajv ||
+          plugin.optionalDependencies.ajv === "8.20.0"),
+          "The SDK build plugin declares an unexpected AJV requirement.");
+        plugin.optionalDependencies = { ...plugin.optionalDependencies, ajv: "8.20.0" };
+        writeJson(pluginFile, plugin);
     }
     const runNpm = (args, cwd = stageRoot) => {
         const result = spawnSync(process.execPath, [npmCli, ...args], {
@@ -221,6 +286,16 @@ try {
         dependency: "@fastify/http-proxy",
         originalRequirement: "11.4.4",
         bundledRequirement: "11.6.10",
+        undiciPatch: {
+            advisory: "CVE-2026-120415",
+            package: "@servicenow/sdk-cli",
+            packageVersion: "4.14.2",
+            field: "dependencies.undici",
+            original: "7.29.1",
+            replacement: patchedUndiciVersion,
+            source: undiciPath,
+            destination: sdkUndiciPath,
+        },
         peerProviderPatch: peerCopies.length ? {
             package: "@servicenow/sdk-build-plugins",
             field: "optionalDependencies.ajv",
@@ -240,6 +315,11 @@ try {
         note: "Publisher-maintained dependency-manifest patch, not an upstream ServiceNow fix.",
     });
 
+    const sdkManifestFile = path.join(stageRoot, sdkPath, "package.json");
+    const sdkManifest = readJson(sdkManifestFile);
+    sdkManifest.snDeveloperBundlePatch = readJson(path.join(stageRoot, "SDK-BUNDLE-PATCH.json"));
+    writeJson(sdkManifestFile, sdkManifest);
+
     console.warn("Checking the staged dependency tree.");
     runNpm(["ls", "-a", "--omit=dev"]);
     console.warn("Packing the release archive without lifecycle scripts.");
@@ -251,18 +331,75 @@ try {
     assert.equal(packed.filename, archiveName, "Unexpected archive filename from npm pack.");
     const packedFiles = new Set(packed.files.map(file => file.path));
     for (const required of [
-        "snUpload.js", "SDK-BUNDLE-PATCH.json", `${sdkPath}/package.json`,
+        "snUpload.js", `${sdkPath}/package.json`,
         `${rollupPath}/package.json`, `${proxyPath}/package.json`,
+        `${sdkCliPath}/package.json`, `${undiciPath}/package.json`, `${undiciPath}/index.js`,
+        `${sdkUndiciPath}/package.json`, `${sdkUndiciPath}/index.js`,
         `${windowsKeyringPath}/package.json`, `${windowsKeyringPath}/${windowsBinary}`,
         ...peerCopies.map(copy => `${copy.to}/package.json`),
     ]) assert(packedFiles.has(required), `Required file missing from archive: ${required}`);
-    mkdirSync(outputRoot, { recursive: true });
-    const archivePath = path.join(outputRoot, archiveName);
-    copyFileSync(path.join(temporaryRoot, archiveName), archivePath);
-    console.warn("Release archive created. Nothing was published or globally installed.");
-    console.info(archivePath);
+    const packedUndici = packed.files.filter(file =>
+      /(?:^|\/)node_modules\/undici\/package\.json$/.test(file.path));
+    for (const file of packedUndici)
+        assert.equal(readJson(path.join(stageRoot, file.path)).version, patchedUndiciVersion,
+          `Unexpected Undici version included in archive: ${file.path}`);
+    console.warn(`Undici release check passed: all ${packedUndici.length} copies are 7.30.2.`);
+    // Install only verified, generated dependency corrections. Never rewrite root source files.
+    const replacements = [
+        `${rollupPath}/package.json`, `${sdkCliPath}/package.json`, sdkUndiciPath,
+        `${sdkPath}/package.json`, windowsKeyringPath,
+        ...(peerCopies.length ? [
+            "node_modules/@servicenow/sdk-build-plugins/package.json",
+            `${buildModules}/ajv`,
+        ] : []),
+    ];
+    const backupRoot = path.join(temporaryRoot, "dependency-backup");
+    const changed = [];
+    const hiddenLock = path.join(projectRoot, "node_modules/.package-lock.json");
+    const hiddenLockBytes = existsSync(hiddenLock) ? readFileSync(hiddenLock) : null;
+    try {
+        for (const location of replacements) {
+            const target = path.join(projectRoot, location);
+            const backup = path.join(backupRoot, location);
+            const hadOriginal = existsSync(target);
+            if (hadOriginal) cpSync(target, backup, { recursive: true, verbatimSymlinks: true });
+            changed.push({ target, backup, hadOriginal });
+            rmSync(target, { recursive: true, force: true });
+            cpSync(path.join(stageRoot, location), target, {
+                recursive: true, verbatimSymlinks: true,
+            });
+        }
+        // npm documents deleting this cache after manual node_modules edits.
+        rmSync(hiddenLock, { force: true });
+        const finalPack = readPackResult(runNpm([
+            "pack", "--json", "--dry-run", "--ignore-scripts",
+        ], projectRoot), manifest.name);
+        const finalFiles = new Set(finalPack.files.map(file => file.path));
+        for (const required of [
+            "snUpload.js", `${sdkPath}/package.json`, `${rollupPath}/package.json`,
+            `${sdkCliPath}/package.json`, `${sdkUndiciPath}/package.json`,
+            `${sdkUndiciPath}/index.js`, `${proxyPath}/package.json`,
+            `${windowsKeyringPath}/package.json`, `${windowsKeyringPath}/${windowsBinary}`,
+            ...peerCopies.map(copy => `${copy.to}/package.json`),
+        ]) assert(finalFiles.has(required), `Missing from ordinary publish: ${required}`);
+        assert(!finalPack.files.some(file => /^(?:release\/|[^/]+\.tgz$)/.test(file.path)),
+          "Old release files would be published; run --configure and check package file rules.");
+        for (const file of finalPack.files.filter(file =>
+          /(?:^|\/)node_modules\/undici\/package\.json$/.test(file.path)))
+            assert.equal(readJson(path.join(projectRoot, file.path)).version, patchedUndiciVersion,
+              `Unexpected Undici version in ordinary publish: ${file.path}`);
+    } catch (error) {
+        for (const { target, backup, hadOriginal } of changed.reverse()) {
+            rmSync(target, { recursive: true, force: true });
+            if (hadOriginal) cpSync(backup, target, { recursive: true, verbatimSymlinks: true });
+        }
+        if (hiddenLockBytes !== null) writeFileSync(hiddenLock, hiddenLockBytes);
+        throw error;
+    }
+    console.warn("SDK preparation passed. npm can now publish the project normally.");
+    console.warn("Tracked package.json and package-lock.json were not changed by preparation.");
 } catch (error) {
-    console.error(`Release packaging failed: ${error.stack || error.message}`);
+    console.error(`Publish preparation failed: ${error.stack || error.message}`);
     process.exitCode = 1;
 } finally {
     if (temporaryRoot) rmSync(temporaryRoot, { recursive: true, force: true });
