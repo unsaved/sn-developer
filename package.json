@@ -36,6 +36,7 @@
   "dependencies": {
     "@admc.com/eslint-plugin-sn": "^3.19.0",
     "@servicenow/sdk": "4.14.2",
+    "ajv": "6.15.0",
     "axios": "^1.6.5",
     "checksum": "^1.0.0",
     "entities": "^4.1.1",
@@ -49,6 +50,10 @@
     }
   },
   "bundleDependencies": [
-    "@servicenow/sdk"
-  ]
+    "@servicenow/sdk",
+    "ajv"
+  ],
+  "devDependencies": {
+    "uri-js-replace": "1.0.3"
+  }
 }

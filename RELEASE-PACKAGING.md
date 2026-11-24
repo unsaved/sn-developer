@@ -1,162 +1,214 @@
 # Standard npm release workflow
 
-Keep this document and `scripts/pack-release.mjs` in Git. The helper is now an automatic
-`prepublishOnly` hook, not a separate manual archive-publishing workflow.
+Keep this document and `scripts/pack-release.mjs` in Git. Normal `npm publish` invokes the
+existing `prepublishOnly` hook. No manual archive publishing is required.
 
-## Existing configured repositories: libxmljs2 correction
+## Dependency-tree correction: apply this revision
 
-Replace `scripts/pack-release.mjs` and this document. Keep the current `snUpload.js`,
-root dependency settings, lockfile, and workstation environment. The existing
-`prepublishOnly` hook is unchanged; do not rerun `--configure` for this update.
+Replace `scripts/pack-release.mjs` and this repository-root document. Do not change
+`snUpload.js`, the existing npm hook, application version, shell configuration, or credentials.
+The previously instructed AJV and URI-replacement installation steps need not be repeated if
+both completed successfully. No `--configure`, reinstall, root `npm prune`, or forced install
+is needed for this correction.
 
-The hook now removes the optional `libxmljs2` component responsible for the reported
-CVE-2024-34393 and sonatype-2018-0585 findings. It removes the SDK build plugin's optional
-installation requirement, CycloneDX's optional peer declaration/metadata, and the complete
-installed `node_modules/libxmljs2` directory. Other optional dependencies, including the
-Windows keyring, are retained. This removes the component, not the scanner's detection.
-
-Before committing and incrementing the release version, run:
+From the module-development repository, run:
 
 ```sh
 npm run prepublishOnly
 ```
 
-Expected additional success message:
+The helper identifies this revision in its output:
 
 ```text
-libxmljs2 exclusion passed for staging and ordinary npm publish.
+Publish preparation revision: dependency-tree-cleanup-1.
 ```
 
-This does not publish, change the version, or rewrite tracked manifests. It updates
-generated dependencies under `node_modules`. Failed application/checking of those updates
-restores affected paths, including the removed XML package and npm's hidden lock cache.
+This revision corrects two preparation defects:
 
-Commit the two changed source files, then follow the normal release workflow below.
-From 3.11.2, `npm version patch` selects 3.11.3. Do not increment twice if an unpublished
-candidate version has already been selected.
+- After removing libxmljs2 and URI.js, inspect the actual staged graph with offline
+  `npm query :extraneous`. Remove only the directories npm identifies as extraneous, and
+  only from the temporary staging copy. Retain source-tree leftovers; assert that none of
+  the excluded orphaned paths appear in the actual project's final publication file list.
+  No dependency installation or network resolution is used for this cleanup.
+- npm can deduplicate ESLint's AJV 6 copies to the application root. Supplying AJV 8 nearer
+  those consumers then shadows AJV 6. Give each affected declared AJV 6 consumer a private
+  copy of the existing 6.15.0 package. Retain AJV 8.20.0 for CycloneDX. Discover the actual
+  reachable AJV 6 copies rather than requiring exactly three lockfile locations, and apply
+  the existing URI backend correction to every one of them.
 
-## One-time setup for repositories not configured yet
+The full `npm ls -a --omit=dev` check remains blocking. No `ELSPROBLEMS`, missing dependency,
+invalid version, or failed runtime check is ignored. The real-library checks additionally
+verify that both ESLint entry points resolve AJV 6 and CycloneDX resolves AJV 8. They run
+before and after application of generated changes. Failed final verification restores the
+changed generated dependencies and hidden lock cache.
 
-Replace `scripts/pack-release.mjs` and this document with the matching new versions. From
-that repository, run:
+All existing security corrections, the Windows keyring, and ordinary `npm publish` remain.
+After preparation and normal project tests pass, commit the helper/documentation and any
+pending intentional package.json/package-lock.json edits. Continue the normal version,
+commit/tag, and `npm publish` process below; do not increment a candidate version twice.
+
+## URI.js correction for the next release
+
+The reported CVE-2026-93690 affects `uri-js@4.4.1`. The original supplied dependency tree had three
+AJV 6.15.0 copies requiring that package; npm can change their installed layout. Removing URI.js without replacing its callers would
+break schema-reference handling used by linting.
+
+This revision replaces AJV 6's URI backend with `uri-js-replace@1.0.3`. That is a different
+implementation, not a renamed copy of URI.js and not an upstream AJV release. It keeps its
+real package name and version. Its maintainer describes AJV/ESLint compatibility and includes
+a regression test for the reported Unicode-separator infinite loop. That statement does not
+prove complete semantic equivalence; the preparation checks and application tests still apply.
+
+### Apply on the module-development workstation
+
+Replace `scripts/pack-release.mjs` and this document. Leave the current `snUpload.js`, existing
+publish hook, proxy settings, and OAuth credentials unchanged. Do not rerun `--configure`.
+
+For a checkout that has not installed these build inputs, run from the repository root:
 
 ```sh
-node scripts/pack-release.mjs --configure
+npm i -P -E -B ajv@6.15.0 &&
+npm i -D -E uri-js-replace@1.0.3 &&
+npm run prepublishOnly
 ```
 
-Configuration makes only these source changes:
+AJV 6.15.0 already exists transitively in the supplied project. The first command explicitly
+bundles that same version as an application dependency. This is necessary because the
+application's unbundled ESLint 8 must resolve the corrected AJV too, rather than install an
+unmodified AJV/URI.js combination later. This is not an AJV 8 migration.
 
-- Adds `scripts.prepublishOnly = "node scripts/pack-release.mjs"`.
-- Removes the old `pack:release` entry if it still names that same helper.
-- Narrows the existing SDK override to `@fastify/http-proxy@11.4.4`, retaining `11.6.10`
-  as its replacement. It no longer applies after the installed declaration is corrected.
-- Adds exclusions for `/release/`, root `.tgz` files, and the obsolete root patch report to
-  `.npmignore`. When creating that file, it preserves existing `.gitignore` rules.
+The second command records the replacement as an exact development/build input, with its
+registry integrity recorded by npm in package-lock.json. The patched AJV manifests give it a
+runtime dependency edge, so it is included in the published bundle even though its root entry
+is a development dependency. Do not omit development dependencies when preparing a release.
+These commands use the configured registry; no alternate registry or policy bypass is set.
 
-The application version, dependency versions, root lockfile, application code, shell,
-registry, proxy, CA settings, and Git history are not changed by configuration.
+Preparation must print both:
 
-Review and commit `package.json`, `.npmignore`, `scripts/pack-release.mjs`, and this document.
-Preserve any other intentional source changes in your usual commit workflow.
+```text
+URI regression, AJV reference validation, and ESLint smoke checks passed.
+URI.js replacement passed for staging and ordinary npm publish.
+```
 
-## Release normally
+It checks the actual installed libraries in a separate Node process with a timeout and heap
+limit. An incompatible or hanging resolver stops preparation before publication. Failure in
+these checks is not a reason to suppress them or publish with --ignore-scripts.
 
-After committing source changes and tests, use your normal version command, for example:
+### What the hook changes
+
+Only generated dependency files under node_modules are changed during preparation:
+
+- All reachable AJV 6.15.0 manifests require uri-js-replace 1.0.3 instead of uri-js. Their Node
+  resolver imports are changed to that dependency's real name. Other AJV validation code stays
+  unchanged.
+- The original node_modules/uri-js package is removed. The original library is not installed
+  under an alias, and no fictitious fixed version is assigned to it.
+- The prebuilt AJV 6 browser bundles under each dist directory are removed rather than shipping
+  an unreconstructed browser payload. Node entry points under lib remain. Direct consumers of
+  these browser bundles are outside this CLI package's supported workflow.
+- Both the staged and actual-project packlists reject original URI.js packages, runtime
+  dependency declarations, npm aliases, and the omitted AJV 6 browser bundles. They require
+  the new runtime package and every corrected resolver file.
+- Actual-library checks cover Unicode U+2028/U+2029 and CR/LF paths, relative reference
+  resolution, valid and invalid AJV schemas/data, escaped JSON Pointer references, recursive
+  references, and both the application's ESLint 8 and the SDK's ESLint 9 Linter entry points.
+
+The checks run before and after applying prepared files. On an application/check failure,
+changed generated paths are restored, including deleted URI.js and the hidden npm lock cache.
+Tracked source manifests are not rewritten by the hook. Dependency installation above does
+update package.json and package-lock.json; commit those intentional input changes.
+
+This is a targeted compatibility/security correction, not proof that all possible schema,
+SDK, lint-plugin, or browser uses remain identical. The replacement maintainer's compatibility
+claim is not a blanket security certification. Nexus must evaluate the resulting release.
+
+## Existing corrections retained
+
+The helper retains the previously tested corrections:
+
+- isomorphic-rollup 1.3.14 requires http-proxy 11.6.10.
+- SDK CLI 4.14.2 requires and includes Undici 7.30.2, including its private copy.
+- CycloneDX has its own AJV 8.20.0 provider and required private dependencies.
+- libxmljs2 and its optional installation/peer declarations remain excluded; CycloneDX's
+  optional XML-schema-validation backend remains unavailable.
+- The Windows x64 keyring 1.2.0 package and actual native binary remain included. If absent on
+  the development machine, the existing configured-registry fetch and lockfile-checksum
+  verification are used. Other optional dependencies are not blanket-omitted.
+
+The SDK manifest's snDeveloperBundlePatch records these corrections and the URI replacement,
+its input integrity, its affected AJV paths, and the omitted browser payloads. The source
+lockfile describes upstream inputs plus the new build input, not the entire generated patched
+output. An npm ci restores upstream inputs; the next hook invocation reapplies corrections.
+
+## Commit, version, and publish normally
+
+After preparation and the project's normal tests pass:
 
 ```sh
-npm version patch
+git add package.json package-lock.json scripts/pack-release.mjs RELEASE-PACKAGING.md &&
+git commit -m "Replace vulnerable URI.js in bundled AJV dependencies" &&
+npm version patch &&
 npm publish
 ```
 
-Skip the version command when you already set the intended unpublished release version.
-Use your normal Git push and tag-push process. No separate packing command, archive path,
-manual archive transfer, or alternate distribution tag is required.
+Starting from 3.11.3, this selects 3.11.4. Skip a version increment already performed for an
+unpublished candidate. Keep your normal Git commit/tag push procedure. Do not use a manual
+archive path or special distribution tag. Do not use --ignore-scripts to publish.
 
-Do not use `--ignore-scripts` for publishing: it would suppress preparation. An existing
-unmodified installed dependency tree needs the hook to become publishable.
+## User-workstation acceptance
 
-## What publishing prepares automatically
-
-npm invokes `prepublishOnly` before its packaging checks. The helper copies the installed
-tree to temporary staging, applies and verifies the existing corrections, then installs
-only the corrected generated dependency files under the project's `node_modules`:
-
-- `isomorphic-rollup` requires the installed `http-proxy` 11.6.10.
-- SDK CLI requires and contains Undici 7.30.2 rather than its old private 7.29.1 copy.
-- The SDK build-plugin subtree receives the existing AJV 8 provider and private dependencies.
-- The vulnerable optional XML validator and its known installation/peer declarations are
-  removed. Staged and final packlists reject libxmljs2 payloads, package aliases, and any
-  remaining runtime/optional/peer requirements that could restore the excluded package.
-- The Windows x64 keyring package and its native binary are present; the existing checksum-
-  verified registry-fetch behavior is retained when the development machine lacks the binary.
-
-Preparation does not modify the root `package.json`, `package-lock.json`, or other tracked
-source files. It invalidates npm's hidden `node_modules/.package-lock.json` cache after
-editing installed dependencies. The explicit dependency patches remain tracked in this helper;
-the root lockfile describes upstream installation inputs, not the generated patched output.
-An `npm ci` can restore upstream inputs; the next publish reapplies preparation.
-
-The patch report is embedded in the installed SDK's `package.json` under
-`snDeveloperBundlePatch`, so it accompanies the published package without adding a generated
-root file to Git. The helper checks the actual project packlist before allowing publication,
-including Windows binary presence, Undici versions, XML-validator exclusion, and old-archive
-exclusion.
-If applying or checking the generated files fails, the helper restores the affected dependency
-paths and fails the publish. Do not run installations or edit dependencies concurrently.
-
-The helper never invokes `npm publish`, and never changes the registry or its security policy.
-Only the outer, ordinary `npm publish` command performs publication. A separate native installer
-may still need your existing corporate proxy and certificate settings on consumer machines.
-Nexus approval remains a registry policy decision, not a consequence of a successful build.
-
-## Functional scope and acceptance
-
-The bundled copy intentionally no longer supplies CycloneDX's optional XML schema
-validation backend. Commands needing that backend cannot be assumed to work. This is not
-a replacement for the full SDK's XML-validation feature set. Authentication, record-transfer,
-proxy, and login-message code in `snUpload.js` is unchanged by this update.
-
-CycloneDX's maintainer identifies libxmljs2 as an optional XML-validation dependency and
-documents operation without optional dependencies. This supports targeted removal but is
-not proof that every SDK command works without it. No JavaScript adapter is replaced with
-a dummy validator or made to report validation success.
-
-After normal publication, on the Windows user workstation in Git Bash, run from the usual
-script working directory with the working environment:
+On the Windows user workstation in Git Bash, from the ordinary working directory, use the
+normal environment and normal latest-version installation. Do not pin an installation version
+or repair dependencies manually:
 
 ```sh
 npm i -g @admc.com/sn-developer &&
 npm view @admc.com/sn-developer dist-tags.latest &&
 npm ls -g @admc.com/sn-developer --depth=0 &&
+snUpload -l si.x/getStaticHtmlPublicationPayload.js &&
 snUpload -rv si.x/getStaticHtmlPublicationPayload.js
 ```
 
-This acceptance test deliberately uses default version selection and the normal global
-installation and executable. Verify the intended new version, a matching latest tag, and
-the SDK path inside the normal global installation. No manual dependency repair should
-be needed. Apply the release's normal round-trip and multi-instance checks as well.
-Nexus must evaluate the new release; removal of these findings is not a guarantee that no
-other security policies will block it.
+The installed version must match the intended new release and latest tag. The ordinary
+executable must find its SDK inside the normal global installation. Both configured linting
+and the download must work. Retain normal multi-instance and upload/download regression tests.
+A read-only download alone does not exercise this change's linting dependency path.
 
-Sources:
-- User-supplied Sonatype report: sonatype-2018-0585, libxmljs2/src/xml_element.cc.
-- https://raw.githubusercontent.com/CVEProject/cvelistV5/main/cves/2024/34xxx/CVE-2024-34393.json
-- https://github.com/CycloneDX/cyclonedx-javascript-library/issues/1079
+## Initial configuration of a different checkout
 
-## Scope and validation
+For a repository that does not yet have the normal publishing hook, use the existing
+`node scripts/pack-release.mjs --configure` setup once, then install the two inputs above.
+Configuration adds prepublishOnly, preserves the SDK override limited to the original
+http-proxy@11.4.4 requirement, and excludes old release files through .npmignore. It is not
+needed again for a checkout already using the normal hook.
 
-The dependency corrections retain their specific version guards. Unexpected versions fail
-for review. The Windows binding is for Windows x64; other platforms require their own validation.
+## Validation of the dependency-tree correction
 
-Tested using Node 22.16.0 and npm 10.9.2 with synthetic package contents reconstructed from
-all 623 dependency entries in the supplied lockfile. Ten checks passed: normal publish
-dry-run; unchanged tracked-file hashes; XML declarations and payload removal; preserved
-Windows/Undici corrections; repeat execution; actual compressed archive inspection; clean
-offline global fixture installation; rejection of a now-required XML dependency; rejection
-of a libxmljs2 alias; and rollback after an injected final-pack failure.
+Node 22.16.0 and npm 10.9.2 were used with metadata fixtures derived from the supplied
+623-package lockfile, the two previously instructed build inputs, and a deliberately
+hoisted/deduplicated AJV layout. Nine checks passed:
 
-For the offline fixture install only, the test bundled normally unbundled application
-dependencies. The delivered helper does not change the bundle list. Native files and
-JavaScript bodies were placeholders, not executable Windows binaries or the actual SDK.
-Live SDK authentication, Windows execution, and Nexus policy evaluation were not tested.
-The previous npm-12 output handling and Windows binary fetching code are retained.
+1. Complete supplied graph: staged npm ls and real npm pack pass with tracked inputs unchanged.
+2. Repeated preparation passes with tracked input hashes unchanged.
+3. Deduplicated graph: two private AJV 6 providers are restored; AJV 8 is retained; ls/pack pass.
+4. The deduplicated layout remains repeatable.
+5. An unrelated missing dependency still blocks preparation.
+6. Injected final-pack failure restores generated paths, deleted XML/URI, and the hidden lock.
+7. The delivered helper parses, has no trailing whitespace, and uses at most 100-character lines.
+8. The older XML-removal helper reproduces both the extraneous packages and invalid AJV 8 failure.
+9. An unrelated incompatible dependency version remains a blocking npm ls error.
+
+npm query, npm ls, and npm pack were actually executed. Library bodies and the Windows native
+payload were fixtures, and library runtime execution was substituted in this test harness.
+The delivered helper retains its real URI/AJV/ESLint runtime checks; it has no test bypass.
+Actual URI/AJV/ESLint runtime compatibility, npm 12, Windows, and FM Nexus were not tested here.
+These tests do not claim security-policy clearance or replace application acceptance testing.
+
+## Sources
+
+- User-supplied FM Nexus report for CVE-2026-93690, version 3.11.3.
+- https://github.com/advisories/GHSA-ffpj-9hx9-929p
+- https://raw.githubusercontent.com/ajv-validator/ajv/v6.15.0/package.json
+- https://raw.githubusercontent.com/ajv-validator/ajv/v6.15.0/lib/compile/resolve.js
+- https://github.com/andreinwald/uri-js-replace
+- https://raw.githubusercontent.com/andreinwald/uri-js-replace/master/test/cve/CVE-2026-93690.test.ts

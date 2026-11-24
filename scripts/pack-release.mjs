@@ -20,6 +20,10 @@ const proxyPath = "node_modules/@fastify/http-proxy";
 const sdkCliPath = "node_modules/@servicenow/sdk-cli";
 const buildPluginPath = "node_modules/@servicenow/sdk-build-plugins";
 const xmlPath = "node_modules/libxmljs2";
+const uriPath = "node_modules/uri-js";
+const uriReplacementName = "uri-js-replace";
+const uriReplacementVersion = "1.0.3";
+const uriReplacementPath = `node_modules/${uriReplacementName}`;
 const undiciPath = "node_modules/undici";
 const sdkUndiciPath = `${sdkCliPath}/node_modules/undici`;
 const patchedUndiciVersion = "7.30.2";
@@ -54,6 +58,109 @@ const assertXmlExcluded = (root, files) => {
                 assert(name !== "libxmljs2" && !/^npm:libxmljs2(?:@|$)/.test(spec),
                   `libxmljs2 dependency remains in ${file.path}: ${field}.${name}`);
     }
+};
+// Reject original URI.js payloads and installation edges, including embedded browser copies.
+const assertUriReplaced = (root, files, uriUsers) => {
+    for (const file of files) {
+        assert(!/(?:^|\/)node_modules\/uri-js(?:\/|$)/.test(file.path),
+          `Original uri-js payload would be published: ${file.path}`);
+        assert(!uriUsers.some(location => file.path.startsWith(`${location}/dist/`)),
+          `Unrebuilt AJV browser bundle would be published: ${file.path}`);
+        if (file.path !== "package.json" &&
+          !/(?:^|\/)node_modules\/(?:@[^/]+\/)?[^/]+\/package\.json$/.test(file.path)) continue;
+        const pkg = readJson(path.join(root, file.path));
+        assert.notEqual(pkg.name, "uri-js", `Original URI.js package found: ${file.path}`);
+        for (const field of ["dependencies", "optionalDependencies", "peerDependencies"])
+            for (const [name, spec] of Object.entries(pkg[field] || {}))
+                assert(name !== "uri-js" && !/^npm:uri-js(?:@|$)/.test(spec),
+                  `Original uri-js dependency remains: ${file.path}: ${field}.${name}`);
+    }
+    const packedFiles = new Set(files.map(file => file.path));
+    for (const required of [
+        `${uriReplacementPath}/package.json`, `${uriReplacementPath}/dist/index.js`,
+        ...uriUsers.map(location => `${location}/lib/compile/resolve.js`),
+    ]) assert(packedFiles.has(required), `URI replacement file missing: ${required}`);
+};
+// Run real installed libraries in a bounded child, so a broken resolver cannot hang publishing.
+const checkUriRuntime = (root, uriUsers) => {
+    const result = spawnSync(process.execPath, ["--max-old-space-size=192", "-e", String.raw`
+const assert = require("node:assert/strict");
+const path = require("node:path");
+const { createRequire } = require("node:module");
+const [root, ...uriUsers] = process.argv.slice(1);
+const uri = require(path.join(root, "node_modules/uri-js-replace"));
+for (const segment of ["\u2028x", "\u2029x", "\rx", "\nx"]) {
+    const inputPath = ["/foo/", segment].join("");
+    const result = uri.resolveComponents(
+        { scheme: "http", host: "example.test", path: "/a" }, { path: inputPath }, {}, true);
+    assert.equal(result.path, inputPath);
+    const normalized = uri.normalize(["http://example.test", inputPath].join(""), { iri: true });
+    assert.equal(typeof normalized, "string");
+    assert.equal(typeof uri.resolve("http://example.test/a", inputPath, { iri: true }), "string");
+}
+for (const [relative, expected] of [
+    ["g", "http://a/b/c/g"], ["./g", "http://a/b/c/g"], ["../g", "http://a/b/g"],
+    ["../../g", "http://a/g"], ["/g", "http://a/g"], ["?y", "http://a/b/c/d;p?y"],
+    ["#s", "http://a/b/c/d;p?q#s"], ["g/../h", "http://a/b/c/h"],
+]) assert.equal(uri.resolve("http://a/b/c/d;p?q", relative), expected);
+for (const location of uriUsers) {
+    const localRequire = createRequire(path.join(root, location, "package.json"));
+    assert.equal(localRequire("uri-js-replace/package.json").version, "1.0.3");
+    const Ajv = require(path.join(root, location));
+    const ajv = new Ajv({ allErrors: true });
+    ajv.addSchema({ $id: "https://example.test/defs/integer.json", type: "integer" });
+    const validate = ajv.compile({
+        $id: "https://example.test/main.json", type: "object",
+        properties: { value: { $ref: "defs/integer.json" } }, required: ["value"],
+        additionalProperties: false,
+    });
+    assert.equal(validate({ value: 7 }), true);
+    assert.equal(validate({ value: "7" }), false);
+    assert.equal(validate({}), false);
+    assert.equal(validate({ value: 7, extra: true }), false);
+    const escaped = ajv.compile({
+        definitions: { "a/b~c": { type: "integer" } }, $ref: "#/definitions/a~1b~0c",
+    });
+    assert.equal(escaped(7), true);
+    assert.equal(escaped("7"), false);
+    const recursive = ajv.compile({ type: "object", properties: { child: { $ref: "#" } } });
+    assert.equal(recursive({ child: {} }), true);
+    assert.equal(recursive({ child: 1 }), false);
+    assert.throws(() => ajv.compile({ type: 42 }));
+}
+for (const location of [
+    "node_modules/eslint", "node_modules/@servicenow/sdk-build-plugins/node_modules/eslint",
+]) {
+    const localRequire = createRequire(path.join(root, location, "package.json"));
+    assert.equal(localRequire("ajv/package.json").version, "6.15.0",
+        ["ESLint resolved the wrong AJV", location].join(": "));
+    const eslint = require(path.join(root, location));
+    const major = Number(require(path.join(root, location, "package.json")).version.split(".")[0]);
+    assert([8, 9].includes(major));
+    const linter = new eslint.Linter();
+    const config = major === 8 ? { parserOptions: { ecmaVersion: 2020 } } :
+        { languageOptions: { ecmaVersion: 2020 } };
+    config.rules = { "no-undef": "error" };
+    assert.equal(linter.verify("const value = 1;", config).length, 0);
+    assert(linter.verify("missingName();", config).some(message => message.ruleId === "no-undef"));
+}
+const cycloneRequire = createRequire(path.join(root,
+    "node_modules/@servicenow/sdk-build-plugins/node_modules",
+    "@cyclonedx/cyclonedx-library/package.json"));
+assert.equal(cycloneRequire("ajv/package.json").version, "8.20.0");
+const Ajv8 = cycloneRequire("ajv");
+const validate8 = new Ajv8().compile({ type: "integer" });
+assert.equal(validate8(7), true);
+assert.equal(validate8("7"), false);
+console.info("URI regression, AJV reference validation, and ESLint smoke checks passed.");
+`, root, ...uriUsers], {
+        cwd: root, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"],
+        timeout: 30000, maxBuffer: 1024 * 1024, windowsHide: true,
+    });
+    if (result.error) throw result.error;
+    assert.equal(result.status, 0,
+      `URI/AJV/ESLint checks failed. No publication allowed.\n${result.stderr || result.stdout}`);
+    console.warn(result.stdout.trim());
 };
 // One-time tracked configuration; normal publishing never edits source manifests.
 if (process.argv[2] === "--configure") {
@@ -111,26 +218,54 @@ try {
     assert(!["prepare", "prepack", "postpack"].some(name => manifest.scripts?.[name]),
       "A packaging lifecycle hook was added; review its interaction with pack:release first.");
 
+    assert.equal(manifest.dependencies?.ajv, "6.15.0",
+      "Bundle the application's AJV with npm i -P -E -B ajv@6.15.0 before preparation.");
+    assert(manifest.bundleDependencies.includes("ajv"),
+      "The application's AJV must be bundled so ESLint cannot restore upstream URI.js.");
+    assert.equal(manifest.devDependencies?.[uriReplacementName], uriReplacementVersion,
+      "Install the build input with npm i -D -E uri-js-replace@1.0.3 before preparation.");
+    assert.equal(lock.packages[uriReplacementPath]?.version, uriReplacementVersion,
+      "The URI replacement lock entry is missing or changed.");
+    assert.equal(lock.packages[uriPath]?.version, "4.4.1", "Review the upstream URI.js version.");
+    for (const [location, pkg] of Object.entries(lock.packages)) {
+        if (!pkg.dependencies?.["uri-js"]) continue;
+        assert(location.endsWith("/ajv") && pkg.version === "6.15.0" &&
+          pkg.dependencies["uri-js"] === "^4.2.2" && pkg.inBundle,
+          `Review this URI.js consumer before replacement: ${location}`);
+    }
+    const replacementManifest =
+      readJson(path.join(projectRoot, uriReplacementPath, "package.json"));
+    assert.equal(replacementManifest.name, uriReplacementName, "Unexpected URI replacement.");
+    assert.equal(replacementManifest.version, uriReplacementVersion,
+      "Unexpected replacement version.");
+    assert.equal(replacementManifest.main, "dist/index.js", "URI replacement entry point changed.");
+    assert.equal(Object.keys(replacementManifest.dependencies || {}).length, 0,
+      "URI replacement gained runtime dependencies; review packaging.");
+    assert.equal(Object.keys(replacementManifest.optionalDependencies || {}).length, 0,
+      "URI replacement gained optional dependencies; review packaging.");
+
     // Validate installed bundle versions without reinstalling or changing the development tree.
     for (const [location, locked] of Object.entries(lock.packages)) {
         if (!locked.inBundle) continue;
         assert(!locked.link, `Linked bundle dependency is unsupported: ${location}`);
         const directory = path.join(projectRoot, location);
         const packageFile = path.join(directory, "package.json");
-        if (!existsSync(packageFile) && locked.optional) continue;
+        if (!existsSync(packageFile) && (locked.optional || location === uriPath)) continue;
         assert(existsSync(packageFile), `Missing installed bundle dependency: ${location}`);
         assert.equal(path.relative(directory, realpathSync(directory)), "",
           `Bundle dependency has a linked directory: ${location}`);
         assert(!lstatSync(packageFile).isSymbolicLink(), `Linked manifest: ${location}`);
         const installedVersion = readJson(packageFile).version;
         assert(installedVersion === locked.version ||
-          location === sdkUndiciPath && installedVersion === patchedUndiciVersion,
+          location === sdkUndiciPath && installedVersion === patchedUndiciVersion ||
+          location === `${buildPluginPath}/node_modules/ajv` && installedVersion === "8.20.0",
           `Installed version differs from package-lock.json: ${location}`);
     }
 
     const archiveName = `${manifest.name.slice(1).replace("/", "-")}-${manifest.version}.tgz`;
     temporaryRoot = mkdtempSync(path.join(tmpdir(), "sn-developer-pack-"));
     const stageRoot = path.join(temporaryRoot, "package");
+    console.warn("Publish preparation revision: dependency-tree-cleanup-1.");
     console.warn("Preparing SDK dependencies for npm publish; tracked files stay unchanged.");
     cpSync(projectRoot, stageRoot, {
         recursive: true,
@@ -146,6 +281,20 @@ try {
         },
     });
 
+    const runNpm = (args, cwd = stageRoot) => {
+        const result = spawnSync(process.execPath, [npmCli, ...args], {
+            cwd,
+            encoding: "utf8",
+            stdio: ["ignore", "pipe", "pipe"],
+            windowsHide: true,
+            maxBuffer: 32 * 1024 * 1024,
+        });
+        if (result.error) throw result.error;
+        if (result.status !== 0)
+            throw new Error(`npm ${args[0]} failed (${result.signal || result.status}).\n${
+              result.stderr || result.stdout}`);
+        return result.stdout;
+    };
     // Correct the copied dependency declaration, not just the root override.
     const rollupFile = path.join(stageRoot, rollupPath, "package.json");
     const rollup = readJson(rollupFile);
@@ -225,6 +374,33 @@ try {
         plugin.optionalDependencies = { ...plugin.optionalDependencies, ajv: "8.20.0" };
         writeJson(pluginFile, plugin);
     }
+    // npm may deduplicate ESLint's AJV 6 to the root. The SDK's nearer AJV 8 then shadows it.
+    // Restore a private AJV 6 only where a declared v6 consumer would otherwise resolve v8.
+    const ajv6Source = path.join(stageRoot, "node_modules/ajv");
+    assert.equal(readJson(path.join(ajv6Source, "package.json")).version, "6.15.0");
+    const ajv6Placements = [];
+    for (const [location, locked] of Object.entries(lock.packages)) {
+        const requirement = locked.dependencies?.ajv;
+        if (!requirement || !/^\^6\./.test(requirement)) continue;
+        assert(["^6.12.4", "^6.14.0"].includes(requirement),
+          `Review the AJV 6 requirement at ${location}: ${requirement}`);
+        const ownerFile = path.join(stageRoot, location, "package.json");
+        assert.equal(readJson(ownerFile).dependencies?.ajv, requirement,
+          `AJV requirement differs from the lockfile: ${location}`);
+        const localRequire = createRequire(ownerFile);
+        const resolved = readJson(localRequire.resolve("ajv/package.json"));
+        if (resolved.version === "6.15.0") continue;
+        assert.equal(resolved.version, "8.20.0", `Unexpected AJV resolved from ${location}`);
+        const destination = `${location}/node_modules/ajv`;
+        assert(!existsSync(path.join(stageRoot, destination)),
+          `Refusing to replace an unexpected private AJV: ${destination}`);
+        cpSync(ajv6Source, path.join(stageRoot, destination), {
+            recursive: true, verbatimSymlinks: true,
+        });
+        ajv6Placements.push(destination);
+    }
+    console.warn(`AJV isolation checked; restored ${ajv6Placements.length} private AJV 6 copies.`);
+
     // Exclude the vulnerable optional XML validator, not all optional dependencies.
     assert.equal(lock.packages[xmlPath]?.version, "0.37.0", "Review the XML exclusion.");
     assert(lock.packages[xmlPath].optional, "libxmljs2 is no longer optional; review its removal.");
@@ -255,20 +431,46 @@ try {
     rmSync(path.join(stageRoot, xmlPath), { recursive: true, force: true });
     console.warn("Excluded libxmljs2 and its optional dependency declarations.");
 
-    const runNpm = (args, cwd = stageRoot) => {
-        const result = spawnSync(process.execPath, [npmCli, ...args], {
-            cwd,
-            encoding: "utf8",
-            stdio: ["ignore", "pipe", "pipe"],
-            windowsHide: true,
-            maxBuffer: 32 * 1024 * 1024,
-        });
-        if (result.error) throw result.error;
-        if (result.status !== 0)
-            throw new Error(`npm ${args[0]} failed (${result.signal || result.status}).\n${
-              result.stderr || result.stdout}`);
-        return result.stdout;
-    };
+    // Use the installed graph: npm can change the number and locations of deduplicated copies.
+    const installedAjv = JSON.parse(runNpm([
+        "query", "[name=ajv]:not(:extraneous)", "--offline",
+    ]));
+    assert(Array.isArray(installedAjv), "Unexpected npm query result for AJV.");
+    const uriUsers = installedAjv.filter(pkg => pkg.version.startsWith("6.")).map(pkg => {
+        assert.equal(pkg.version, "6.15.0", `Unexpected AJV 6 version at ${pkg.location}`);
+        assert(/^node_modules\/(?:[^/]+\/)*ajv$/.test(pkg.location) &&
+          !pkg.location.split("/").includes(".."), "Unsafe AJV package location.");
+        return pkg.location;
+    });
+    assert(uriUsers.includes("node_modules/ajv"), "The application's AJV 6 is missing.");
+    // Keep AJV 6's API; replace only its URI backend and omit its stale browser-only bundles.
+    for (const location of uriUsers) {
+        const packageFile = path.join(stageRoot, location, "package.json");
+        const pkg = readJson(packageFile);
+        assert.equal(pkg.name, "ajv", `Unexpected URI consumer at ${location}`);
+        assert.equal(pkg.version, "6.15.0", `Unexpected AJV version at ${location}`);
+        assert.equal(pkg.main, "lib/ajv.js", `Unexpected AJV entry point at ${location}`);
+        assert(pkg.dependencies?.["uri-js"] === "^4.2.2" ||
+          !pkg.dependencies?.["uri-js"] &&
+          pkg.dependencies?.[uriReplacementName] === uriReplacementVersion,
+          `Unexpected URI dependency in ${location}`);
+        const resolverFile = path.join(stageRoot, location, "lib/compile/resolve.js");
+        const resolver = readFileSync(resolverFile, "utf8");
+        const oldImport = /require\((['"])uri-js\1\)/g;
+        const newImport = /require\((['"])uri-js-replace\1\)/g;
+        const oldCount = [...resolver.matchAll(oldImport)].length;
+        const newCount = [...resolver.matchAll(newImport)].length;
+        assert(oldCount === 1 && newCount === 0 || oldCount === 0 && newCount === 1,
+          `Review the AJV URI import at ${resolverFile}`);
+        writeFileSync(resolverFile, resolver.replace(oldImport, 'require("uri-js-replace")'));
+        delete pkg.dependencies["uri-js"];
+        pkg.dependencies[uriReplacementName] = uriReplacementVersion;
+        writeJson(packageFile, pkg);
+        rmSync(path.join(stageRoot, location, "dist"), { recursive: true, force: true });
+    }
+    rmSync(path.join(stageRoot, uriPath), { recursive: true, force: true });
+    checkUriRuntime(stageRoot, uriUsers);
+
     // A Linux/macOS build can omit this optional package even though Windows needs it.
     const nativeLocked = lock.packages[windowsKeyringPath];
     assert.equal(nativeLocked?.version, "1.2.0", "Review the Windows keyring version.");
@@ -325,6 +527,25 @@ try {
       "Windows keyring binary is missing, empty, or linked.");
     console.warn("Windows x64 keyring binary is present in the release copy.");
 
+    // Removing optional parents leaves their private build/download dependencies orphaned.
+    // Inspect the actual graph offline, then remove only extraneous directories in staging.
+    const extraneous = JSON.parse(runNpm(["query", ":extraneous", "--offline"]));
+    assert(Array.isArray(extraneous), "Unexpected npm query result for extraneous packages.");
+    const extraneousLocations = extraneous.map(pkg => {
+        assert(typeof pkg.location === "string" && pkg.location.startsWith("node_modules/") &&
+          !pkg.location.split("/").some(part => ["", ".", ".."].includes(part)),
+          "Unsafe extraneous package location.");
+        const target = path.join(stageRoot, pkg.location);
+        assert.equal(path.relative(target, realpathSync(target)), "",
+          `Linked extraneous package: ${pkg.location}`);
+        return pkg.location;
+    });
+    const removedStagingPaths = extraneousLocations.filter(location =>
+      !extraneousLocations.some(parent => location.startsWith(`${parent}/`)));
+    for (const location of removedStagingPaths)
+        rmSync(path.join(stageRoot, location), { recursive: true });
+    console.warn(`Staging cleanup removed ${removedStagingPaths.length} extraneous package trees.`);
+
     writeJson(path.join(stageRoot, "SDK-BUNDLE-PATCH.json"), {
         publisher: manifest.name,
         sdkVersion: "4.14.2",
@@ -350,6 +571,8 @@ try {
             replacement: "8.20.0",
         } : null,
         peerCopies,
+        ajv6Placements,
+        stagingOnlyCleanup: removedStagingPaths,
         excludedXmlValidator: {
             package: "libxmljs2",
             version: "0.37.0",
@@ -363,6 +586,16 @@ try {
             ],
             removedPayload: xmlPath,
             limitation: "Optional CycloneDX XML schema validation is unavailable.",
+        },
+        uriReplacement: {
+            advisory: "CVE-2026-93690",
+            original: { name: "uri-js", version: "4.4.1" },
+            replacement: { name: uriReplacementName, version: uriReplacementVersion },
+            sourceIntegrity: lock.packages[uriReplacementPath].integrity,
+            consumers: uriUsers,
+            removedPayload: uriPath,
+            removedBrowserBundles: uriUsers.map(location => `${location}/dist`),
+            limitation: "AJV 6 prebuilt browser bundles are omitted; Node entry points remain.",
         },
         windowsNativePackage: {
             name: windowsKeyring,
@@ -391,6 +624,9 @@ try {
     assert.equal(packed.version, manifest.version, "Unexpected package version from npm pack.");
     assert.equal(packed.filename, archiveName, "Unexpected archive filename from npm pack.");
     assertXmlExcluded(stageRoot, packed.files);
+    assertUriReplaced(stageRoot, packed.files, uriUsers);
+    assert(!packed.files.some(file => removedStagingPaths.some(location =>
+      file.path.startsWith(`${location}/`))), "An extraneous dependency would be published.");
     const packedFiles = new Set(packed.files.map(file => file.path));
     for (const required of [
         "snUpload.js", `${sdkPath}/package.json`,
@@ -411,7 +647,7 @@ try {
     // Install only verified, generated dependency corrections. Never rewrite root source files.
     const replacements = [
         `${rollupPath}/package.json`, `${sdkCliPath}/package.json`, sdkUndiciPath,
-        `${sdkPath}/package.json`, windowsKeyringPath,
+        `${sdkPath}/package.json`, windowsKeyringPath, ...uriUsers,
         `${buildPluginPath}/package.json`,
         `${buildModules}/@cyclonedx/cyclonedx-library/package.json`,
         ...(peerCopies.length ? [`${buildModules}/ajv`] : []),
@@ -421,14 +657,15 @@ try {
     const hiddenLock = path.join(projectRoot, "node_modules/.package-lock.json");
     const hiddenLockBytes = existsSync(hiddenLock) ? readFileSync(hiddenLock) : null;
     try {
-        for (const location of [...replacements, xmlPath]) {
+        for (const location of [...replacements, xmlPath, uriPath]) {
             const target = path.join(projectRoot, location);
             const backup = path.join(backupRoot, location);
             const hadOriginal = existsSync(target);
             if (hadOriginal) cpSync(target, backup, { recursive: true, verbatimSymlinks: true });
             changed.push({ target, backup, hadOriginal });
             rmSync(target, { recursive: true, force: true });
-            if (location !== xmlPath) cpSync(path.join(stageRoot, location), target, {
+            if (![xmlPath, uriPath].includes(location)) cpSync(
+              path.join(stageRoot, location), target, {
                 recursive: true, verbatimSymlinks: true,
             });
         }
@@ -438,6 +675,10 @@ try {
             "pack", "--json", "--dry-run", "--ignore-scripts",
         ], projectRoot), manifest.name);
         assertXmlExcluded(projectRoot, finalPack.files);
+        assertUriReplaced(projectRoot, finalPack.files, uriUsers);
+        assert(!finalPack.files.some(file => removedStagingPaths.some(location =>
+          file.path.startsWith(`${location}/`))), "An orphaned dependency would be published.");
+        checkUriRuntime(projectRoot, uriUsers);
         const finalFiles = new Set(finalPack.files.map(file => file.path));
         for (const required of [
             "snUpload.js", `${sdkPath}/package.json`, `${rollupPath}/package.json`,
@@ -463,6 +704,7 @@ try {
         throw error;
     }
     console.warn("libxmljs2 exclusion passed for staging and ordinary npm publish.");
+    console.warn("URI.js replacement passed for staging and ordinary npm publish.");
     console.warn("SDK preparation passed. npm can now publish the project normally.");
     console.warn("Tracked package.json and package-lock.json were not changed by preparation.");
 } catch (error) {
