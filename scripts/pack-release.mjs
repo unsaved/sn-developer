@@ -18,6 +18,8 @@ const sdkPath = "node_modules/@servicenow/sdk";
 const rollupPath = "node_modules/@servicenow/isomorphic-rollup";
 const proxyPath = "node_modules/@fastify/http-proxy";
 const sdkCliPath = "node_modules/@servicenow/sdk-cli";
+const buildPluginPath = "node_modules/@servicenow/sdk-build-plugins";
+const xmlPath = "node_modules/libxmljs2";
 const undiciPath = "node_modules/undici";
 const sdkUndiciPath = `${sdkCliPath}/node_modules/undici`;
 const patchedUndiciVersion = "7.30.2";
@@ -37,6 +39,21 @@ const readPackResult = (text, name) => {
       `npm pack returned no file manifest for '${name}'.`);
     assert.equal(packed.name, name, "Unexpected package name from npm pack.");
     return packed;
+};
+// Check both prepared and final packlists, including aliases and dependency declarations.
+const assertXmlExcluded = (root, files) => {
+    for (const file of files) {
+        assert(!/(?:^|\/)node_modules\/libxmljs2(?:\/|$)/.test(file.path),
+          `Excluded libxmljs2 payload would be published: ${file.path}`);
+        if (file.path !== "package.json" &&
+          !/(?:^|\/)node_modules\/(?:@[^/]+\/)?[^/]+\/package\.json$/.test(file.path)) continue;
+        const pkg = readJson(path.join(root, file.path));
+        assert.notEqual(pkg.name, "libxmljs2", `Excluded package found: ${file.path}`);
+        for (const field of ["dependencies", "optionalDependencies", "peerDependencies"])
+            for (const [name, spec] of Object.entries(pkg[field] || {}))
+                assert(name !== "libxmljs2" && !/^npm:libxmljs2(?:@|$)/.test(spec),
+                  `libxmljs2 dependency remains in ${file.path}: ${field}.${name}`);
+    }
 };
 // One-time tracked configuration; normal publishing never edits source manifests.
 if (process.argv[2] === "--configure") {
@@ -169,7 +186,7 @@ try {
     // The supplied tree exposes AJV 6 to CycloneDX's optional AJV 8 peer. Give that peer
     // its own already-installed AJV 8 and private dependencies, without changing ESLint's AJV.
     const peerCopies = [];
-    const buildModules = "node_modules/@servicenow/sdk-build-plugins/node_modules";
+    const buildModules = `${buildPluginPath}/node_modules`;
     const libraryFile = path.join(stageRoot, buildModules,
       "@cyclonedx/cyclonedx-library/package.json");
     if (existsSync(libraryFile)) {
@@ -208,6 +225,36 @@ try {
         plugin.optionalDependencies = { ...plugin.optionalDependencies, ajv: "8.20.0" };
         writeJson(pluginFile, plugin);
     }
+    // Exclude the vulnerable optional XML validator, not all optional dependencies.
+    assert.equal(lock.packages[xmlPath]?.version, "0.37.0", "Review the XML exclusion.");
+    assert(lock.packages[xmlPath].optional, "libxmljs2 is no longer optional; review its removal.");
+    assert.equal(lock.packages[buildPluginPath]?.optionalDependencies?.libxmljs2, "0.37.0",
+      "The SDK's XML dependency changed; review its exclusion.");
+    const xmlOwnerFile = path.join(stageRoot, buildPluginPath, "package.json");
+    const xmlOwner = readJson(xmlOwnerFile);
+    assert.equal(xmlOwner.version, "4.14.2", "Unexpected SDK build-plugin version.");
+    assert(!xmlOwner.dependencies?.libxmljs2, "libxmljs2 became a required SDK dependency.");
+    assert(xmlOwner.optionalDependencies?.libxmljs2 === undefined ||
+      xmlOwner.optionalDependencies.libxmljs2 === "0.37.0", "Unexpected XML dependency version.");
+    delete xmlOwner.optionalDependencies?.libxmljs2;
+    writeJson(xmlOwnerFile, xmlOwner);
+
+    const xmlPeer = readJson(libraryFile);
+    assert.equal(xmlPeer.version, "9.5.0", "Unexpected CycloneDX version for XML exclusion.");
+    assert(!xmlPeer.dependencies?.libxmljs2 && !xmlPeer.optionalDependencies?.libxmljs2,
+      "CycloneDX changed how it obtains libxmljs2; review its exclusion.");
+    if (xmlPeer.peerDependencies?.libxmljs2 !== undefined) {
+        assert.equal(xmlPeer.peerDependencies.libxmljs2, "^0.35||^0.37",
+          "Unexpected CycloneDX XML peer requirement.");
+        assert.equal(xmlPeer.peerDependenciesMeta?.libxmljs2?.optional, true,
+          "CycloneDX XML peer is no longer optional.");
+    }
+    delete xmlPeer.peerDependencies?.libxmljs2;
+    delete xmlPeer.peerDependenciesMeta?.libxmljs2;
+    writeJson(libraryFile, xmlPeer);
+    rmSync(path.join(stageRoot, xmlPath), { recursive: true, force: true });
+    console.warn("Excluded libxmljs2 and its optional dependency declarations.");
+
     const runNpm = (args, cwd = stageRoot) => {
         const result = spawnSync(process.execPath, [npmCli, ...args], {
             cwd,
@@ -303,6 +350,20 @@ try {
             replacement: "8.20.0",
         } : null,
         peerCopies,
+        excludedXmlValidator: {
+            package: "libxmljs2",
+            version: "0.37.0",
+            advisories: ["CVE-2024-34393", "sonatype-2018-0585"],
+            removedFrom: [
+                {
+                    package: "@servicenow/sdk-build-plugins",
+                    field: "optionalDependencies.libxmljs2",
+                },
+                { package: "@cyclonedx/cyclonedx-library", field: "peerDependencies.libxmljs2" },
+            ],
+            removedPayload: xmlPath,
+            limitation: "Optional CycloneDX XML schema validation is unavailable.",
+        },
         windowsNativePackage: {
             name: windowsKeyring,
             version: nativeLocked.version,
@@ -329,9 +390,12 @@ try {
     console.warn("Verifying the packed archive contents.");
     assert.equal(packed.version, manifest.version, "Unexpected package version from npm pack.");
     assert.equal(packed.filename, archiveName, "Unexpected archive filename from npm pack.");
+    assertXmlExcluded(stageRoot, packed.files);
     const packedFiles = new Set(packed.files.map(file => file.path));
     for (const required of [
         "snUpload.js", `${sdkPath}/package.json`,
+        `${buildPluginPath}/package.json`,
+        `${buildModules}/@cyclonedx/cyclonedx-library/package.json`,
         `${rollupPath}/package.json`, `${proxyPath}/package.json`,
         `${sdkCliPath}/package.json`, `${undiciPath}/package.json`, `${undiciPath}/index.js`,
         `${sdkUndiciPath}/package.json`, `${sdkUndiciPath}/index.js`,
@@ -348,24 +412,23 @@ try {
     const replacements = [
         `${rollupPath}/package.json`, `${sdkCliPath}/package.json`, sdkUndiciPath,
         `${sdkPath}/package.json`, windowsKeyringPath,
-        ...(peerCopies.length ? [
-            "node_modules/@servicenow/sdk-build-plugins/package.json",
-            `${buildModules}/ajv`,
-        ] : []),
+        `${buildPluginPath}/package.json`,
+        `${buildModules}/@cyclonedx/cyclonedx-library/package.json`,
+        ...(peerCopies.length ? [`${buildModules}/ajv`] : []),
     ];
     const backupRoot = path.join(temporaryRoot, "dependency-backup");
     const changed = [];
     const hiddenLock = path.join(projectRoot, "node_modules/.package-lock.json");
     const hiddenLockBytes = existsSync(hiddenLock) ? readFileSync(hiddenLock) : null;
     try {
-        for (const location of replacements) {
+        for (const location of [...replacements, xmlPath]) {
             const target = path.join(projectRoot, location);
             const backup = path.join(backupRoot, location);
             const hadOriginal = existsSync(target);
             if (hadOriginal) cpSync(target, backup, { recursive: true, verbatimSymlinks: true });
             changed.push({ target, backup, hadOriginal });
             rmSync(target, { recursive: true, force: true });
-            cpSync(path.join(stageRoot, location), target, {
+            if (location !== xmlPath) cpSync(path.join(stageRoot, location), target, {
                 recursive: true, verbatimSymlinks: true,
             });
         }
@@ -374,9 +437,12 @@ try {
         const finalPack = readPackResult(runNpm([
             "pack", "--json", "--dry-run", "--ignore-scripts",
         ], projectRoot), manifest.name);
+        assertXmlExcluded(projectRoot, finalPack.files);
         const finalFiles = new Set(finalPack.files.map(file => file.path));
         for (const required of [
             "snUpload.js", `${sdkPath}/package.json`, `${rollupPath}/package.json`,
+            `${buildPluginPath}/package.json`,
+            `${buildModules}/@cyclonedx/cyclonedx-library/package.json`,
             `${sdkCliPath}/package.json`, `${sdkUndiciPath}/package.json`,
             `${sdkUndiciPath}/index.js`, `${proxyPath}/package.json`,
             `${windowsKeyringPath}/package.json`, `${windowsKeyringPath}/${windowsBinary}`,
@@ -396,6 +462,7 @@ try {
         if (hiddenLockBytes !== null) writeFileSync(hiddenLock, hiddenLockBytes);
         throw error;
     }
+    console.warn("libxmljs2 exclusion passed for staging and ordinary npm publish.");
     console.warn("SDK preparation passed. npm can now publish the project normally.");
     console.warn("Tracked package.json and package-lock.json were not changed by preparation.");
 } catch (error) {

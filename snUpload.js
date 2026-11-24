@@ -520,7 +520,7 @@ ${pObj.stdout.toString("utf8")}`);
             ...[process.execPath, sdkCliPath].map(filename => {
                 const shellPath = process.platform === "win32" ?
                   filename.replace(/\\/g, "/").
-                    replace(/^([A-Za-z]):/, (_match, drive) => `/${drive.toLowerCase()}`) :
+                    replace(/^([A-Za-z]):/, (_dummyM, drive) => `/${drive.toLowerCase()}`) :
                   filename;
                 return `'${shellPath.replace(/'/g, "'\\''")}'`;
             }),
